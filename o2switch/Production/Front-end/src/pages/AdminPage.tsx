@@ -240,6 +240,10 @@ export default function AdminPage(): React.ReactNode {
   };
   const handleCloseAuctionModal = () => setIsAuctionModalOpen(false);
 
+  // FIX: The generic `else` block was causing type errors.
+  // The error messages (related to React 'Key' and 'ReactNode') were misleading
+  // but pointed to a type inference problem during state update that this change corrects.
+  // Explicitly handling `startingPrice` is safer and resolves the issue. Also added radix to parseInt.
   const handleAuctionFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     const [field, subfield] = name.split('.');
@@ -247,15 +251,10 @@ export default function AdminPage(): React.ReactNode {
     setAuctionFormData(prev => {
         let newState = { ...prev };
         if (field === 'vehicle' && subfield) {
-            // FIX: Added radix to parseInt for correctness and safety.
             newState.vehicle = { ...newState.vehicle, [subfield]: e.target.type === 'number' ? parseInt(value, 10) || 0 : value };
         } else if (name === 'endDate') {
             newState.endDate = new Date(value);
         } else if (name === 'startingPrice') {
-            // FIX: The original generic `else` block on line 1254 was causing type errors.
-            // The error messages (related to React 'Key' and 'ReactNode') were misleading
-            // but pointed to a type inference problem during state update that this change corrects.
-            // Explicitly handling `startingPrice` is safer and resolves the issue.
             newState.startingPrice = parseFloat(value) || 0;
         }
         return newState;
