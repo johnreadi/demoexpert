@@ -6,13 +6,13 @@ services:
     build: .
     container_name: demolition-expert
     ports:
-      # Map port 80 of the host to port 3001 in the container
-      # Dokploy will manage the external port
+      # Map port 80 (standard HTTP) from the host to port 3001 inside the container.
+      # Dokploy will manage the external port mapping.
       - "80:3001"
     environment:
-      # The server will listen on the port defined here
+      # The server will listen on the port defined here inside the container
       - PORT=3001
-      # IMPORTANT: Set your Gemini API_KEY in the Dokploy environment variables UI.
-      # Dokploy will inject the value you set in its dashboard.
+      # IMPORTANT: Define your Gemini API_KEY in the Dokploy dashboard.
+      # Dokploy will inject the value you set into this environment variable.
       - API_KEY=${API_KEY}
     restart: unless-stopped
