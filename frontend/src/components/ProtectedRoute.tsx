@@ -8,7 +8,7 @@ export const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ childr
   const location = useLocation();
 
   if (isLoading) {
-    return <LoadingSpinner message="Vérification de l'authentification..." />;
+    return <div className="flex justify-center items-center h-screen"><LoadingSpinner message="Vérification de l'authentification..." /></div>;
   }
 
   if (!isAuthenticated) {

@@ -48,7 +48,7 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
   return (
     <SettingsContext.Provider value={value}>
       {/* Do not render children until settings are loaded to prevent flicker */}
-      {!isLoading && children}
+      {!isLoading ? children : null}
     </SettingsContext.Provider>
   );
 };
