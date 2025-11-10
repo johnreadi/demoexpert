@@ -6,7 +6,7 @@ RUN npm install --no-fund --no-audit
 COPY tsconfig.json ./
 COPY prisma ./prisma
 COPY src ./src
-RUN npm run build || yarn build || pnpm build
+RUN npx prisma generate && npm run build
 
 # --- Runner stage ---
 FROM node:20-alpine AS runner
