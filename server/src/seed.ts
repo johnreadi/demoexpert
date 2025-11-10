@@ -58,6 +58,68 @@ async function main() {
     });
   }
 
+  // Seed demo auctions with bids
+  const demoAuctions = [
+    {
+      vehicleName: 'Peugeot 208 GT Line',
+      brand: 'Peugeot',
+      model: '208',
+      year: 2019,
+      mileage: 55000,
+      description: 'Superbe Peugeot 208 GT Line...',
+      images: ['https://picsum.photos/seed/auc1-1/800/600'],
+      startingPrice: '8000.00',
+      endDate: new Date(Date.now() + 1000 * 60 * 60 * 48),
+      bids: [
+        { bidderName: 'Marie Curie', userEmail: 'marie.curie@expert.fr', amount: '8300.00' }
+      ]
+    },
+    {
+      vehicleName: 'Volkswagen Golf VII',
+      brand: 'Volkswagen',
+      model: 'Golf',
+      year: 2017,
+      mileage: 89000,
+      description: 'Volkswagen Golf 7 en excellent état...',
+      images: ['https://picsum.photos/seed/auc2-1/800/600'],
+      startingPrice: '10000.00',
+      endDate: new Date(Date.now() + 1000 * 60 * 60 * 24 * 5),
+      bids: [
+        { bidderName: 'Jean Dupont', userEmail: 'jean.dupont@expert.fr', amount: '10500.00' }
+      ]
+    }
+  ];
+
+  for (const a of demoAuctions) {
+    // find user ids from email
+    const userByEmail = async (email: string) => {
+      const u = await prisma.user.findUnique({ where: { email: email.toLowerCase() } });
+      return u?.id || 'user-unknown';
+    };
+
+    const created = await prisma.auction.create({
+      data: {
+        vehicleName: a.vehicleName,
+        brand: a.brand,
+        model: a.model,
+        year: a.year,
+        mileage: a.mileage,
+        description: a.description,
+        images: a.images,
+        startingPrice: a.startingPrice,
+        currentBid: a.startingPrice,
+        bidCount: 0,
+        endDate: a.endDate,
+      }
+    });
+
+    for (const b of a.bids) {
+      const uid = await userByEmail(b.userEmail);
+      await prisma.bid.create({ data: { auctionId: created.id, userId: uid, bidderName: b.bidderName, amount: b.amount } });
+      await prisma.auction.update({ where: { id: created.id }, data: { currentBid: b.amount, bidCount: { increment: 1 } } });
+    }
+  }
+
   // eslint-disable-next-line no-console
   console.log('Seed completed');
 }

@@ -166,6 +166,109 @@ app.delete('/api/products/:id', async (req, res) => {
   }
 });
 
+// Auctions API
+app.get('/api/auctions', async (_req, res) => {
+  try {
+    const auctions = await prisma.auction.findMany({ orderBy: { createdAt: 'desc' } });
+    res.json(auctions);
+  } catch {
+    res.status(500).json({ error: 'failed_to_list_auctions' });
+  }
+});
+
+app.get('/api/auctions/:id', async (req, res) => {
+  try {
+    const auction = await prisma.auction.findUnique({ where: { id: req.params.id }, include: { bids: { orderBy: { timestamp: 'desc' } } } });
+    if (!auction) return res.status(404).json({ error: 'not_found' });
+    res.json(auction);
+  } catch {
+    res.status(500).json({ error: 'failed_to_get_auction' });
+  }
+});
+
+function requireAdmin(req: any, res: any, next: any) {
+  const user = req.session?.user;
+  if (!user || user.role !== 'Admin') return res.status(403).json({ error: 'forbidden' });
+  next();
+}
+
+app.post('/api/auctions', requireAdmin, async (req, res) => {
+  try {
+    const d = req.body || {};
+    const created = await prisma.auction.create({ data: {
+      vehicleName: d.vehicleName,
+      brand: d.brand,
+      model: d.model,
+      year: Number(d.year),
+      mileage: Number(d.mileage),
+      description: d.description,
+      images: Array.isArray(d.images) ? d.images : [],
+      startingPrice: String(d.startingPrice),
+      currentBid: String(d.startingPrice),
+      bidCount: 0,
+      endDate: new Date(d.endDate),
+    }});
+    res.status(201).json(created);
+  } catch {
+    res.status(400).json({ error: 'failed_to_create_auction' });
+  }
+});
+
+app.put('/api/auctions/:id', requireAdmin, async (req, res) => {
+  try {
+    const d = req.body || {};
+    const updated = await prisma.auction.update({ where: { id: req.params.id }, data: {
+      ...(d.vehicleName !== undefined ? { vehicleName: d.vehicleName } : {}),
+      ...(d.brand !== undefined ? { brand: d.brand } : {}),
+      ...(d.model !== undefined ? { model: d.model } : {}),
+      ...(d.year !== undefined ? { year: Number(d.year) } : {}),
+      ...(d.mileage !== undefined ? { mileage: Number(d.mileage) } : {}),
+      ...(d.description !== undefined ? { description: d.description } : {}),
+      ...(d.images !== undefined ? { images: Array.isArray(d.images) ? d.images : [] } : {}),
+      ...(d.startingPrice !== undefined ? { startingPrice: String(d.startingPrice) } : {}),
+      ...(d.currentBid !== undefined ? { currentBid: String(d.currentBid) } : {}),
+      ...(d.bidCount !== undefined ? { bidCount: Number(d.bidCount) } : {}),
+      ...(d.endDate !== undefined ? { endDate: new Date(d.endDate) } : {}),
+    }});
+    res.json(updated);
+  } catch {
+    res.status(400).json({ error: 'failed_to_update_auction' });
+  }
+});
+
+app.delete('/api/auctions/:id', requireAdmin, async (req, res) => {
+  try {
+    await prisma.auction.delete({ where: { id: req.params.id } });
+    res.json({ success: true });
+  } catch {
+    res.status(404).json({ error: 'not_found' });
+  }
+});
+
+app.post('/api/auctions/:id/bids', async (req, res) => {
+  try {
+    const user = (req.session as any)?.user;
+    if (!user) return res.status(401).json({ error: 'unauthorized' });
+    const { amount } = req.body || {};
+    const auction = await prisma.auction.findUnique({ where: { id: req.params.id } });
+    if (!auction) return res.status(404).json({ error: 'not_found' });
+    if (new Date(auction.endDate).getTime() <= Date.now()) return res.status(400).json({ error: 'auction_ended' });
+    const nextAmount = Number(amount);
+    const current = Number(auction.currentBid);
+    if (!(nextAmount > current)) return res.status(400).json({ error: 'bid_too_low' });
+
+    await prisma.$transaction(async (tx) => {
+      await tx.bid.create({ data: { auctionId: auction.id, userId: user.id, bidderName: user.name, amount: String(nextAmount) } });
+      await tx.auction.update({ where: { id: auction.id }, data: { currentBid: String(nextAmount), bidCount: auction.bidCount + 1 } });
+    });
+
+    const updated = await prisma.auction.findUnique({ where: { id: auction.id }, include: { bids: { orderBy: { timestamp: 'desc' } } } });
+    res.json(updated);
+  } catch {
+    res.status(400).json({ error: 'failed_to_place_bid' });
+  }
+});
+
 // 404 fallback for API
 app.use('/api', (_req, res) => {
   res.status(404).json({ error: 'not_found' });

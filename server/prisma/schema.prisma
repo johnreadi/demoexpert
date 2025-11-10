@@ -48,3 +48,33 @@ model Product {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 }
+
+model Auction {
+  id           String   @id @default(cuid())
+  vehicleName  String
+  brand        String
+  model        String
+  year         Int
+  mileage      Int
+  description  String
+  images       String[]
+  startingPrice Decimal  @db.Numeric(12,2)
+  currentBid   Decimal   @db.Numeric(12,2)
+  bidCount     Int       @default(0)
+  endDate      DateTime
+  bids         Bid[]
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([endDate])
+}
+
+model Bid {
+  id         String   @id @default(cuid())
+  auctionId  String
+  auction    Auction  @relation(fields: [auctionId], references: [id], onDelete: Cascade)
+  userId     String
+  bidderName String
+  amount     Decimal  @db.Numeric(12,2)
+  timestamp  DateTime @default(now())
+}

@@ -38,19 +38,19 @@ export const updateProduct = async (productId: string, productData: Partial<Omit
 export const deleteProduct = async (productId: string): Promise<{ success: boolean }> => http<{ success: boolean }>(`/products/${productId}`, { method: 'DELETE' });
 
 
-// --- Auctions API ---
-export const getAuctions = (): Promise<Auction[]> => simulateApiCall(db.getAuctions());
-export const getAuctionById = (id: string): Promise<Auction | undefined> => simulateApiCall(db.getAuctionById(id));
-export const addBid = (auctionId: string, bidAmount: number, userId: string, bidderName: string): Promise<Auction> => {
-    try {
-        return simulateApiCall(db.addBid(auctionId, bidAmount, userId, bidderName));
-    } catch (error: any) {
-        return simulateApiError(error.message);
-    }
+// --- Auctions API (real backend) ---
+export const getAuctions = async (): Promise<Auction[]> => http<Auction[]>(`/auctions`);
+export const getAuctionById = async (id: string): Promise<Auction | undefined> => http<Auction>(`/auctions/${id}`);
+export const addBid = async (auctionId: string, bidAmount: number, userId: string, bidderName: string): Promise<Auction> => {
+  // userId/bidderName sont connus côté serveur via la session; on envoie seulement amount
+  return http<Auction>(`/auctions/${auctionId}/bids`, { method: 'POST', body: JSON.stringify({ amount: bidAmount }) });
 };
-export const addAuction = (auctionData: Omit<Auction, 'id' | 'currentBid' | 'bidCount' | 'bids'>): Promise<Auction> => simulateApiCall(db.addAuction(auctionData));
-export const updateAuction = (auctionId: string, auctionData: Partial<Omit<Auction, 'id'>>): Promise<Auction> => simulateApiCall(db.updateAuction(auctionId, auctionData));
-export const deleteAuction = (auctionId: string): Promise<{ success: boolean }> => simulateApiCall(db.deleteAuction(auctionId));
+export const addAuction = async (auctionData: Omit<Auction, 'id' | 'currentBid' | 'bidCount' | 'bids'>): Promise<Auction> =>
+  http<Auction>(`/auctions`, { method: 'POST', body: JSON.stringify(auctionData) });
+export const updateAuction = async (auctionId: string, auctionData: Partial<Omit<Auction, 'id'>>): Promise<Auction> =>
+  http<Auction>(`/auctions/${auctionId}`, { method: 'PUT', body: JSON.stringify(auctionData) });
+export const deleteAuction = async (auctionId: string): Promise<{ success: boolean }> =>
+  http<{ success: boolean }>(`/auctions/${auctionId}`, { method: 'DELETE' });
 
 // --- Blog API ---
 export const getBlogPosts = (): Promise<BlogPost[]> => simulateApiCall(db.getBlogPosts());
