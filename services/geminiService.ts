@@ -1,19 +1,4 @@
-import { GoogleGenAI } from "@google/genai";
 import type { SiteSettings, ChatMessage } from '../types';
-
-let ai: InstanceType<typeof GoogleGenAI> | null = null;
-
-// Lazily initialize the AI client to avoid errors on page load
-// if the environment variables are not immediately available.
-function getAiClient() {
-    if (!ai) {
-        // This will only be called when the AI is first needed.
-        // The environment is expected to provide the API key at this point.
-        ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-    }
-    return ai;
-}
-
 
 const getChatSystemInstruction = (settings: SiteSettings | null): string => {
     if (!settings) {
@@ -32,32 +17,10 @@ const getChatSystemInstruction = (settings: SiteSettings | null): string => {
 
 
 export const getAiChatResponse = async (message: string, history: ChatMessage[], settings: SiteSettings | null): Promise<string> => {
-  try {
-    const aiClient = getAiClient();
-    const chatModel = settings?.advancedSettings?.ai?.chatModel || 'gemini-2.5-flash';
-    const systemInstruction = getChatSystemInstruction(settings);
-
-    const modelHistory = history.map(msg => ({
-        role: msg.sender === 'user' ? 'user' : 'model',
-        parts: [{ text: msg.text }]
-    }));
-    
-    const chat = aiClient.chats.create({
-        model: chatModel,
-        config: {
-          systemInstruction: systemInstruction,
-        },
-        history: modelHistory
-      });
-
-    const result = await chat.sendMessage(message);
-    return result.text;
-
-  } catch (error) {
-    console.error("Error getting AI chat response:", error);
-     if (error instanceof Error && error.message.includes('API key not valid')) {
-       return "Désolé, la configuration de l'assistant IA n'est pas correcte. Veuillez contacter le support.";
-    }
-    return "Désolé, une erreur technique m'empêche de répondre. Veuillez réessayer plus tard ou nous appeler.";
-  }
+  // Stub sans dépendance externe: renvoie une réponse simple et utile.
+  const intro = getChatSystemInstruction(settings);
+  const lastUser = message?.trim();
+  const base = "Je suis un assistant. Pour des réponses IA avancées, veuillez configurer une clé dans GEMINI_API_KEY et activer l'intégration ultérieurement.";
+  if (!lastUser) return base;
+  return `${base}\n\nContexte: ${intro}\n\nVous avez demandé: "${lastUser}". Pour un devis pièces, utilisez la fonction 'demande de devis' sur la page produit. Pour le rachat véhicule, consultez /rachat-vehicule.`;
 };
