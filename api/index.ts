@@ -1,5 +1,6 @@
 import type { Product, Auction, PartCategory, User, AdminMessage, SiteSettings, LiftRentalBooking, AuditLogEntry, BlogPost, Contact } from '../types';
 import * as db from './db';
+import { http } from '../services/http';
 
 // Helper to simulate network delay and return a promise
 const simulateApiCall = <T>(data: T, delay = 200): Promise<T> => {
@@ -22,12 +23,19 @@ export const getSiteSettings = (): Promise<SiteSettings> => simulateApiCall(db.g
 export const updateSiteSettings = (newSettings: SiteSettings): Promise<SiteSettings> => simulateApiCall(db.updateSiteSettings(newSettings));
 
 
-// --- Products API ---
-export const getProducts = (filters: { category?: string | PartCategory; brand?: string; model?: string, limit?: number }): Promise<Product[]> => simulateApiCall(db.getProducts(filters));
-export const getProductById = (id: string): Promise<Product | undefined> => simulateApiCall(db.getProductById(id));
-export const addProduct = (productData: Omit<Product, 'id'>): Promise<Product> => simulateApiCall(db.addProduct(productData));
-export const updateProduct = (productId: string, productData: Partial<Omit<Product, 'id'>>): Promise<Product> => simulateApiCall(db.updateProduct(productId, productData));
-export const deleteProduct = (productId: string): Promise<{ success: boolean }> => simulateApiCall(db.deleteProduct(productId));
+// --- Products API (real backend) ---
+export const getProducts = async (filters: { category?: string | PartCategory; brand?: string; model?: string, limit?: number }): Promise<Product[]> => {
+  const params = new URLSearchParams();
+  if (filters?.category) params.set('category', String(filters.category));
+  if (filters?.brand) params.set('brand', String(filters.brand));
+  if (filters?.model) params.set('model', String(filters.model));
+  if (filters?.limit) params.set('limit', String(filters.limit));
+  return http<Product[]>(`/products${params.toString() ? `?${params.toString()}` : ''}`);
+};
+export const getProductById = async (id: string): Promise<Product | undefined> => http<Product>(`/products/${id}`);
+export const addProduct = async (productData: Omit<Product, 'id'>): Promise<Product> => http<Product>(`/products`, { method: 'POST', body: JSON.stringify(productData) });
+export const updateProduct = async (productId: string, productData: Partial<Omit<Product, 'id'>>): Promise<Product> => http<Product>(`/products/${productId}`, { method: 'PUT', body: JSON.stringify(productData) });
+export const deleteProduct = async (productId: string): Promise<{ success: boolean }> => http<{ success: boolean }>(`/products/${productId}`, { method: 'DELETE' });
 
 
 // --- Auctions API ---

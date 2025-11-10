@@ -81,6 +81,91 @@ app.post('/api/auth/logout', (req, res) => {
   });
 });
 
+// Products API
+app.get('/api/products', async (req, res) => {
+  try {
+    const { category, brand, model, limit } = req.query as any;
+    const take = limit ? Number(limit) : undefined;
+    const products = await prisma.product.findMany({
+      where: {
+        ...(category ? { category: String(category) } : {}),
+        ...(brand ? { brand: { contains: String(brand), mode: 'insensitive' } } : {}),
+        ...(model ? { model: { contains: String(model), mode: 'insensitive' } } : {}),
+      },
+      orderBy: { createdAt: 'desc' },
+      ...(take ? { take } : {}),
+    });
+    res.json(products);
+  } catch (e) {
+    res.status(500).json({ error: 'failed_to_list_products' });
+  }
+});
+
+app.get('/api/products/:id', async (req, res) => {
+  try {
+    const product = await prisma.product.findUnique({ where: { id: req.params.id } });
+    if (!product) return res.status(404).json({ error: 'not_found' });
+    res.json(product);
+  } catch (e) {
+    res.status(500).json({ error: 'failed_to_get_product' });
+  }
+});
+
+app.post('/api/products', async (req, res) => {
+  try {
+    const data = req.body || {};
+    const created = await prisma.product.create({ data: {
+      name: data.name,
+      oemRef: data.oemRef,
+      brand: data.brand,
+      model: data.model,
+      year: Number(data.year),
+      category: String(data.category),
+      price: String(data.price),
+      condition: data.condition,
+      warranty: data.warranty,
+      compatibility: data.compatibility ?? null,
+      images: Array.isArray(data.images) ? data.images : [],
+      description: data.description,
+    }});
+    res.status(201).json(created);
+  } catch (e) {
+    res.status(400).json({ error: 'failed_to_create_product' });
+  }
+});
+
+app.put('/api/products/:id', async (req, res) => {
+  try {
+    const data = req.body || {};
+    const updated = await prisma.product.update({ where: { id: req.params.id }, data: {
+      ...(data.name !== undefined ? { name: data.name } : {}),
+      ...(data.oemRef !== undefined ? { oemRef: data.oemRef } : {}),
+      ...(data.brand !== undefined ? { brand: data.brand } : {}),
+      ...(data.model !== undefined ? { model: data.model } : {}),
+      ...(data.year !== undefined ? { year: Number(data.year) } : {}),
+      ...(data.category !== undefined ? { category: String(data.category) } : {}),
+      ...(data.price !== undefined ? { price: String(data.price) } : {}),
+      ...(data.condition !== undefined ? { condition: data.condition } : {}),
+      ...(data.warranty !== undefined ? { warranty: data.warranty } : {}),
+      ...(data.compatibility !== undefined ? { compatibility: data.compatibility } : {}),
+      ...(data.images !== undefined ? { images: Array.isArray(data.images) ? data.images : [] } : {}),
+      ...(data.description !== undefined ? { description: data.description } : {}),
+    }});
+    res.json(updated);
+  } catch (e) {
+    res.status(400).json({ error: 'failed_to_update_product' });
+  }
+});
+
+app.delete('/api/products/:id', async (req, res) => {
+  try {
+    await prisma.product.delete({ where: { id: req.params.id } });
+    res.json({ success: true });
+  } catch (e) {
+    res.status(404).json({ error: 'not_found' });
+  }
+});
+
 // 404 fallback for API
 app.use('/api', (_req, res) => {
   res.status(404).json({ error: 'not_found' });
