@@ -39,7 +39,7 @@ model Product {
   model        String
   year         Int
   category     String
-  price        Decimal  @db.Numeric(12,2)
+  price        Decimal  @db.Decimal(12,2)
   condition    String
   warranty     String
   compatibility String?
@@ -58,8 +58,8 @@ model Auction {
   mileage      Int
   description  String
   images       String[]
-  startingPrice Decimal  @db.Numeric(12,2)
-  currentBid   Decimal   @db.Numeric(12,2)
+  startingPrice Decimal  @db.Decimal(12,2)
+  currentBid   Decimal   @db.Decimal(12,2)
   bidCount     Int       @default(0)
   endDate      DateTime
   bids         Bid[]
@@ -75,6 +75,6 @@ model Bid {
   auction    Auction  @relation(fields: [auctionId], references: [id], onDelete: Cascade)
   userId     String
   bidderName String
-  amount     Decimal  @db.Numeric(12,2)
+  amount     Decimal  @db.Decimal(12,2)
   timestamp  DateTime @default(now())
 }
