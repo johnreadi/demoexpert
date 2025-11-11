@@ -49,6 +49,11 @@ app.get('/healthz', (_req, res) => {
   res.status(200).json({ status: 'ok', env: NODE_ENV });
 });
 
+// Mirror for proxies that keep /api prefix
+app.get('/api/healthz', (_req, res) => {
+  res.status(200).json({ status: 'ok', env: NODE_ENV });
+});
+
 // Auth API
 app.get('/api/auth/me', (req, res) => {
   const user = (req.session as any).user as UserSession | undefined;
@@ -56,7 +61,26 @@ app.get('/api/auth/me', (req, res) => {
   return res.json(user);
 });
 
+// Auth with /api prefix
 app.post('/api/auth/login', async (req, res) => {
+  const { email, password } = req.body || {};
+  if (!email || !password) return res.status(400).json({ error: 'missing_credentials' });
+  try {
+    const user = await prisma.user.findUnique({ where: { email: String(email).toLowerCase() } });
+    if (!user) return res.status(401).json({ error: 'invalid_credentials' });
+    const ok = await bcrypt.compare(String(password), user.password);
+    if (!ok) return res.status(401).json({ error: 'invalid_credentials' });
+    if (user.status === 'pending') return res.status(403).json({ error: 'account_pending' });
+    const safeUser: UserSession = { id: user.id, name: user.name, email: user.email, role: user.role as any, status: user.status as any };
+    (req.session as any).user = safeUser;
+    return res.json(safeUser);
+  } catch (e) {
+    return res.status(500).json({ error: 'login_failed' });
+  }
+});
+
+// Auth aliases without /api prefix (for proxies that strip /api)
+app.post('/auth/login', async (req, res) => {
   const { email, password } = req.body || {};
   if (!email || !password) return res.status(400).json({ error: 'missing_credentials' });
   try {
@@ -81,8 +105,54 @@ app.post('/api/auth/logout', (req, res) => {
   });
 });
 
+app.post('/auth/logout', (req, res) => {
+  req.session.destroy(err => {
+    if (err) return res.status(500).json({ error: 'logout_failed' });
+    res.clearCookie('connect.sid');
+    return res.json({ success: true });
+  });
+});
+
+// --- AI Chat (Gemini) ---
+app.post('/api/ai/chat', async (req, res) => {
+  try {
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      return res.status(501).json({ error: 'ai_not_configured', message: 'GEMINI_API_KEY manquant côté serveur.' });
+    }
+    const { message, history, settings } = req.body || {};
+    const intro = settings?.businessInfo ? `Vous êtes un assistant virtuel pour '${settings.businessInfo.name}', une casse automobile en Normandie, France. Votre nom est 'ExpertBot'.\n- Répondez de manière amicale, professionnelle et concise en français.\n- Services principaux : Vente de pièces auto d'occasion, rachat de véhicules, enlèvement gratuit d'épaves, réparation pare-brise, location de pont, entretien, pneus.\n- Adresse : ${settings.businessInfo.address}.\n- Téléphone : ${settings.businessInfo.phone}.\n- Horaires : ${settings.businessInfo.openingHours}.\n- Pour les prix des pièces, indiquez que le client doit faire une 'demande de devis' sur la page du produit car les prix varient.\n- Pour le rachat, dirigez l'utilisateur vers la page 'Rachat de Véhicules'.\n- Si vous ne connaissez pas la réponse, dites-le poliment et suggérez de contacter l'entreprise directement par téléphone.` :
+      "Vous êtes un assistant virtuel amical et professionnel. Répondez en français.";
+
+    const historyText = Array.isArray(history)
+      ? history.map((m: any) => `${m.sender === 'user' ? 'Utilisateur' : 'Bot'}: ${m.text}`).join('\n')
+      : '';
+
+    const prompt = `${intro}\n\nHistorique:\n${historyText}\n\nDernière question utilisateur: ${String(message ?? '').trim()}`;
+
+    const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [
+          { role: 'user', parts: [{ text: prompt }] }
+        ]
+      })
+    });
+    if (!r.ok) {
+      const text = await r.text().catch(() => '');
+      return res.status(502).json({ error: 'ai_call_failed', details: text });
+    }
+    const data = await r.json();
+    const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || 'Désolé, je n’ai pas pu générer de réponse.';
+    return res.json({ text });
+  } catch (e: any) {
+    return res.status(500).json({ error: 'ai_internal_error' });
+  }
+});
+
 // Products API
-app.get('/api/products', async (req, res) => {
+app.get('/products', async (req, res) => {
   try {
     const { category, brand, model, limit } = req.query as any;
     const take = limit ? Number(limit) : undefined;
@@ -101,7 +171,7 @@ app.get('/api/products', async (req, res) => {
   }
 });
 
-app.get('/api/products/:id', async (req, res) => {
+app.get('/products/:id', async (req, res) => {
   try {
     const product = await prisma.product.findUnique({ where: { id: req.params.id } });
     if (!product) return res.status(404).json({ error: 'not_found' });
@@ -111,7 +181,7 @@ app.get('/api/products/:id', async (req, res) => {
   }
 });
 
-app.post('/api/products', async (req, res) => {
+app.post('/products', async (req, res) => {
   try {
     const data = req.body || {};
     const created = await prisma.product.create({ data: {
@@ -134,7 +204,7 @@ app.post('/api/products', async (req, res) => {
   }
 });
 
-app.put('/api/products/:id', async (req, res) => {
+app.put('/products/:id', async (req, res) => {
   try {
     const data = req.body || {};
     const updated = await prisma.product.update({ where: { id: req.params.id }, data: {
@@ -157,7 +227,7 @@ app.put('/api/products/:id', async (req, res) => {
   }
 });
 
-app.delete('/api/products/:id', async (req, res) => {
+app.delete('/products/:id', async (req, res) => {
   try {
     await prisma.product.delete({ where: { id: req.params.id } });
     res.json({ success: true });
@@ -167,7 +237,7 @@ app.delete('/api/products/:id', async (req, res) => {
 });
 
 // Auctions API
-app.get('/api/auctions', async (_req, res) => {
+app.get('/auctions', async (_req, res) => {
   try {
     const auctions = await prisma.auction.findMany({ orderBy: { createdAt: 'desc' } });
     res.json(auctions);
@@ -176,7 +246,7 @@ app.get('/api/auctions', async (_req, res) => {
   }
 });
 
-app.get('/api/auctions/:id', async (req, res) => {
+app.get('/auctions/:id', async (req, res) => {
   try {
     const auction = await prisma.auction.findUnique({ where: { id: req.params.id }, include: { bids: { orderBy: { timestamp: 'desc' } } } });
     if (!auction) return res.status(404).json({ error: 'not_found' });
@@ -192,7 +262,7 @@ function requireAdmin(req: any, res: any, next: any) {
   next();
 }
 
-app.post('/api/auctions', requireAdmin, async (req, res) => {
+app.post('/auctions', requireAdmin, async (req, res) => {
   try {
     const d = req.body || {};
     const created = await prisma.auction.create({ data: {
@@ -214,7 +284,7 @@ app.post('/api/auctions', requireAdmin, async (req, res) => {
   }
 });
 
-app.put('/api/auctions/:id', requireAdmin, async (req, res) => {
+app.put('/auctions/:id', requireAdmin, async (req, res) => {
   try {
     const d = req.body || {};
     const updated = await prisma.auction.update({ where: { id: req.params.id }, data: {
