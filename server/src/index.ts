@@ -394,16 +394,20 @@ app.get('/api/settings', async (_req, res) => {
   try {
     const settings = await prisma.settings.findUnique({ where: { key: 'site_settings' } });
     if (!settings) {
-      // Return default settings if none exist
+      // Return minimal default settings if none exist
+      // Frontend will merge with its own defaults
       return res.json({
-        liftRental: {
-          pricingTiers: [
-            { duration: 1, price: 50 },
-            { duration: 2, price: 90 },
-            { duration: 4, price: 160 }
-          ],
-          unavailableDates: []
-        }
+        businessInfo: { name: "Démolition Expert", logoUrl: "", address: "", phone: "", email: "", openingHours: "" },
+        socialLinks: { facebook: "", twitter: "", linkedin: "" },
+        themeColors: { headerBg: "#003366", footerBg: "#003366" },
+        hero: { title: "", subtitle: "", backgroundImage: "", ctaText: "", ctaLink: "" },
+        services: [],
+        testimonials: [],
+        footer: { description: "", servicesLinks: [], infoLinks: [] },
+        legal: { mentions: { title: "", content: "" }, cgv: { title: "", content: "" }, confidentialite: { title: "", content: "" } },
+        liftRental: { pricingTiers: [{ duration: 1, price: 50 }, { duration: 2, price: 90 }, { duration: 4, price: 160 }], unavailableDates: [] },
+        pageContent: { repairs: { features: [] }, maintenance: { features: [] }, tires: { features: [] } },
+        advancedSettings: { maintenanceMode: false, allowRegistration: true, maxUploadSize: 5 }
       });
     }
     res.json(settings.value);
