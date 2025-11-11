@@ -1,7 +1,24 @@
 services:
-  api:
+  postgres:
+    image: postgres:16-alpine
+    restart: always
+    environment:
+      POSTGRES_DB: demoexpert
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    expose:
+      - "5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d demoexpert"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
     networks:
       - demoexpert-net
+
+  api:
     build:
       context: ./server
       dockerfile: Dockerfile
@@ -15,6 +32,9 @@ services:
       COOKIE_SAME_SITE: "lax"
       CORS_ORIGIN: https://app.demoexpert.fr
       DATABASE_URL: postgresql://${DB_USER}:${DB_PASSWORD}@postgres:5432/demoexpert?schema=public
+    depends_on:
+      postgres:
+        condition: service_healthy
     expose:
       - "8080"
     healthcheck:
@@ -29,10 +49,10 @@ services:
         npm run db:seed &&
         node dist/index.js
       "
-
-  web:
     networks:
       - demoexpert-net
+
+  web:
     build:
       context: .
       dockerfile: Dockerfile.web
@@ -41,7 +61,6 @@ services:
       NODE_ENV: production
       VITE_API_BASE_URL: /api
       VITE_APP_BASE_URL: https://app.demoexpert.fr
-      # GEMINI_API_KEY: ${GEMINI_API_KEY}
     depends_on:
       api:
         condition: service_started
@@ -52,8 +71,12 @@ services:
       interval: 10s
       timeout: 2s
       retries: 3
+    networks:
+      - demoexpert-net
+
+volumes:
+  postgres_data:
 
 networks:
   demoexpert-net:
-    external: true
 
