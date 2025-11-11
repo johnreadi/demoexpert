@@ -1,5 +1,7 @@
 services:
   api:
+    networks:
+      - demoexpert-net
     build:
       context: ./server
       dockerfile: Dockerfile
@@ -29,6 +31,8 @@ services:
       "
 
   web:
+    networks:
+      - demoexpert-net
     build:
       context: .
       dockerfile: Dockerfile.web
@@ -48,4 +52,8 @@ services:
       interval: 10s
       timeout: 2s
       retries: 3
+
+networks:
+  demoexpert-net:
+    external: true
 
