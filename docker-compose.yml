@@ -42,14 +42,6 @@ services:
       retries: 3
     command: >
       sh -c "
-        # Wait for the database to be ready
-        until nc -z postgres 5432; do
-          echo 'Waiting for the database to be ready...';
-          sleep 2;
-        done;
-        echo 'Database is ready!';
-
-        # Run migrations and start the app
         npm run db:generate &&
         npm run db:migrate &&
         npm run db:seed &&
