@@ -152,6 +152,36 @@ app.post('/api/ai/chat', async (req, res) => {
 });
 
 // Products API
+app.get('/api/products', async (req, res) => {
+  try {
+    const { category, brand, model, limit } = req.query as any;
+    const take = limit ? Number(limit) : undefined;
+    const products = await prisma.product.findMany({
+      where: {
+        ...(category ? { category: String(category) } : {}),
+        ...(brand ? { brand: { contains: String(brand), mode: 'insensitive' } } : {}),
+        ...(model ? { model: { contains: String(model), mode: 'insensitive' } } : {}),
+      },
+      orderBy: { createdAt: 'desc' },
+      ...(take ? { take } : {}),
+    });
+    res.json(products);
+  } catch (e) {
+    res.status(500).json({ error: 'failed_to_list_products' });
+  }
+});
+
+app.get('/api/products/:id', async (req, res) => {
+  try {
+    const product = await prisma.product.findUnique({ where: { id: req.params.id } });
+    if (!product) return res.status(404).json({ error: 'not_found' });
+    res.json(product);
+  } catch (e) {
+    res.status(500).json({ error: 'failed_to_get_product' });
+  }
+});
+
+// Aliases without /api prefix (for direct access)
 app.get('/products', async (req, res) => {
   try {
     const { category, brand, model, limit } = req.query as any;
