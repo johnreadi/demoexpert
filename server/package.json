@@ -10,7 +10,7 @@
     "prisma": "prisma",
     "db:migrate": "prisma migrate deploy",
     "db:generate": "prisma generate",
-    "db:seed": "ts-node-dev --transpile-only src/seed.ts"
+    "db:seed": "node dist/seed.js"
   },
   "dependencies": {
     "cookie-parser": "^1.4.6",
