@@ -1022,9 +1022,20 @@ export default function AdminPage(): React.ReactNode {
                                 </div>
                             </div>
                          </div>
+                         
+                         {/* Save Button */}
+                         <div className="mt-6 flex justify-end">
+                            <button 
+                                onClick={handleSaveSettings}
+                                className="bg-expert-green text-white font-bold px-6 py-3 rounded-lg hover:bg-expert-green/80 transition-colors flex items-center gap-2"
+                            >
+                                <i className="fas fa-save"></i>
+                                Sauvegarder les paramètres
+                            </button>
+                         </div>
                     </div>
 
-                    <div className="bg-white rounded-lg shadow-md">
+                    <div className="bg-white rounded-lg shadow-md mt-8">
                          <h3 className="text-xl font-bold font-heading text-expert-blue p-4 border-b">Réservations ({liftBookings.length})</h3>
                          <div className="overflow-x-auto">
                             <table className="w-full min-w-[700px]">
