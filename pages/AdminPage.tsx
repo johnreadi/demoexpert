@@ -680,6 +680,16 @@ export default function AdminPage(): React.ReactNode {
             showToast("Erreur lors de l'enregistrement.", 'error');
         }
     }
+
+    const handleSaveSettings = async () => {
+        if (!settingsFormData) return;
+        try {
+            await updateSettings(settingsFormData);
+            showToast('Paramètres de location sauvegardés avec succès !', 'success');
+        } catch(error) {
+            showToast("Erreur lors de la sauvegarde.", 'error');
+        }
+    }
   
   const navItems = [
     { id: 'dashboard', icon: 'fa-tachometer-alt', text: 'Tableau de bord' },
@@ -872,8 +882,8 @@ export default function AdminPage(): React.ReactNode {
                        <tbody>
                         {auctions.map(a => (
                           <tr key={a.id} className="border-b hover:bg-gray-50">
-                            <td className="p-3">{a.vehicle.name}</td>
-                            <td className="p-3">{a.currentBid} €</td>
+                            <td className="p-3">{a.vehicle?.name || 'N/A'}</td>
+                            <td className="p-3">{a.currentBid || 0} €</td>
                             <td className="p-3">{new Date(a.endDate).toLocaleDateString('fr-FR')}</td>
                             <td className="p-3 whitespace-nowrap">
                                <button onClick={() => handleOpenAuctionModal(a)} className="text-blue-500 hover:text-blue-700 p-2 rounded-md hover:bg-blue-100"><i className="fas fa-edit"></i> Modifier</button>
