@@ -267,6 +267,26 @@ app.delete('/products/:id', async (req, res) => {
 });
 
 // Auctions API
+app.get('/api/auctions', async (_req, res) => {
+  try {
+    const auctions = await prisma.auction.findMany({ orderBy: { createdAt: 'desc' } });
+    res.json(auctions);
+  } catch {
+    res.status(500).json({ error: 'failed_to_list_auctions' });
+  }
+});
+
+app.get('/api/auctions/:id', async (req, res) => {
+  try {
+    const auction = await prisma.auction.findUnique({ where: { id: req.params.id }, include: { bids: { orderBy: { timestamp: 'desc' } } } });
+    if (!auction) return res.status(404).json({ error: 'not_found' });
+    res.json(auction);
+  } catch {
+    res.status(500).json({ error: 'failed_to_get_auction' });
+  }
+});
+
+// Aliases without /api prefix
 app.get('/auctions', async (_req, res) => {
   try {
     const auctions = await prisma.auction.findMany({ orderBy: { createdAt: 'desc' } });
