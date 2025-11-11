@@ -5,7 +5,7 @@ import helmet from 'helmet';
 import morgan from 'morgan';
 import cookieParser from 'cookie-parser';
 import bcrypt from 'bcryptjs';
-import { prisma } from './prisma';
+import { prisma } from './prisma.js';
 
 const app = express();
 
