@@ -35,6 +35,9 @@ services:
         npm run db:seed &&
         node dist/index.js
       "
+    networks:
+      - dokploy-network
+      - default
 
   web:
     build:
@@ -62,4 +65,10 @@ services:
       interval: 10s
       timeout: 2s
       retries: 3
+    networks:
+      - dokploy-network
+      - default
 
+networks:
+  dokploy-network:
+    external: true
