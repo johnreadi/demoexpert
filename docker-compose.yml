@@ -12,6 +12,7 @@ services:
       - "traefik.http.services.demoexpert-api.loadbalancer.server.port=8080"
       - "traefik.http.middlewares.demoexpert-api-stripprefix.stripprefix.prefixes=/api"
       - "traefik.http.routers.demoexpert-api.middlewares=demoexpert-api-stripprefix"
+      - "traefik.http.routers.demoexpert-api.priority=100"
     environment:
       NODE_ENV: production
       PORT: 8080
