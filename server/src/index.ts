@@ -389,12 +389,48 @@ app.post('/api/auctions/:id/bids', async (req, res) => {
   }
 });
 
+// Settings API
+app.get('/api/settings', async (_req, res) => {
+  try {
+    const settings = await prisma.settings.findUnique({ where: { key: 'site_settings' } });
+    if (!settings) {
+      // Return default settings if none exist
+      return res.json({
+        liftRental: {
+          pricingTiers: [
+            { duration: 1, price: 50 },
+            { duration: 2, price: 90 },
+            { duration: 4, price: 160 }
+          ],
+          unavailableDates: []
+        }
+      });
+    }
+    res.json(settings.value);
+  } catch {
+    res.status(500).json({ error: 'failed_to_get_settings' });
+  }
+});
+
+app.put('/api/settings', async (req, res) => {
+  try {
+    const settingsData = req.body;
+    const settings = await prisma.settings.upsert({
+      where: { key: 'site_settings' },
+      update: { value: settingsData },
+      create: { key: 'site_settings', value: settingsData }
+    });
+    res.json(settings.value);
+  } catch {
+    res.status(500).json({ error: 'failed_to_update_settings' });
+  }
+});
+
 // 404 fallback for API
 app.use('/api', (_req, res) => {
   res.status(404).json({ error: 'not_found' });
 });
 
 app.listen(PORT, '0.0.0.0', () => {
-  // eslint-disable-next-line no-console
   console.log(`API listening on 0.0.0.0:${PORT} (${NODE_ENV})`);
 });
