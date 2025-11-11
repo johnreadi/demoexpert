@@ -4,15 +4,6 @@ services:
       context: ./server
       dockerfile: Dockerfile
     restart: always
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.demoexpert-api.rule=Host(`app.demoexpert.fr`) && PathPrefix(`/api`)"
-      - "traefik.http.routers.demoexpert-api.entrypoints=websecure"
-      - "traefik.http.routers.demoexpert-api.tls.certresolver=letsencrypt"
-      - "traefik.http.services.demoexpert-api.loadbalancer.server.port=8080"
-      - "traefik.http.middlewares.demoexpert-api-stripprefix.stripprefix.prefixes=/api"
-      - "traefik.http.routers.demoexpert-api.middlewares=demoexpert-api-stripprefix"
-      - "traefik.http.routers.demoexpert-api.priority=100"
     environment:
       NODE_ENV: production
       PORT: 8080
@@ -45,13 +36,6 @@ services:
       context: .
       dockerfile: Dockerfile.web
     restart: always
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.demoexpert-web.rule=Host(`app.demoexpert.fr`)"
-      - "traefik.http.routers.demoexpert-web.entrypoints=websecure"
-      - "traefik.http.routers.demoexpert-web.tls.certresolver=letsencrypt"
-      - "traefik.http.services.demoexpert-web.loadbalancer.server.port=80"
-      - "traefik.http.routers.demoexpert-web.priority=1"
     environment:
       NODE_ENV: production
       VITE_API_BASE_URL: /api
