@@ -15,8 +15,6 @@ services:
       interval: 10s
       timeout: 3s
       retries: 5
-    networks:
-      - demoexpert-net
 
   api:
     build:
@@ -49,8 +47,6 @@ services:
         npm run db:seed &&
         node dist/index.js
       "
-    networks:
-      - demoexpert-net
 
   web:
     build:
@@ -71,11 +67,6 @@ services:
       interval: 10s
       timeout: 2s
       retries: 3
-    networks:
-      - demoexpert-net
 
 volumes:
   postgres_data:
-
-networks:
-  demoexpert-net:
