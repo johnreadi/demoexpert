@@ -18,10 +18,13 @@ const simulateApiError = (message: string, delay = 200): Promise<any> => {
 };
 
 
-// --- Site Settings API (real backend) ---
-export const getSiteSettings = async (): Promise<SiteSettings> => http<SiteSettings>(`/settings`);
-export const updateSiteSettings = async (newSettings: SiteSettings): Promise<SiteSettings> => 
-  http<SiteSettings>(`/settings`, { method: 'PUT', body: JSON.stringify(newSettings) });
+// --- Site Settings API (real backend - no localStorage) ---
+export const getSiteSettings = async (): Promise<SiteSettings> => {
+  return http<SiteSettings>(`/settings`);
+};
+export const updateSiteSettings = async (newSettings: SiteSettings): Promise<SiteSettings> => {
+  return http<SiteSettings>(`/settings`, { method: 'PUT', body: JSON.stringify(newSettings) });
+};
 
 
 // --- Products API (real backend) ---
