@@ -49,7 +49,7 @@ services:
     labels:
       - traefik.enable=true
       - traefik.http.routers.demoexpert.rule=Host(`app.demoexpert.fr`)
-      - traefik.http.routers.demoexpert.entrypoints=websecure,web
+      - traefik.http.routers.demoexpert.entrypoints=web,websecure
       - traefik.http.routers.demoexpert.tls=true
       - traefik.http.routers.demoexpert.tls.certresolver=letsencrypt
       - traefik.http.services.demoexpert.loadbalancer.server.port=80
