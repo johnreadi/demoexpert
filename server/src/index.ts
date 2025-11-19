@@ -9,7 +9,6 @@ import { prisma } from './prisma.js';
 
 const app = express();
 
-// Config
 const PORT = Number(process.env.PORT || 8080);
 const NODE_ENV = process.env.NODE_ENV || 'development';
 const SESSION_SECRET = process.env.SESSION_SECRET || 'dev_session_secret_change_me';
@@ -20,8 +19,18 @@ const COOKIE_SAME_SITE = (process.env.COOKIE_SAME_SITE as 'lax'|'strict'|'none')
 
 app.set('trust proxy', TRUST_PROXY);
 
-// Middlewares
-app.use(helmet());
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "https://cdn.tailwindcss.com"],
+      styleSrc: ["'self'", "https:", "'unsafe-inline'"],
+      fontSrc: ["'self'", "https:", "data:"],
+      imgSrc: ["'self'", "data:"],
+      connectSrc: ["'self'", CORS_ORIGIN]
+    }
+  }
+}));
 app.use(morgan('combined'));
 app.use(express.json());
 app.use(cookieParser());
@@ -38,30 +47,26 @@ app.use(session({
     httpOnly: true,
     secure: COOKIE_SECURE,
     sameSite: COOKIE_SAME_SITE,
-    maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
+    maxAge: 1000 * 60 * 60 * 24 * 7,
   },
 }));
 
 type UserSession = { id: string; name: string; email: string; role: 'Admin'|'Staff'; status: 'approved'|'pending' };
 
-// Healthcheck
 app.get('/healthz', (_req, res) => {
   res.status(200).json({ status: 'ok', env: NODE_ENV });
 });
 
-// Mirror for proxies that keep /api prefix
 app.get('/api/healthz', (_req, res) => {
   res.status(200).json({ status: 'ok', env: NODE_ENV });
 });
 
-// Auth API
 app.get('/api/auth/me', (req, res) => {
   const user = (req.session as any).user as UserSession | undefined;
   if (!user) return res.status(401).json({ error: 'unauthorized' });
   return res.json(user);
 });
 
-// Auth with /api prefix
 app.post('/api/auth/login', async (req, res) => {
   const { email, password } = req.body || {};
   if (!email || !password) return res.status(400).json({ error: 'missing_credentials' });
@@ -79,7 +84,6 @@ app.post('/api/auth/login', async (req, res) => {
   }
 });
 
-// Auth aliases without /api prefix (for proxies that strip /api)
 app.post('/auth/login', async (req, res) => {
   const { email, password } = req.body || {};
   if (!email || !password) return res.status(400).json({ error: 'missing_credentials' });
@@ -113,7 +117,6 @@ app.post('/auth/logout', (req, res) => {
   });
 });
 
-// --- AI Chat (Gemini) ---
 app.post('/api/ai/chat', async (req, res) => {
   try {
     const apiKey = process.env.GEMINI_API_KEY;
@@ -151,7 +154,6 @@ app.post('/api/ai/chat', async (req, res) => {
   }
 });
 
-// Products API
 app.get('/api/products', async (req, res) => {
   try {
     const { category, brand, model, limit } = req.query as any;
@@ -181,7 +183,6 @@ app.get('/api/products/:id', async (req, res) => {
   }
 });
 
-// Aliases without /api prefix (for direct access)
 app.get('/products', async (req, res) => {
   try {
     const { category, brand, model, limit } = req.query as any;
@@ -266,7 +267,6 @@ app.delete('/products/:id', async (req, res) => {
   }
 });
 
-// Auctions API
 app.get('/api/auctions', async (_req, res) => {
   try {
     const auctions = await prisma.auction.findMany({ orderBy: { createdAt: 'desc' } });
@@ -286,7 +286,6 @@ app.get('/api/auctions/:id', async (req, res) => {
   }
 });
 
-// Aliases without /api prefix
 app.get('/auctions', async (_req, res) => {
   try {
     const auctions = await prisma.auction.findMany({ orderBy: { createdAt: 'desc' } });
@@ -389,13 +388,10 @@ app.post('/api/auctions/:id/bids', async (req, res) => {
   }
 });
 
-// Settings API
 app.get('/api/settings', async (_req, res) => {
   try {
     const settings = await prisma.settings.findUnique({ where: { key: 'site_settings' } });
     if (!settings) {
-      // Return minimal default settings if none exist
-      // Frontend will merge with its own defaults
       return res.json({
         businessInfo: { name: "Démolition Expert", logoUrl: "", address: "", phone: "", email: "", openingHours: "" },
         socialLinks: { facebook: "", twitter: "", linkedin: "" },
@@ -430,7 +426,6 @@ app.put('/api/settings', async (req, res) => {
   }
 });
 
-// 404 fallback for API
 app.use('/api', (_req, res) => {
   res.status(404).json({ error: 'not_found' });
 });
