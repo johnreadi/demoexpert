@@ -13,6 +13,7 @@ services:
       COOKIE_SAME_SITE: "lax"
       CORS_ORIGIN: https://app.demoexpert.fr
       DATABASE_URL: ${DATABASE_URL}
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
     expose:
       - "8080"
     command: >
@@ -24,8 +25,6 @@ services:
       "
     networks:
       - dokploy-network
-      - gateway
-      - default
 
   web:
     build:
@@ -47,11 +46,16 @@ services:
       interval: 10s
       timeout: 2s
       retries: 3
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.demoexpert.rule=Host(`app.demoexpert.fr`)
+      - traefik.http.routers.demoexpert.entrypoints=websecure,web
+      - traefik.http.routers.demoexpert.tls=true
+      - traefik.http.routers.demoexpert.tls.certresolver=letsencrypt
+      - traefik.http.services.demoexpert.loadbalancer.server.port=80
     networks:
       - dokploy-network
 
 networks:
   dokploy-network:
-    external: true
-  gateway:
     external: true
