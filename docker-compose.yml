@@ -24,6 +24,8 @@ services:
       "
     networks:
       - dokploy-network
+    labels:
+      - traefik.enable=false
 
   web:
     build:
@@ -47,6 +49,8 @@ services:
       retries: 3
     networks:
       - dokploy-network
+    labels:
+      - traefik.enable=false
 
 networks:
   dokploy-network:
