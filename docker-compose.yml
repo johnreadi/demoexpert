@@ -13,7 +13,6 @@ services:
       COOKIE_SAME_SITE: "lax"
       CORS_ORIGIN: https://app.demoexpert.fr
       DATABASE_URL: ${DATABASE_URL}
-      GEMINI_API_KEY: ${GEMINI_API_KEY}
     expose:
       - "8080"
     command: >
@@ -25,6 +24,8 @@ services:
       "
     networks:
       - dokploy-network
+      - gateway
+      - default
 
   web:
     build:
@@ -48,7 +49,6 @@ services:
       retries: 3
     networks:
       - dokploy-network
-      - gateway
 
 networks:
   dokploy-network:
