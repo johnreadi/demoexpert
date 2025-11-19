@@ -25,7 +25,6 @@ services:
       "
     networks:
       - dokploy-network
-      - gateway
 
   web:
     build:
