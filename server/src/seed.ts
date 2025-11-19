@@ -5,8 +5,8 @@ const prisma = new PrismaClient();
 
 async function main() {
   const users = [
-    { name: 'Admin Expert', email: 'admin@expert.fr', role: 'Admin' as const, status: 'approved' as const, password: 'demolition76000' },
-    { name: 'Admin Demoexpert', email: 'admin@demoexpert.fr', role: 'Admin' as const, status: 'approved' as const, password: 'demolition76000' },
+    { name: 'Admin Expert', email: 'admin@expert.fr', role: 'Admin' as const, status: 'approved' as const, password: 'demo76000' },
+    { name: 'Admin Demoexpert', email: 'admin@demoexpert.fr', role: 'Admin' as const, status: 'approved' as const, password: 'demo76000' },
     { name: 'Jean Dupont', email: 'jean.dupont@expert.fr', role: 'Staff' as const, status: 'approved' as const, password: 'password123' },
     { name: 'Marie Curie', email: 'marie.curie@expert.fr', role: 'Staff' as const, status: 'pending' as const, password: 'password123' },
   ];
@@ -20,7 +20,6 @@ async function main() {
     });
   }
 
-  // Seed demo products (id auto)
   const demoProducts = [
     {
       name: "Alternateur Renault Clio",
@@ -59,7 +58,6 @@ async function main() {
     });
   }
 
-  // Seed demo auctions with bids
   const demoAuctions = [
     {
       vehicleName: 'Peugeot 208 GT Line',
@@ -92,7 +90,6 @@ async function main() {
   ];
 
   for (const a of demoAuctions) {
-    // find user ids from email
     const userByEmail = async (email: string) => {
       const u = await prisma.user.findUnique({ where: { email: email.toLowerCase() } });
       return u?.id || 'user-unknown';
@@ -121,7 +118,6 @@ async function main() {
     }
   }
 
-  // eslint-disable-next-line no-console
   console.log('Seed completed');
 }
 
