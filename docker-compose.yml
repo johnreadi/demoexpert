@@ -13,6 +13,7 @@ services:
       COOKIE_SAME_SITE: "lax"
       CORS_ORIGIN: https://app.demoexpert.fr
       DATABASE_URL: ${DATABASE_URL}
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
     expose:
       - "8080"
     command: >
@@ -24,17 +25,18 @@ services:
       "
     networks:
       - dokploy-network
-      - default
+      - gateway
 
   web:
     build:
       context: .
       dockerfile: Dockerfile.web
+      args:
+        VITE_API_BASE_URL: /api
+        VITE_APP_BASE_URL: https://app.demoexpert.fr
     restart: always
     environment:
       NODE_ENV: production
-      VITE_API_BASE_URL: /api
-      VITE_APP_BASE_URL: https://app.demoexpert.fr
     depends_on:
       api:
         condition: service_started
@@ -47,8 +49,10 @@ services:
       retries: 3
     networks:
       - dokploy-network
-      - default
+      - gateway
 
 networks:
   dokploy-network:
+    external: true
+  gateway:
     external: true
