@@ -1,0 +1,22 @@
+# Build stage
+FROM node:20-alpine AS build
+WORKDIR /app
+
+ARG VITE_API_BASE_URL=/api
+ARG VITE_APP_BASE_URL=https://app.demoexpert.fr
+ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
+ENV VITE_APP_BASE_URL=$VITE_APP_BASE_URL
+
+COPY package.json package-lock.json* yarn.lock* pnpm-lock.yaml* ./
+RUN npm install --no-fund --no-audit
+COPY . .
+RUN npm run build
+
+# Serve stage
+FROM nginx:1.27-alpine
+WORKDIR /usr/share/nginx/html
+COPY --from=build /app/dist ./
+COPY ./nginx.conf /etc/nginx/conf.d/default.conf
+EXPOSE 80
+HEALTHCHECK --interval=10s --timeout=2s --retries=3 CMD wget -qO- http://127.0.0.1:80/ || exit 1
+CMD ["nginx", "-g", "daemon off;"]
