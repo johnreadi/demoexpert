@@ -10,12 +10,12 @@ services:
       SESSION_SECRET: ${SESSION_SECRET}
       TRUST_PROXY: "1"
       COOKIE_SECURE: "true"
-      COOKIE_SAME_SITE: "lax"
+      COOKIE_SAME_SITE: lax
       CORS_ORIGIN: https://app.demoexpert.fr
       DATABASE_URL: ${DATABASE_URL}
     expose:
       - "8080"
-    command: >
+    command: |
       sh -c "
         npm run db:generate &&
         npx prisma db push --accept-data-loss &&
@@ -25,7 +25,11 @@ services:
     networks:
       - dokploy-network
     labels:
-      - traefik.enable=false
+      - traefik.enable=true
+      - traefik.http.routers.demoexpert-api.rule=Host(`app.demoexpert.fr`) && PathPrefix(`/api`)
+      - traefik.http.routers.demoexpert-api.entrypoints=websecure
+      - traefik.http.services.demoexpert-api.loadbalancer.server.port=8080
+      - traefik.http.routers.demoexpert-api.tls.certresolver=letsencrypt
 
   web:
     build:
@@ -43,14 +47,19 @@ services:
     expose:
       - "80"
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:80/ || exit 1"]
-      interval: 10s
-      timeout: 2s
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:80/"]
+      interval: 30s
+      timeout: 10s
       retries: 3
+      start_period: 40s
     networks:
       - dokploy-network
     labels:
-      - traefik.enable=false
+      - traefik.enable=true
+      - traefik.http.routers.demoexpert-web.rule=Host(`app.demoexpert.fr`)
+      - traefik.http.routers.demoexpert-web.entrypoints=websecure
+      - traefik.http.services.demoexpert-web.loadbalancer.server.port=80
+      - traefik.http.routers.demoexpert-web.tls.certresolver=letsencrypt
 
 networks:
   dokploy-network:
