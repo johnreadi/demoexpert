@@ -61,6 +61,22 @@ app.get('/api/healthz', (_req, res) => {
   res.status(200).json({ status: 'ok', env: NODE_ENV });
 });
 
+function normalizeSettings(input: any) {
+  const heroBg = input?.hero?.background ?? (input?.hero?.backgroundImage ? { type: 'image', value: input.hero.backgroundImage } : { type: 'color', value: '#003366' });
+  const hero = { title: input?.hero?.title ?? '', subtitle: input?.hero?.subtitle ?? '', background: heroBg };
+  const pc = input?.pageContent ?? {};
+  const normalizePage = (p: any) => ({ heroTitle: p?.heroTitle ?? '', heroSubtitle: p?.heroSubtitle ?? '', heroImage: p?.heroImage ?? '', contentTitle: p?.contentTitle ?? '', contentDescription: p?.contentDescription ?? '', contentImage: p?.contentImage ?? '', features: Array.isArray(p?.features) ? p.features : [] });
+  const pageContent = { repairs: normalizePage(pc?.repairs ?? {}), maintenance: normalizePage(pc?.maintenance ?? {}), tires: normalizePage(pc?.tires ?? {}) };
+  const adv = input?.advancedSettings ?? {};
+  const advancedSettings = {
+    smtp: { host: adv?.smtp?.host ?? '', port: adv?.smtp?.port ?? 0, user: adv?.smtp?.user ?? '', pass: adv?.smtp?.pass ?? '' },
+    ai: { chatModel: adv?.ai?.chatModel ?? '', estimationModel: adv?.ai?.estimationModel ?? '' },
+    seo: { metaTitle: adv?.seo?.metaTitle ?? '', metaDescription: adv?.seo?.metaDescription ?? '', keywords: adv?.seo?.keywords ?? '' },
+    security: { allowPublicRegistration: adv?.security?.allowPublicRegistration ?? true }
+  };
+  return { ...input, hero, pageContent, advancedSettings };
+}
+
 app.get('/api/auth/me', (req, res) => {
   const user = (req.session as any).user as UserSession | undefined;
   if (!user) return res.status(401).json({ error: 'unauthorized' });
@@ -415,7 +431,7 @@ app.get('/api/settings', async (_req, res) => {
         }
       });
     }
-    res.json(settings.value);
+    res.json(normalizeSettings(settings.value));
   } catch {
     res.status(500).json({ error: 'failed_to_get_settings' });
   }
