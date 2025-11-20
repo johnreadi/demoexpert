@@ -396,14 +396,23 @@ app.get('/api/settings', async (_req, res) => {
         businessInfo: { name: "Démolition Expert", logoUrl: "", address: "", phone: "", email: "", openingHours: "" },
         socialLinks: { facebook: "", twitter: "", linkedin: "" },
         themeColors: { headerBg: "#003366", footerBg: "#003366" },
-        hero: { title: "", subtitle: "", backgroundImage: "", ctaText: "", ctaLink: "" },
+        hero: { title: "", subtitle: "", background: { type: "color", value: "#003366" } },
         services: [],
         testimonials: [],
         footer: { description: "", servicesLinks: [], infoLinks: [] },
         legal: { mentions: { title: "", content: "" }, cgv: { title: "", content: "" }, confidentialite: { title: "", content: "" } },
         liftRental: { pricingTiers: [{ duration: 1, price: 50 }, { duration: 2, price: 90 }, { duration: 4, price: 160 }], unavailableDates: [] },
-        pageContent: { repairs: { features: [] }, maintenance: { features: [] }, tires: { features: [] } },
-        advancedSettings: { maintenanceMode: false, allowRegistration: true, maxUploadSize: 5 }
+        pageContent: {
+          repairs: { heroTitle: "", heroSubtitle: "", heroImage: "", contentTitle: "", contentDescription: "", contentImage: "", features: [] },
+          maintenance: { heroTitle: "", heroSubtitle: "", heroImage: "", contentTitle: "", contentDescription: "", contentImage: "", features: [] },
+          tires: { heroTitle: "", heroSubtitle: "", heroImage: "", contentTitle: "", contentDescription: "", contentImage: "", features: [] }
+        },
+        advancedSettings: {
+          smtp: { host: "", port: 0, user: "", pass: "" },
+          ai: { chatModel: "", estimationModel: "" },
+          seo: { metaTitle: "", metaDescription: "", keywords: "" },
+          security: { allowPublicRegistration: true }
+        }
       });
     }
     res.json(settings.value);
