@@ -13,6 +13,9 @@ export default defineConfig(({ mode }) => {
           target: 'http://localhost:8085',
           changeOrigin: true,
           secure: false,
+          bypass: (req) => {
+            if (req.url?.match(/^\/api\/.*\.(ts|tsx|js|jsx|map)$/)) return req.url;
+          }
         }
       }
     },

@@ -17,18 +17,28 @@ const simulateApiError = (message: string, delay = 200): Promise<any> => {
     });
 };
 
+const USE_LOCAL_API = import.meta.env.MODE !== 'production' && import.meta.env.VITE_USE_LOCAL_API === 'true';
+
 
 // --- Site Settings API (real backend - no localStorage) ---
 export const getSiteSettings = async (): Promise<SiteSettings> => {
-  return http<SiteSettings>(`/api/settings`);
+  return USE_LOCAL_API ? simulateApiCall(db.getSiteSettings()) : http<SiteSettings>(`/api/settings`);
 };
 export const updateSiteSettings = async (newSettings: SiteSettings): Promise<SiteSettings> => {
-  return http<SiteSettings>(`/api/settings`, { method: 'PUT', body: JSON.stringify(newSettings) });
+  return USE_LOCAL_API ? simulateApiCall(db.updateSiteSettings(newSettings)) : http<SiteSettings>(`/api/settings`, { method: 'PUT', body: JSON.stringify(newSettings) });
 };
 
 
 // --- Products API (real backend) ---
 export const getProducts = async (filters: { category?: string | PartCategory; brand?: string; model?: string, limit?: number }): Promise<Product[]> => {
+  if (USE_LOCAL_API) {
+    return simulateApiCall(db.getProducts({
+      category: filters?.category ? String(filters.category) : undefined,
+      brand: filters?.brand,
+      model: filters?.model,
+      limit: filters?.limit,
+    }));
+  }
   const params = new URLSearchParams();
   if (filters?.category) params.set('category', String(filters.category));
   if (filters?.brand) params.set('brand', String(filters.brand));
@@ -36,25 +46,31 @@ export const getProducts = async (filters: { category?: string | PartCategory; b
   if (filters?.limit) params.set('limit', String(filters.limit));
   return http<Product[]>(`/api/products${params.toString() ? `?${params.toString()}` : ''}`);
 };
-export const getProductById = async (id: string): Promise<Product | undefined> => http<Product>(`/api/products/${id}`);
-export const addProduct = async (productData: Omit<Product, 'id'>): Promise<Product> => http<Product>(`/api/products`, { method: 'POST', body: JSON.stringify(productData) });
-export const updateProduct = async (productId: string, productData: Partial<Omit<Product, 'id'>>): Promise<Product> => http<Product>(`/api/products/${productId}`, { method: 'PUT', body: JSON.stringify(productData) });
-export const deleteProduct = async (productId: string): Promise<{ success: boolean }> => http<{ success: boolean }>(`/api/products/${productId}`, { method: 'DELETE' });
+export const getProductById = async (id: string): Promise<Product | undefined> =>
+  USE_LOCAL_API ? simulateApiCall(db.getProductById(id)) : http<Product>(`/api/products/${id}`);
+export const addProduct = async (productData: Omit<Product, 'id'>): Promise<Product> =>
+  USE_LOCAL_API ? simulateApiCall(db.addProduct(productData)) : http<Product>(`/api/products`, { method: 'POST', body: JSON.stringify(productData) });
+export const updateProduct = async (productId: string, productData: Partial<Omit<Product, 'id'>>): Promise<Product> =>
+  USE_LOCAL_API ? simulateApiCall(db.updateProduct(productId, productData)) : http<Product>(`/api/products/${productId}`, { method: 'PUT', body: JSON.stringify(productData) });
+export const deleteProduct = async (productId: string): Promise<{ success: boolean }> =>
+  USE_LOCAL_API ? simulateApiCall(db.deleteProduct(productId)) : http<{ success: boolean }>(`/api/products/${productId}`, { method: 'DELETE' });
 
 
 // --- Auctions API (real backend) ---
-export const getAuctions = async (): Promise<Auction[]> => http<Auction[]>(`/api/auctions`);
-export const getAuctionById = async (id: string): Promise<Auction | undefined> => http<Auction>(`/api/auctions/${id}`);
+export const getAuctions = async (): Promise<Auction[]> =>
+  USE_LOCAL_API ? simulateApiCall(db.getAuctions()) : http<Auction[]>(`/api/auctions`);
+export const getAuctionById = async (id: string): Promise<Auction | undefined> =>
+  USE_LOCAL_API ? simulateApiCall(db.getAuctionById(id)) : http<Auction>(`/api/auctions/${id}`);
 export const addBid = async (auctionId: string, bidAmount: number, userId: string, bidderName: string): Promise<Auction> => {
-  // userId/bidderName sont connus côté serveur via la session; on envoie seulement amount
+  if (USE_LOCAL_API) return simulateApiCall(db.addBid(auctionId, bidAmount, userId, bidderName));
   return http<Auction>(`/api/auctions/${auctionId}/bids`, { method: 'POST', body: JSON.stringify({ amount: bidAmount }) });
 };
 export const addAuction = async (auctionData: Omit<Auction, 'id' | 'currentBid' | 'bidCount' | 'bids'>): Promise<Auction> =>
-  http<Auction>(`/api/auctions`, { method: 'POST', body: JSON.stringify(auctionData) });
+  USE_LOCAL_API ? simulateApiCall(db.addAuction(auctionData)) : http<Auction>(`/api/auctions`, { method: 'POST', body: JSON.stringify(auctionData) });
 export const updateAuction = async (auctionId: string, auctionData: Partial<Omit<Auction, 'id'>>): Promise<Auction> =>
-  http<Auction>(`/api/auctions/${auctionId}`, { method: 'PUT', body: JSON.stringify(auctionData) });
+  USE_LOCAL_API ? simulateApiCall(db.updateAuction(auctionId, auctionData)) : http<Auction>(`/api/auctions/${auctionId}`, { method: 'PUT', body: JSON.stringify(auctionData) });
 export const deleteAuction = async (auctionId: string): Promise<{ success: boolean }> =>
-  http<{ success: boolean }>(`/api/auctions/${auctionId}`, { method: 'DELETE' });
+  USE_LOCAL_API ? simulateApiCall(db.deleteAuction(auctionId)) : http<{ success: boolean }>(`/api/auctions/${auctionId}`, { method: 'DELETE' });
 
 // --- Blog API ---
 export const getBlogPosts = (): Promise<BlogPost[]> => simulateApiCall(db.getBlogPosts());
