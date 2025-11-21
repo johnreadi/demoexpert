@@ -5,11 +5,11 @@ import helmet from 'helmet';
 import morgan from 'morgan';
 import cookieParser from 'cookie-parser';
 import bcrypt from 'bcryptjs';
-import { prisma } from './prisma.js';
+const { prisma } = require('./prisma.js');
 
 const app = express();
 
-const PORT = Number(process.env.PORT || 8080);
+const PORT = Number(process.env.PORT || 8084);
 const NODE_ENV = process.env.NODE_ENV || 'development';
 const SESSION_SECRET = process.env.SESSION_SECRET || 'dev_session_secret_change_me';
 const CORS_ORIGIN = process.env.CORS_ORIGIN || 'http://localhost:3000';
@@ -140,14 +140,27 @@ app.post('/api/ai/chat', async (req, res) => {
       return res.status(501).json({ error: 'ai_not_configured', message: 'GEMINI_API_KEY manquant côté serveur.' });
     }
     const { message, history, settings } = req.body || {};
-    const intro = settings?.businessInfo ? `Vous êtes un assistant virtuel pour '${settings.businessInfo.name}', une casse automobile en Normandie, France. Votre nom est 'ExpertBot'.\n- Répondez de manière amicale, professionnelle et concise en français.\n- Services principaux : Vente de pièces auto d'occasion, rachat de véhicules, enlèvement gratuit d'épaves, réparation pare-brise, location de pont, entretien, pneus.\n- Adresse : ${settings.businessInfo.address}.\n- Téléphone : ${settings.businessInfo.phone}.\n- Horaires : ${settings.businessInfo.openingHours}.\n- Pour les prix des pièces, indiquez que le client doit faire une 'demande de devis' sur la page du produit car les prix varient.\n- Pour le rachat, dirigez l'utilisateur vers la page 'Rachat de Véhicules'.\n- Si vous ne connaissez pas la réponse, dites-le poliment et suggérez de contacter l'entreprise directement par téléphone.` :
+    const intro = settings?.businessInfo ? `Vous êtes un assistant virtuel pour '${settings.businessInfo.name}', une casse automobile en Normandie, France. Votre nom est 'ExpertBot'.
+- Répondez de manière amicale, professionnelle et concise en français.
+- Services principaux : Vente de pièces auto d'occasion, rachat de véhicules, enlèvement gratuit d'épaves, réparation pare-brise, location de pont, entretien, pneus.
+- Adresse : ${settings.businessInfo.address}.
+- Téléphone : ${settings.businessInfo.phone}.
+- Horaires : ${settings.businessInfo.openingHours}.
+- Pour les prix des pièces, indiquez que le client doit faire une 'demande de devis' sur la page du produit car les prix varient.
+- Pour le rachat, dirigez l'utilisateur vers la page 'Rachat de Véhicules'.
+- Si vous ne connaissez pas la réponse, dites-le poliment et suggérez de contacter l'entreprise directement par téléphone.` :
       "Vous êtes un assistant virtuel amical et professionnel. Répondez en français.";
 
     const historyText = Array.isArray(history)
       ? history.map((m: any) => `${m.sender === 'user' ? 'Utilisateur' : 'Bot'}: ${m.text}`).join('\n')
       : '';
 
-    const prompt = `${intro}\n\nHistorique:\n${historyText}\n\nDernière question utilisateur: ${String(message ?? '').trim()}`;
+    const prompt = `${intro}
+
+Historique:
+${historyText}
+
+Dernière question utilisateur: ${String(message ?? '').trim()}`;
 
     const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`, {
       method: 'POST',
@@ -432,8 +445,39 @@ app.get('/api/settings', async (_req, res) => {
       });
     }
     res.json(normalizeSettings(settings.value));
-  } catch {
-    res.status(500).json({ error: 'failed_to_get_settings' });
+  } catch (error) {
+    console.error("Failed to fetch settings from database:", error);
+    // Return default settings if database is not accessible
+    return res.json({
+      businessInfo: { name: "Démolition Expert", logoUrl: "", address: "123 Rue de la Casse, 76000 Rouen", phone: "02 35 00 00 00", email: "contact@demoexpert.fr", openingHours: "Lun-Ven: 9h-18h, Sam: 9h-12h" },
+      socialLinks: { facebook: "", twitter: "", linkedin: "" },
+      themeColors: { headerBg: "#003366", footerBg: "#003366" },
+      hero: { title: "Bienvenue chez Démolition Expert", subtitle: "Vente de pièces auto d'occasion, rachat de véhicules, enlèvement d'épaves", background: { type: "color", value: "#003366" } },
+      services: [
+        { id: "1", icon: "fas fa-car", title: "Pièces Détachées", description: "Large choix de pièces automobiles d'occasion de qualité", link: "/pieces" },
+        { id: "2", icon: "fas fa-hand-holding-dollar", title: "Rachat de Véhicules", description: "Rachetons votre véhicule quelle que soit sa condition", link: "/rachat-vehicule" },
+        { id: "3", icon: "fas fa-trash", title: "Enlèvement d'Épaves", description: "Service d'enlèvement gratuit d'épaves dans toute la Normandie", link: "/enlevement-epave" }
+      ],
+      testimonials: [
+        { id: "1", text: "Service rapide et professionnel. J'ai trouvé la pièce dont j'avais besoin en un rien de temps !", author: "Marie D." },
+        { id: "2", text: "Le rachat de mon ancienne voiture a été simple et rapide. Je recommande vivement !", author: "Jean-Pierre L." },
+        { id: "3", text: "Équipe sympathique et compétente. Tarifs très compétitifs sur tous les services.", author: "Sophie M." }
+      ],
+      footer: { description: "Votre expert en pièces automobiles d'occasion depuis 1995", servicesLinks: [], infoLinks: [] },
+      legal: { mentions: { title: "Mentions Légales", content: "" }, cgv: { title: "Conditions Générales de Vente", content: "" }, confidentialite: { title: "Politique de Confidentialité", content: "" } },
+      liftRental: { pricingTiers: [{ duration: 1, price: 50 }, { duration: 2, price: 90 }, { duration: 4, price: 160 }], unavailableDates: [] },
+      pageContent: {
+        repairs: { heroTitle: "", heroSubtitle: "", heroImage: "", contentTitle: "", contentDescription: "", contentImage: "", features: [] },
+        maintenance: { heroTitle: "", heroSubtitle: "", heroImage: "", contentTitle: "", contentDescription: "", contentImage: "", features: [] },
+        tires: { heroTitle: "", heroSubtitle: "", heroImage: "", contentTitle: "", contentDescription: "", contentImage: "", features: [] }
+      },
+      advancedSettings: {
+        smtp: { host: "", port: 0, user: "", pass: "" },
+        ai: { chatModel: "", estimationModel: "" },
+        seo: { metaTitle: "", metaDescription: "", keywords: "" },
+        security: { allowPublicRegistration: true }
+      }
+    });
   }
 });
 

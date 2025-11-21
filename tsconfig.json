@@ -24,8 +24,8 @@
         "./*"
       ]
     },
-    "allowImportingTsExtensions": true,
+    "allowImportingTsExtensions": false,
     "noEmit": true
   },
-  "include": ["components", "pages", "context", "services", "vite.config.ts", "types.ts", "App.tsx", "index.tsx", "constants.ts"]
+  "include": ["components", "pages", "context", "services", "vite.config.ts", "types.ts", "App.tsx", "index.tsx", "constants.ts", "TestApiOnly.tsx", "TestSpecificApiImport.tsx"]
 }

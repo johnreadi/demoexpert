@@ -20,10 +20,10 @@ const simulateApiError = (message: string, delay = 200): Promise<any> => {
 
 // --- Site Settings API (real backend - no localStorage) ---
 export const getSiteSettings = async (): Promise<SiteSettings> => {
-  return http<SiteSettings>(`/settings`);
+  return http<SiteSettings>(`/api/settings`);
 };
 export const updateSiteSettings = async (newSettings: SiteSettings): Promise<SiteSettings> => {
-  return http<SiteSettings>(`/settings`, { method: 'PUT', body: JSON.stringify(newSettings) });
+  return http<SiteSettings>(`/api/settings`, { method: 'PUT', body: JSON.stringify(newSettings) });
 };
 
 
@@ -34,27 +34,27 @@ export const getProducts = async (filters: { category?: string | PartCategory; b
   if (filters?.brand) params.set('brand', String(filters.brand));
   if (filters?.model) params.set('model', String(filters.model));
   if (filters?.limit) params.set('limit', String(filters.limit));
-  return http<Product[]>(`/products${params.toString() ? `?${params.toString()}` : ''}`);
+  return http<Product[]>(`/api/products${params.toString() ? `?${params.toString()}` : ''}`);
 };
-export const getProductById = async (id: string): Promise<Product | undefined> => http<Product>(`/products/${id}`);
-export const addProduct = async (productData: Omit<Product, 'id'>): Promise<Product> => http<Product>(`/products`, { method: 'POST', body: JSON.stringify(productData) });
-export const updateProduct = async (productId: string, productData: Partial<Omit<Product, 'id'>>): Promise<Product> => http<Product>(`/products/${productId}`, { method: 'PUT', body: JSON.stringify(productData) });
-export const deleteProduct = async (productId: string): Promise<{ success: boolean }> => http<{ success: boolean }>(`/products/${productId}`, { method: 'DELETE' });
+export const getProductById = async (id: string): Promise<Product | undefined> => http<Product>(`/api/products/${id}`);
+export const addProduct = async (productData: Omit<Product, 'id'>): Promise<Product> => http<Product>(`/api/products`, { method: 'POST', body: JSON.stringify(productData) });
+export const updateProduct = async (productId: string, productData: Partial<Omit<Product, 'id'>>): Promise<Product> => http<Product>(`/api/products/${productId}`, { method: 'PUT', body: JSON.stringify(productData) });
+export const deleteProduct = async (productId: string): Promise<{ success: boolean }> => http<{ success: boolean }>(`/api/products/${productId}`, { method: 'DELETE' });
 
 
 // --- Auctions API (real backend) ---
-export const getAuctions = async (): Promise<Auction[]> => http<Auction[]>(`/auctions`);
-export const getAuctionById = async (id: string): Promise<Auction | undefined> => http<Auction>(`/auctions/${id}`);
+export const getAuctions = async (): Promise<Auction[]> => http<Auction[]>(`/api/auctions`);
+export const getAuctionById = async (id: string): Promise<Auction | undefined> => http<Auction>(`/api/auctions/${id}`);
 export const addBid = async (auctionId: string, bidAmount: number, userId: string, bidderName: string): Promise<Auction> => {
   // userId/bidderName sont connus côté serveur via la session; on envoie seulement amount
-  return http<Auction>(`/auctions/${auctionId}/bids`, { method: 'POST', body: JSON.stringify({ amount: bidAmount }) });
+  return http<Auction>(`/api/auctions/${auctionId}/bids`, { method: 'POST', body: JSON.stringify({ amount: bidAmount }) });
 };
 export const addAuction = async (auctionData: Omit<Auction, 'id' | 'currentBid' | 'bidCount' | 'bids'>): Promise<Auction> =>
-  http<Auction>(`/auctions`, { method: 'POST', body: JSON.stringify(auctionData) });
+  http<Auction>(`/api/auctions`, { method: 'POST', body: JSON.stringify(auctionData) });
 export const updateAuction = async (auctionId: string, auctionData: Partial<Omit<Auction, 'id'>>): Promise<Auction> =>
-  http<Auction>(`/auctions/${auctionId}`, { method: 'PUT', body: JSON.stringify(auctionData) });
+  http<Auction>(`/api/auctions/${auctionId}`, { method: 'PUT', body: JSON.stringify(auctionData) });
 export const deleteAuction = async (auctionId: string): Promise<{ success: boolean }> =>
-  http<{ success: boolean }>(`/auctions/${auctionId}`, { method: 'DELETE' });
+  http<{ success: boolean }>(`/api/auctions/${auctionId}`, { method: 'DELETE' });
 
 // --- Blog API ---
 export const getBlogPosts = (): Promise<BlogPost[]> => simulateApiCall(db.getBlogPosts());

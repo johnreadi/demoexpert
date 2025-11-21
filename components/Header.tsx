@@ -22,9 +22,37 @@ const NavItem: React.FC<{ to: string; children: React.ReactNode; onClick?: () =>
 export default function Header(): React.ReactNode {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { user, isAuthenticated, logout } = useAuth();
-  const { settings } = useSettings();
+  const { settings, isLoading } = useSettings();
 
-  if (!settings) return null; // Or a loading skeleton
+  // Show loading state while settings are being fetched
+  if (isLoading) {
+    return (
+      <header className="shadow-md sticky top-0 z-50" style={{ backgroundColor: '#003366' }}>
+        <div className="w-full mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-wrap items-center justify-between p-4">
+            <div className="h-10 w-32 bg-gray-200 rounded animate-pulse"></div>
+            <div className="flex md:order-2 items-center space-x-3 rtl:space-x-reverse">
+              <div className="h-10 w-32 bg-gray-200 rounded animate-pulse hidden lg:block"></div>
+              <div className="h-10 w-10 bg-gray-200 rounded animate-pulse md:hidden"></div>
+            </div>
+          </div>
+        </div>
+      </header>
+    );
+  }
+
+  // If settings failed to load, use default values to prevent blank page
+  const safeSettings = settings || {
+    businessInfo: { 
+      name: "Démolition Expert", 
+      logoUrl: "", 
+      address: "123 Rue de la Casse, 76000 Rouen", 
+      phone: "02 35 00 00 00", 
+      email: "contact@demoexpert.fr", 
+      openingHours: "Lun-Ven: 9h-18h, Sam: 9h-12h" 
+    },
+    themeColors: { headerBg: "#003366", footerBg: "#003366" }
+  } as any;
 
   const navLinks = [
     { to: '/', text: 'Accueil' },
@@ -45,21 +73,21 @@ export default function Header(): React.ReactNode {
   }
 
   return (
-    <header className="shadow-md sticky top-0 z-50" style={{ backgroundColor: settings.themeColors?.headerBg || '#003366' }}>
+    <header className="shadow-md sticky top-0 z-50" style={{ backgroundColor: safeSettings.themeColors?.headerBg || '#003366' }}>
       <nav className="w-full mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex flex-wrap items-center justify-between p-4">
           <Link to="/" className="flex items-center space-x-3 rtl:space-x-reverse">
-             {settings.businessInfo.logoUrl ? (
-                <img src={settings.businessInfo.logoUrl} alt={`${settings.businessInfo.name} logo`} className="h-10 w-auto" />
+             {safeSettings.businessInfo.logoUrl ? (
+                <img src={safeSettings.businessInfo.logoUrl} alt={`${safeSettings.businessInfo.name} logo`} className="h-10 w-auto" />
             ) : (
                 <span className="self-center text-2xl font-heading font-semibold whitespace-nowrap text-white">
-                    <i className="fas fa-car-burst mr-2"></i>{settings.businessInfo.name}
+                    <i className="fas fa-car-burst mr-2"></i>{safeSettings.businessInfo.name}
                 </span>
             )}
           </Link>
           <div className="flex md:order-2 items-center space-x-3 rtl:space-x-reverse">
-            <a href={`tel:${settings.businessInfo.phone.replace(/\s/g, '')}`} className="hidden lg:inline-block text-white bg-expert-green hover:bg-green-600 focus:ring-4 focus:outline-none focus:ring-green-300 font-medium rounded-lg text-sm px-4 py-2 text-center transition-colors">
-              <i className="fas fa-phone mr-2"></i>{settings.businessInfo.phone}
+            <a href={`tel:${safeSettings.businessInfo.phone.replace(/\s/g, '')}`} className="hidden lg:inline-block text-white bg-expert-green hover:bg-green-600 focus:ring-4 focus:outline-none focus:ring-green-300 font-medium rounded-lg text-sm px-4 py-2 text-center transition-colors">
+              <i className="fas fa-phone mr-2"></i>{safeSettings.businessInfo.phone}
             </a>
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}

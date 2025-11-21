@@ -3,7 +3,7 @@ import { http } from './http';
 
 export const getAiChatResponse = async (message: string, history: ChatMessage[], settings: SiteSettings | null): Promise<string> => {
   try {
-    const res = await http<{ text: string }>(`/ai/chat`, {
+    const res = await http<{ text: string }>(`/api/ai/chat`, {
       method: 'POST',
       body: JSON.stringify({ message, history, settings })
     });

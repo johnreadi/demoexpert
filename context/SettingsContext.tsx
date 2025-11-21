@@ -1,4 +1,3 @@
-
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import * as api from '../api';
 import type { SiteSettings } from '../types';
@@ -27,8 +26,78 @@ const normalizeSettings = (input: any): SiteSettings => {
   return { ...input, hero, pageContent, advancedSettings } as SiteSettings;
 };
 
+// Default settings to use when API is not available
+const DEFAULT_SETTINGS: SiteSettings = {
+  businessInfo: { 
+    name: "Démolition Expert", 
+    logoUrl: "", 
+    address: "123 Rue de la Casse, 76000 Rouen", 
+    phone: "02 35 00 00 00", 
+    email: "contact@demoexpert.fr", 
+    openingHours: "Lun-Ven: 9h-18h, Sam: 9h-12h" 
+  },
+  socialLinks: { facebook: "", twitter: "", linkedin: "" },
+  themeColors: { headerBg: "#003366", footerBg: "#003366" },
+  hero: { 
+    title: "Bienvenue chez Démolition Expert", 
+    subtitle: "Vente de pièces auto d'occasion, rachat de véhicules, enlèvement d'épaves", 
+    background: { type: "color", value: "#003366" } 
+  },
+  services: [],
+  testimonials: [],
+  footer: { 
+    description: "Votre expert en pièces automobiles d'occasion depuis 1995", 
+    servicesLinks: [], 
+    infoLinks: [] 
+  },
+  legal: { 
+    mentions: { title: "Mentions Légales", content: "" }, 
+    cgv: { title: "Conditions Générales de Vente", content: "" }, 
+    confidentialite: { title: "Politique de Confidentialité", content: "" } 
+  },
+  liftRental: { 
+    pricingTiers: [{ duration: 1, price: 50 }, { duration: 2, price: 90 }, { duration: 4, price: 160 }], 
+    unavailableDates: [] 
+  },
+  pageContent: {
+    repairs: { 
+      heroTitle: "", 
+      heroSubtitle: "", 
+      heroImage: "", 
+      contentTitle: "", 
+      contentDescription: "", 
+      contentImage: "", 
+      features: [] 
+    },
+    maintenance: { 
+      heroTitle: "", 
+      heroSubtitle: "", 
+      heroImage: "", 
+      contentTitle: "", 
+      contentDescription: "", 
+      contentImage: "", 
+      features: [] 
+    },
+    tires: { 
+      heroTitle: "", 
+      heroSubtitle: "", 
+      heroImage: "", 
+      contentTitle: "", 
+      contentDescription: "", 
+      contentImage: "", 
+      features: [] 
+    }
+  },
+  advancedSettings: {
+    smtp: { host: "", port: 0, user: "", pass: "" },
+    ai: { chatModel: "", estimationModel: "" },
+    seo: { metaTitle: "", metaDescription: "", keywords: "" },
+    security: { allowPublicRegistration: true }
+  }
+};
+
 export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [settings, setSettings] = useState<SiteSettings | null>(null);
+  const [settings, setSettings] = useState<SiteSettings | null>(DEFAULT_SETTINGS);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -38,6 +107,8 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         setSettings(normalizeSettings(siteSettings));
       } catch (error) {
         console.error("Failed to fetch site settings:", error);
+        // Use default settings if API fails
+        setSettings(DEFAULT_SETTINGS);
       } finally {
         setIsLoading(false);
       }
@@ -64,7 +135,7 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   return (
     <SettingsContext.Provider value={value}>
-      {!isLoading && children}
+      {children}
     </SettingsContext.Provider>
   );
 };

@@ -10,7 +10,7 @@ export default defineConfig(({ mode }) => {
       host: '0.0.0.0',
       proxy: {
         '/api': {
-          target: 'http://localhost:8080',
+          target: 'http://localhost:8085',
           changeOrigin: true,
           secure: false,
         }
@@ -21,7 +21,14 @@ export default defineConfig(({ mode }) => {
     resolve: {
       alias: {
         '@': path.resolve(__dirname, '.'),
-      }
+        // Remove the problematic alias that might be causing conflicts
+      },
+      // Add extensions to resolve
+      extensions: ['.ts', '.tsx', '.js', '.jsx', '.json']
+    },
+    optimizeDeps: {
+      include: ['react', 'react-dom', 'react-router-dom'],
+      // Remove the exclude that might be causing issues
     }
   };
 });
