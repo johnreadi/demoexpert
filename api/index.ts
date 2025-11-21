@@ -18,6 +18,30 @@ const simulateApiError = (message: string, delay = 200): Promise<any> => {
 };
 
 const USE_LOCAL_API = import.meta.env.MODE !== 'production' && import.meta.env.VITE_USE_LOCAL_API === 'true';
+const normalizeAuction = (a: any): Auction => ({
+  id: a.id,
+  vehicle: {
+    name: a.vehicleName ?? a.vehicle?.name ?? '',
+    brand: a.brand ?? a.vehicle?.brand ?? '',
+    model: a.model ?? a.vehicle?.model ?? '',
+    year: Number(a.year ?? a.vehicle?.year ?? 0),
+    mileage: Number(a.mileage ?? a.vehicle?.mileage ?? 0),
+    description: a.description ?? a.vehicle?.description ?? '',
+    images: Array.isArray(a.images) ? a.images : (a.vehicle?.images ?? []),
+  },
+  startingPrice: Number(a.startingPrice ?? 0),
+  currentBid: Number(a.currentBid ?? 0),
+  bidCount: Number(a.bidCount ?? 0),
+  bids: Array.isArray(a.bids)
+    ? a.bids.map((b: any) => ({
+        userId: b.userId ?? '',
+        bidderName: b.bidderName ?? '',
+        amount: Number(b.amount ?? 0),
+        timestamp: new Date(b.timestamp),
+      }))
+    : [],
+  endDate: new Date(a.endDate),
+});
 
 
 // --- Site Settings API (real backend - no localStorage) ---
@@ -57,18 +81,31 @@ export const deleteProduct = async (productId: string): Promise<{ success: boole
 
 
 // --- Auctions API (real backend) ---
-export const getAuctions = async (): Promise<Auction[]> =>
-  USE_LOCAL_API ? simulateApiCall(db.getAuctions()) : http<Auction[]>(`/api/auctions`);
-export const getAuctionById = async (id: string): Promise<Auction | undefined> =>
-  USE_LOCAL_API ? simulateApiCall(db.getAuctionById(id)) : http<Auction>(`/api/auctions/${id}`);
+export const getAuctions = async (): Promise<Auction[]> => {
+  if (USE_LOCAL_API) return simulateApiCall(db.getAuctions());
+  const data = await http<any[]>(`/api/auctions`);
+  return data.map(normalizeAuction);
+};
+export const getAuctionById = async (id: string): Promise<Auction | undefined> => {
+  if (USE_LOCAL_API) return simulateApiCall(db.getAuctionById(id));
+  const a = await http<any>(`/api/auctions/${id}`);
+  return normalizeAuction(a);
+};
 export const addBid = async (auctionId: string, bidAmount: number, userId: string, bidderName: string): Promise<Auction> => {
   if (USE_LOCAL_API) return simulateApiCall(db.addBid(auctionId, bidAmount, userId, bidderName));
-  return http<Auction>(`/api/auctions/${auctionId}/bids`, { method: 'POST', body: JSON.stringify({ amount: bidAmount }) });
+  const a = await http<any>(`/api/auctions/${auctionId}/bids`, { method: 'POST', body: JSON.stringify({ amount: bidAmount }) });
+  return normalizeAuction(a);
 };
-export const addAuction = async (auctionData: Omit<Auction, 'id' | 'currentBid' | 'bidCount' | 'bids'>): Promise<Auction> =>
-  USE_LOCAL_API ? simulateApiCall(db.addAuction(auctionData)) : http<Auction>(`/api/auctions`, { method: 'POST', body: JSON.stringify(auctionData) });
-export const updateAuction = async (auctionId: string, auctionData: Partial<Omit<Auction, 'id'>>): Promise<Auction> =>
-  USE_LOCAL_API ? simulateApiCall(db.updateAuction(auctionId, auctionData)) : http<Auction>(`/api/auctions/${auctionId}`, { method: 'PUT', body: JSON.stringify(auctionData) });
+export const addAuction = async (auctionData: Omit<Auction, 'id' | 'currentBid' | 'bidCount' | 'bids'>): Promise<Auction> => {
+  if (USE_LOCAL_API) return simulateApiCall(db.addAuction(auctionData));
+  const a = await http<any>(`/api/auctions`, { method: 'POST', body: JSON.stringify(auctionData) });
+  return normalizeAuction(a);
+};
+export const updateAuction = async (auctionId: string, auctionData: Partial<Omit<Auction, 'id'>>): Promise<Auction> => {
+  if (USE_LOCAL_API) return simulateApiCall(db.updateAuction(auctionId, auctionData));
+  const a = await http<any>(`/api/auctions/${auctionId}`, { method: 'PUT', body: JSON.stringify(auctionData) });
+  return normalizeAuction(a);
+};
 export const deleteAuction = async (auctionId: string): Promise<{ success: boolean }> =>
   USE_LOCAL_API ? simulateApiCall(db.deleteAuction(auctionId)) : http<{ success: boolean }>(`/api/auctions/${auctionId}`, { method: 'DELETE' });
 
