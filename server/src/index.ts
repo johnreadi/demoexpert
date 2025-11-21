@@ -77,6 +77,48 @@ function normalizeSettings(input: any) {
   return { ...input, hero, pageContent, advancedSettings };
 }
 
+const DEFAULT_SETTINGS = {
+  businessInfo: { name: "Démolition Expert", logoUrl: "", address: "123 Rue de la Casse, 76000 Rouen", phone: "02 35 00 00 00", email: "contact@demoexpert.fr", openingHours: "Lun-Ven: 9h-18h, Sam: 9h-12h" },
+  socialLinks: { facebook: "", twitter: "", linkedin: "" },
+  themeColors: { headerBg: "#003366", footerBg: "#003366" },
+  hero: { title: "Bienvenue chez Démolition Expert", subtitle: "Vente de pièces auto d'occasion, rachat de véhicules, enlèvement d'épaves", background: { type: "color", value: "#003366" } },
+  services: [
+    { id: "1", icon: "fas fa-car", title: "Pièces Détachées", description: "Large choix de pièces automobiles d'occasion de qualité", link: "/pieces" },
+    { id: "2", icon: "fas fa-hand-holding-dollar", title: "Rachat de Véhicules", description: "Rachetons votre véhicule quelle que soit sa condition", link: "/rachat-vehicule" },
+    { id: "3", icon: "fas fa-trash", title: "Enlèvement d'Épaves", description: "Service d'enlèvement gratuit d'épaves dans toute la Normandie", link: "/enlevement-epave" }
+  ],
+  testimonials: [
+    { id: "1", text: "Service rapide et professionnel. J'ai trouvé la pièce dont j'avais besoin en un rien de temps !", author: "Marie D." },
+    { id: "2", text: "Le rachat de mon ancienne voiture a été simple et rapide. Je recommande vivement !", author: "Jean-Pierre L." },
+    { id: "3", text: "Équipe sympathique et compétente. Tarifs très compétitifs sur tous les services.", author: "Sophie M." }
+  ],
+  footer: { description: "Votre expert en pièces automobiles d'occasion depuis 1995", servicesLinks: [], infoLinks: [] },
+  legal: { mentions: { title: "Mentions Légales", content: "" }, cgv: { title: "Conditions Générales de Vente", content: "" }, confidentialite: { title: "Politique de Confidentialité", content: "" } },
+  liftRental: { pricingTiers: [{ duration: 1, price: 50 }, { duration: 2, price: 90 }, { duration: 4, price: 160 }], unavailableDates: [] },
+  pageContent: {
+    repairs: { heroTitle: "", heroSubtitle: "", heroImage: "", contentTitle: "", contentDescription: "", contentImage: "", features: [] },
+    maintenance: { heroTitle: "", heroSubtitle: "", heroImage: "", contentTitle: "", contentDescription: "", contentImage: "", features: [] },
+    tires: { heroTitle: "", heroSubtitle: "", heroImage: "", contentTitle: "", contentDescription: "", contentImage: "", features: [] }
+  },
+  advancedSettings: {
+    smtp: { host: "", port: 0, user: "", pass: "" },
+    ai: { chatModel: "", estimationModel: "" },
+    seo: { metaTitle: "", metaDescription: "", keywords: "" },
+    security: { allowPublicRegistration: true }
+  }
+};
+
+async function ensureDefaultSettings() {
+  try {
+    const s = await prisma.settings.findUnique({ where: { key: 'site_settings' } });
+    if (!s) {
+      await prisma.settings.create({ data: { key: 'site_settings', value: DEFAULT_SETTINGS } });
+    }
+  } catch (e) {
+    console.error('Failed to ensure default settings:', e);
+  }
+}
+
 app.get('/api/auth/me', (req, res) => {
   const user = (req.session as any).user as UserSession | undefined;
   if (!user) return res.status(401).json({ error: 'unauthorized' });
@@ -421,63 +463,12 @@ app.get('/api/settings', async (_req, res) => {
   try {
     const settings = await prisma.settings.findUnique({ where: { key: 'site_settings' } });
     if (!settings) {
-      return res.json({
-        businessInfo: { name: "Démolition Expert", logoUrl: "", address: "", phone: "", email: "", openingHours: "" },
-        socialLinks: { facebook: "", twitter: "", linkedin: "" },
-        themeColors: { headerBg: "#003366", footerBg: "#003366" },
-        hero: { title: "", subtitle: "", background: { type: "color", value: "#003366" } },
-        services: [],
-        testimonials: [],
-        footer: { description: "", servicesLinks: [], infoLinks: [] },
-        legal: { mentions: { title: "", content: "" }, cgv: { title: "", content: "" }, confidentialite: { title: "", content: "" } },
-        liftRental: { pricingTiers: [{ duration: 1, price: 50 }, { duration: 2, price: 90 }, { duration: 4, price: 160 }], unavailableDates: [] },
-        pageContent: {
-          repairs: { heroTitle: "", heroSubtitle: "", heroImage: "", contentTitle: "", contentDescription: "", contentImage: "", features: [] },
-          maintenance: { heroTitle: "", heroSubtitle: "", heroImage: "", contentTitle: "", contentDescription: "", contentImage: "", features: [] },
-          tires: { heroTitle: "", heroSubtitle: "", heroImage: "", contentTitle: "", contentDescription: "", contentImage: "", features: [] }
-        },
-        advancedSettings: {
-          smtp: { host: "", port: 0, user: "", pass: "" },
-          ai: { chatModel: "", estimationModel: "" },
-          seo: { metaTitle: "", metaDescription: "", keywords: "" },
-          security: { allowPublicRegistration: true }
-        }
-      });
+      return res.json(DEFAULT_SETTINGS);
     }
     res.json(normalizeSettings(settings.value));
   } catch (error) {
     console.error("Failed to fetch settings from database:", error);
-    // Return default settings if database is not accessible
-    return res.json({
-      businessInfo: { name: "Démolition Expert", logoUrl: "", address: "123 Rue de la Casse, 76000 Rouen", phone: "02 35 00 00 00", email: "contact@demoexpert.fr", openingHours: "Lun-Ven: 9h-18h, Sam: 9h-12h" },
-      socialLinks: { facebook: "", twitter: "", linkedin: "" },
-      themeColors: { headerBg: "#003366", footerBg: "#003366" },
-      hero: { title: "Bienvenue chez Démolition Expert", subtitle: "Vente de pièces auto d'occasion, rachat de véhicules, enlèvement d'épaves", background: { type: "color", value: "#003366" } },
-      services: [
-        { id: "1", icon: "fas fa-car", title: "Pièces Détachées", description: "Large choix de pièces automobiles d'occasion de qualité", link: "/pieces" },
-        { id: "2", icon: "fas fa-hand-holding-dollar", title: "Rachat de Véhicules", description: "Rachetons votre véhicule quelle que soit sa condition", link: "/rachat-vehicule" },
-        { id: "3", icon: "fas fa-trash", title: "Enlèvement d'Épaves", description: "Service d'enlèvement gratuit d'épaves dans toute la Normandie", link: "/enlevement-epave" }
-      ],
-      testimonials: [
-        { id: "1", text: "Service rapide et professionnel. J'ai trouvé la pièce dont j'avais besoin en un rien de temps !", author: "Marie D." },
-        { id: "2", text: "Le rachat de mon ancienne voiture a été simple et rapide. Je recommande vivement !", author: "Jean-Pierre L." },
-        { id: "3", text: "Équipe sympathique et compétente. Tarifs très compétitifs sur tous les services.", author: "Sophie M." }
-      ],
-      footer: { description: "Votre expert en pièces automobiles d'occasion depuis 1995", servicesLinks: [], infoLinks: [] },
-      legal: { mentions: { title: "Mentions Légales", content: "" }, cgv: { title: "Conditions Générales de Vente", content: "" }, confidentialite: { title: "Politique de Confidentialité", content: "" } },
-      liftRental: { pricingTiers: [{ duration: 1, price: 50 }, { duration: 2, price: 90 }, { duration: 4, price: 160 }], unavailableDates: [] },
-      pageContent: {
-        repairs: { heroTitle: "", heroSubtitle: "", heroImage: "", contentTitle: "", contentDescription: "", contentImage: "", features: [] },
-        maintenance: { heroTitle: "", heroSubtitle: "", heroImage: "", contentTitle: "", contentDescription: "", contentImage: "", features: [] },
-        tires: { heroTitle: "", heroSubtitle: "", heroImage: "", contentTitle: "", contentDescription: "", contentImage: "", features: [] }
-      },
-      advancedSettings: {
-        smtp: { host: "", port: 0, user: "", pass: "" },
-        ai: { chatModel: "", estimationModel: "" },
-        seo: { metaTitle: "", metaDescription: "", keywords: "" },
-        security: { allowPublicRegistration: true }
-      }
-    });
+    return res.json(DEFAULT_SETTINGS);
   }
 });
 
@@ -499,6 +490,8 @@ app.use('/api', (_req, res) => {
   res.status(404).json({ error: 'not_found' });
 });
 
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`API listening on 0.0.0.0:${PORT} (${NODE_ENV})`);
+ensureDefaultSettings().finally(() => {
+  app.listen(PORT, '0.0.0.0', () => {
+    console.log(`API listening on 0.0.0.0:${PORT} (${NODE_ENV})`);
+  });
 });
