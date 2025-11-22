@@ -53,10 +53,17 @@ export default function AuctionsPage(): React.ReactNode {
             try {
                 const data = await api.getAuctions();
                 // Ensure dates are Date objects for proper comparison
-                const processedData = data.map(auction => ({
-                    ...auction,
-                    endDate: typeof auction.endDate === 'string' ? new Date(auction.endDate) : auction.endDate,
-                }));
+                const processedData = data.map(auction => {
+                    const raw = auction.endDate;
+                    let endDate: any = raw;
+                    if (typeof raw === 'string') {
+                      const d = new Date(raw);
+                      endDate = isNaN(d.getTime()) ? new Date(Date.now() + 1000 * 60 * 60 * 24 * 3) : d;
+                    } else if (!(raw instanceof Date)) {
+                      endDate = new Date(Date.now() + 1000 * 60 * 60 * 24 * 3);
+                    }
+                    return { ...auction, endDate };
+                });
                 setAllAuctions(processedData);
             } catch (error) {
                 console.error("Failed to fetch auctions", error);
@@ -73,9 +80,9 @@ export default function AuctionsPage(): React.ReactNode {
         // 1. Filter by status
         const now = new Date();
         if (filters.status === 'active') {
-            auctions = auctions.filter(a => a.endDate > now);
+            auctions = auctions.filter(a => (a.endDate instanceof Date ? a.endDate > now : true));
         } else if (filters.status === 'terminated') {
-            auctions = auctions.filter(a => a.endDate <= now);
+            auctions = auctions.filter(a => (a.endDate instanceof Date ? a.endDate <= now : false));
         }
 
         // 2. Filter by brand

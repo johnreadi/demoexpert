@@ -251,8 +251,16 @@ app.post('/auth/logout', (req, res) => {
 app.post('/api/ai/chat', async (req, res) => {
   try {
     const apiKey = process.env.GEMINI_API_KEY;
+
+    const fallback = () => {
+      const q = String(message || '').toLowerCase();
+      if (q.includes('bonjour') || q.includes('salut')) return 'Bonjour ! Comment puis-je vous aider ?';
+      if (q.includes('horaire') || q.includes('ouvert')) return `Nos horaires: ${settings?.businessInfo?.openingHours || 'Lun-Ven 8h-18h, Sam 9h-12h'}.`;
+      if (q.includes('contact') || q.includes('email') || q.includes('téléphone')) return `Contact: ${settings?.businessInfo?.phone || ''} / ${settings?.businessInfo?.email || ''}.`;
+      return "Je suis un assistant. L’IA n’est pas disponible pour le moment.";
+    };
     if (!apiKey) {
-      return res.status(501).json({ error: 'ai_not_configured', message: 'GEMINI_API_KEY manquant côté serveur.' });
+      return res.json({ text: fallback() });
     }
     const { message, history, settings } = req.body || {};
     const intro = settings?.businessInfo ? `Vous êtes un assistant virtuel pour '${settings.businessInfo.name}', une casse automobile en Normandie, France. Votre nom est 'ExpertBot'.
