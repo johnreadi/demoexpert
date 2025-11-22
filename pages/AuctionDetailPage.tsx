@@ -41,7 +41,7 @@ export default function AuctionDetailPage(): React.ReactNode {
                 if(foundAuction) {
                     const processedAuction = processAuctionData(foundAuction);
                     setAuction(processedAuction);
-                    setMainImage(processedAuction.vehicle.images?.[0] || 'https://picsum.photos/seed/auction-detail/800/600');
+                    setMainImage(processedAuction.vehicle?.images?.[0] || 'https://picsum.photos/seed/auction-detail/800/600');
                     if (processedAuction.endDate < new Date()) {
                         setIsEnded(true);
                     }
@@ -175,10 +175,10 @@ export default function AuctionDetailPage(): React.ReactNode {
                         <div className="mt-8">
                             <h3 className="text-2xl font-bold font-heading text-expert-blue border-b-2 border-expert-light-gray pb-2 mb-4">Détails du Véhicule</h3>
                             <div className="grid grid-cols-2 gap-4 text-lg">
-                                <p><strong className="font-semibold">Kilométrage:</strong> {auction.vehicle.mileage.toLocaleString()} km</p>
-                                <p><strong className="font-semibold">Année:</strong> {auction.vehicle.year}</p>
-                                <p><strong className="font-semibold">Marque:</strong> {auction.vehicle.brand}</p>
-                                <p><strong className="font-semibold">Modèle:</strong> {auction.vehicle.model}</p>
+                                <p><strong className="font-semibold">Kilométrage:</strong> {Number(auction.vehicle?.mileage ?? 0).toLocaleString()} km</p>
+                                <p><strong className="font-semibold">Année:</strong> {auction.vehicle?.year ?? ''}</p>
+                                <p><strong className="font-semibold">Marque:</strong> {auction.vehicle?.brand || ''}</p>
+                                <p><strong className="font-semibold">Modèle:</strong> {auction.vehicle?.model || ''}</p>
                             </div>
                             <p className="mt-4 text-gray-700">{auction.vehicle.description}</p>
                         </div>
