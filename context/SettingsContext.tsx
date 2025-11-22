@@ -129,21 +129,49 @@ const DEFAULT_SETTINGS: SiteSettings = {
 export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [settings, setSettings] = useState<SiteSettings | null>(DEFAULT_SETTINGS);
   const [isLoading, setIsLoading] = useState(true);
+  const [hasError, setHasError] = useState(false);
 
   useEffect(() => {
+    let isMounted = true;
+    let timeoutId: NodeJS.Timeout;
+
     const fetchSettings = async () => {
       try {
         const siteSettings = await api.getSiteSettings();
-        setSettings(normalizeSettings(siteSettings));
+        if (isMounted) {
+          setSettings(normalizeSettings(siteSettings));
+        }
       } catch (error) {
         console.error("Failed to fetch site settings:", error);
-        // Use default settings if API fails
-        setSettings(DEFAULT_SETTINGS);
+        if (isMounted) {
+          // Use default settings if API fails
+          setSettings(DEFAULT_SETTINGS);
+          setHasError(true);
+        }
       } finally {
-        setIsLoading(false);
+        if (isMounted) {
+          setIsLoading(false);
+        }
       }
     };
+    
+    // Add a timeout to ensure the app doesn't hang indefinitely
+    timeoutId = setTimeout(() => {
+      if (isMounted && isLoading) {
+        console.warn("Settings fetch timeout - using default settings");
+        setSettings(DEFAULT_SETTINGS);
+        setIsLoading(false);
+        setHasError(true);
+      }
+    }, 5000); // 5 second timeout
+    
     fetchSettings();
+    
+    // Clean up function
+    return () => {
+      isMounted = false;
+      clearTimeout(timeoutId);
+    };
   }, []);
 
   const updateSettings = async (newSettings: SiteSettings) => {
@@ -156,10 +184,9 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   };
 
-
   const value = {
     settings,
-    isLoading,
+    isLoading: isLoading && !hasError, // Stop showing loading if there's an error
     updateSettings
   };
 

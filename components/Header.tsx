@@ -24,7 +24,7 @@ export default function Header(): React.ReactNode {
   const { user, isAuthenticated, logout } = useAuth();
   const { settings, isLoading } = useSettings();
 
-  // Show loading state while settings are being fetched
+  // Show loading state while settings are being fetched (but not indefinitely)
   if (isLoading) {
     return (
       <header className="shadow-md sticky top-0 z-50" style={{ backgroundColor: '#003366' }}>

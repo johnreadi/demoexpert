@@ -188,7 +188,8 @@ async function ensureDefaultSettings() {
       await prisma.settings.create({ data: { key: 'site_settings', value: DEFAULT_SETTINGS } });
     }
   } catch (e) {
-    console.error('Failed to ensure default settings:', e);
+    console.error('Failed to ensure default settings (database may not be available):', e);
+    console.log('Continuing without database connection...');
   }
 }
 
@@ -574,5 +575,6 @@ app.use('/api', (_req, res) => {
 ensureDefaultSettings().finally(() => {
   app.listen(PORT, '0.0.0.0', () => {
     console.log(`API listening on 0.0.0.0:${PORT} (${NODE_ENV})`);
+    console.log('Note: Some features may be limited without a database connection');
   });
 });
