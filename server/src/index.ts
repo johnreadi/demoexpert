@@ -631,6 +631,50 @@ app.delete('/api/auctions/:id', requireAdmin, async (req, res) => {
   }
 });
 
+app.post('/api/contact', async (req, res) => {
+  try {
+    const { name, email, subject, message } = req.body || {};
+    
+    // Validate required fields
+    if (!name || !email || !subject || !message) {
+      return res.status(400).json({ error: 'missing_required_fields' });
+    }
+    
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({ error: 'invalid_email_format' });
+    }
+    
+    // Store in database
+    const contact = await prisma.contact.create({
+      data: {
+        name,
+        email,
+        subject,
+        message
+      }
+    });
+    
+    res.status(201).json({ success: true, id: contact.id });
+  } catch (error) {
+    console.error('Failed to submit contact form:', error);
+    res.status(500).json({ error: 'failed_to_submit_contact_form' });
+  }
+});
+
+app.get('/api/contact', async (_req, res) => {
+  try {
+    const contacts = await prisma.contact.findMany({
+      orderBy: { createdAt: 'desc' }
+    });
+    res.json(contacts);
+  } catch (error) {
+    console.error('Failed to fetch contacts:', error);
+    res.status(500).json({ error: 'failed_to_fetch_contacts' });
+  }
+});
+
 app.post('/api/auctions/:id/bids', async (req, res) => {
   try {
     const user = (req.session as any)?.user;

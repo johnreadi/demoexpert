@@ -127,12 +127,23 @@ export const getBlogPosts = (): Promise<BlogPost[]> => simulateApiCall(db.getBlo
 
 
 // --- Forms API ---
-export const submitContactForm = (data: any): Promise<{ success: boolean }> => simulateApiCall(db.submitContactForm(data));
-export const submitScrapRemovalRequest = (data: any): Promise<{ success: boolean }> => simulateApiCall(db.submitScrapRemovalRequest(data));
-export const submitWindshieldRequest = (data: any): Promise<{ success: boolean }> => simulateApiCall(db.submitWindshieldRequest(data));
-export const submitLiftRentalRequest = (data: any): Promise<{ success: boolean }> => simulateApiCall(db.submitLiftRentalRequest(data));
-export const submitBuybackRequest = (data: any): Promise<{ success: true, estimation: string }> => simulateApiCall(db.submitBuybackRequest(data));
-export const submitQuoteRequest = (product: Product, quoteData: any): Promise<{ success: boolean }> => simulateApiCall(db.submitQuoteRequest(product, quoteData));
+export const submitContactForm = (data: any): Promise<{ success: boolean }> => 
+  USE_LOCAL_API ? simulateApiCall(db.submitContactForm(data)) : http<{ success: boolean }>(`/api/contact`, { method: 'POST', body: JSON.stringify(data) });
+
+export const submitScrapRemovalRequest = (data: any): Promise<{ success: boolean }> => 
+  USE_LOCAL_API ? simulateApiCall(db.submitScrapRemovalRequest(data)) : http<{ success: boolean }>(`/api/scrap-removal`, { method: 'POST', body: JSON.stringify(data) });
+
+export const submitWindshieldRequest = (data: any): Promise<{ success: boolean }> => 
+  USE_LOCAL_API ? simulateApiCall(db.submitWindshieldRequest(data)) : http<{ success: boolean }>(`/api/windshield`, { method: 'POST', body: JSON.stringify(data) });
+
+export const submitLiftRentalRequest = (data: any): Promise<{ success: boolean }> => 
+  USE_LOCAL_API ? simulateApiCall(db.submitLiftRentalRequest(data)) : http<{ success: boolean }>(`/api/lift-rental`, { method: 'POST', body: JSON.stringify(data) });
+
+export const submitBuybackRequest = (data: any): Promise<{ success: true, estimation: string }> => 
+  USE_LOCAL_API ? simulateApiCall(db.submitBuybackRequest(data)) : http<{ success: true, estimation: string }>(`/api/buyback`, { method: 'POST', body: JSON.stringify(data) });
+
+export const submitQuoteRequest = (product: Product, quoteData: any): Promise<{ success: boolean }> => 
+  USE_LOCAL_API ? simulateApiCall(db.submitQuoteRequest(product, quoteData)) : http<{ success: boolean }>(`/api/quote`, { method: 'POST', body: JSON.stringify({ product, ...quoteData }) });
 
 // --- Admin Messaging API ---
 export const sendAdminReply = (data: any): Promise<{ success: boolean }> => simulateApiCall(db.sendAdminReply(data));
