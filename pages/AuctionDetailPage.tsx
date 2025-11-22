@@ -9,12 +9,17 @@ import { useAuth } from '../context/AuthContext';
 
 // Helper to process auction data from API, converting date strings to Date objects
 const processAuctionData = (auctionData: AuctionType): AuctionType => {
+    const safeVehicle = auctionData?.vehicle ?? { name: '', brand: '', model: '', year: 0, mileage: 0, description: '', images: [] } as any;
+    const end = auctionData?.endDate;
+    const endDate = typeof end === 'string' ? new Date(end) : (end instanceof Date ? end : new Date(Date.now() + 1000 * 60 * 60 * 24 * 3));
+    const bidsArr = Array.isArray(auctionData?.bids) ? auctionData.bids : [];
     return {
         ...auctionData,
-        endDate: typeof auctionData.endDate === 'string' ? new Date(auctionData.endDate) : auctionData.endDate,
-        bids: auctionData.bids.map(bid => ({
+        vehicle: { ...safeVehicle, images: Array.isArray(safeVehicle.images) ? safeVehicle.images : [] },
+        endDate,
+        bids: bidsArr.map(bid => ({
             ...bid,
-            timestamp: typeof bid.timestamp === 'string' ? new Date(bid.timestamp) : bid.timestamp
+            timestamp: typeof bid?.timestamp === 'string' ? new Date(bid.timestamp) : (bid?.timestamp instanceof Date ? bid.timestamp : new Date())
         }))
     };
 };
