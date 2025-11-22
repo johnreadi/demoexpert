@@ -18,30 +18,43 @@ const simulateApiError = (message: string, delay = 200): Promise<any> => {
 };
 
 const USE_LOCAL_API = import.meta.env.MODE !== 'production' && import.meta.env.VITE_USE_LOCAL_API === 'true';
-const normalizeAuction = (a: any): Auction => ({
-  id: a.id,
-  vehicle: {
-    name: a.vehicleName ?? a.vehicle?.name ?? '',
-    brand: a.brand ?? a.vehicle?.brand ?? '',
-    model: a.model ?? a.vehicle?.model ?? '',
-    year: Number(a.year ?? a.vehicle?.year ?? 0),
-    mileage: Number(a.mileage ?? a.vehicle?.mileage ?? 0),
-    description: a.description ?? a.vehicle?.description ?? '',
-    images: Array.isArray(a.images) ? a.images : (Array.isArray(a.vehicle?.images) ? a.vehicle.images : ['https://picsum.photos/seed/auction/800/600']),
-  },
-  startingPrice: Number(a.startingPrice ?? 0),
-  currentBid: Number(a.currentBid ?? 0),
-  bidCount: Number(a.bidCount ?? 0),
-  bids: Array.isArray(a.bids)
-    ? a.bids.map((b: any) => ({
-        userId: b.userId ?? '',
-        bidderName: b.bidderName ?? '',
-        amount: Number(b.amount ?? 0),
-        timestamp: b?.timestamp ? new Date(b.timestamp) : new Date(),
-      }))
-    : [],
-  endDate: a?.endDate ? new Date(a.endDate) : new Date(Date.now() + 1000 * 60 * 60 * 24 * 3),
-});
+const normalizeAuction = (a: any): Auction => {
+  const rawVehicle = a?.vehicle ?? {};
+
+  const images = Array.isArray(a?.images)
+    ? a.images
+    : Array.isArray(rawVehicle.images)
+      ? rawVehicle.images
+      : ['https://picsum.photos/seed/auction/800/600'];
+
+  const safeVehicle = {
+    name: a?.vehicleName ?? rawVehicle.name ?? '',
+    brand: a?.brand ?? rawVehicle.brand ?? '',
+    model: a?.model ?? rawVehicle.model ?? '',
+    year: Number(a?.year ?? rawVehicle.year ?? 0),
+    mileage: Number(a?.mileage ?? rawVehicle.mileage ?? 0),
+    description: a?.description ?? rawVehicle.description ?? '',
+    images,
+    videos: Array.isArray(rawVehicle.videos) ? rawVehicle.videos : [],
+  };
+
+  return {
+    id: a?.id ?? '',
+    vehicle: safeVehicle,
+    startingPrice: Number(a?.startingPrice ?? 0),
+    currentBid: Number(a?.currentBid ?? 0),
+    bidCount: Number(a?.bidCount ?? 0),
+    bids: Array.isArray(a?.bids)
+      ? a.bids.map((b: any) => ({
+          userId: b?.userId ?? '',
+          bidderName: b?.bidderName ?? '',
+          amount: Number(b?.amount ?? 0),
+          timestamp: b?.timestamp ? new Date(b.timestamp) : new Date(),
+        }))
+      : [],
+    endDate: a?.endDate ? new Date(a.endDate) : new Date(Date.now() + 1000 * 60 * 60 * 24 * 3),
+  };
+};
 
 
 // --- Site Settings API (real backend - no localStorage) ---
