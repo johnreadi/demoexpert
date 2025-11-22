@@ -64,6 +64,19 @@ app.get('/api/healthz', (_req, res) => {
 function normalizeSettings(input: any) {
   const heroBg = input?.hero?.background ?? (input?.hero?.backgroundImage ? { type: 'image', value: input.hero.backgroundImage } : { type: 'color', value: '#003366' });
   const hero = { title: input?.hero?.title ?? '', subtitle: input?.hero?.subtitle ?? '', background: heroBg };
+  const businessInfo = {
+    name: input?.businessInfo?.name ?? DEFAULT_SETTINGS.businessInfo.name,
+    logoUrl: input?.businessInfo?.logoUrl ?? DEFAULT_SETTINGS.businessInfo.logoUrl,
+    address: input?.businessInfo?.address ?? DEFAULT_SETTINGS.businessInfo.address,
+    phone: input?.businessInfo?.phone ?? DEFAULT_SETTINGS.businessInfo.phone,
+    email: input?.businessInfo?.email ?? DEFAULT_SETTINGS.businessInfo.email,
+    openingHours: input?.businessInfo?.openingHours ?? DEFAULT_SETTINGS.businessInfo.openingHours,
+  };
+  const socialLinks = {
+    facebook: input?.socialLinks?.facebook ?? DEFAULT_SETTINGS.socialLinks.facebook,
+    twitter: input?.socialLinks?.twitter ?? DEFAULT_SETTINGS.socialLinks.twitter,
+    linkedin: input?.socialLinks?.linkedin ?? DEFAULT_SETTINGS.socialLinks.linkedin,
+  };
   const pc = input?.pageContent ?? {};
   const normalizePage = (p: any) => ({ heroTitle: p?.heroTitle ?? '', heroSubtitle: p?.heroSubtitle ?? '', heroImage: p?.heroImage ?? '', contentTitle: p?.contentTitle ?? '', contentDescription: p?.contentDescription ?? '', contentImage: p?.contentImage ?? '', features: Array.isArray(p?.features) ? p.features : [] });
   const pageContent = { repairs: normalizePage(pc?.repairs ?? {}), maintenance: normalizePage(pc?.maintenance ?? {}), tires: normalizePage(pc?.tires ?? {}) };
@@ -74,7 +87,29 @@ function normalizeSettings(input: any) {
     seo: { metaTitle: adv?.seo?.metaTitle ?? '', metaDescription: adv?.seo?.metaDescription ?? '', keywords: adv?.seo?.keywords ?? '' },
     security: { allowPublicRegistration: adv?.security?.allowPublicRegistration ?? true }
   };
-  return { ...input, hero, pageContent, advancedSettings };
+  const withDefaultService = (svc: any, idx: number) => {
+    const def = DEFAULT_SETTINGS.services[idx] ?? DEFAULT_SETTINGS.services[0];
+    return {
+      id: svc?.id ?? def.id,
+      icon: svc?.icon ?? def.icon,
+      title: svc?.title ?? def.title,
+      description: svc?.description ?? def.description,
+      link: svc?.link ?? def.link,
+    };
+  };
+  const inputServices = Array.isArray(input?.services) ? input.services : [];
+  const normalizedServices = inputServices.map((s: any, idx: number) => withDefaultService(s, idx)).filter(s => s.title && s.link);
+  const services = normalizedServices.length >= DEFAULT_SETTINGS.services.length
+    ? normalizedServices
+    : [...normalizedServices, ...DEFAULT_SETTINGS.services.slice(normalizedServices.length)];
+  const testimonials = Array.isArray(input?.testimonials) && input.testimonials.length > 0 ? input.testimonials : DEFAULT_SETTINGS.testimonials;
+  const f = input?.footer ?? {};
+  const footer = {
+    description: f?.description ?? DEFAULT_SETTINGS.footer.description,
+    servicesLinks: Array.isArray(f?.servicesLinks) && f.servicesLinks.length > 0 ? f.servicesLinks : DEFAULT_SETTINGS.footer.servicesLinks,
+    infoLinks: Array.isArray(f?.infoLinks) && f.infoLinks.length > 0 ? f.infoLinks : DEFAULT_SETTINGS.footer.infoLinks,
+  };
+  return { ...input, businessInfo, socialLinks, hero, services, testimonials, pageContent, advancedSettings, footer };
 }
 
 const DEFAULT_SETTINGS = {
