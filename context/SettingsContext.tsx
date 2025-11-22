@@ -36,13 +36,15 @@ const normalizeSettings = (input: any): SiteSettings => {
     seo: { metaTitle: adv?.seo?.metaTitle ?? '', metaDescription: adv?.seo?.metaDescription ?? '', keywords: adv?.seo?.keywords ?? '' },
     security: { allowPublicRegistration: adv?.security?.allowPublicRegistration ?? true }
   };
+  const services = Array.isArray(input?.services) && input.services.length > 0 ? input.services : DEFAULT_SETTINGS.services;
+  const testimonials = Array.isArray(input?.testimonials) && input.testimonials.length > 0 ? input.testimonials : DEFAULT_SETTINGS.testimonials;
   const f = input?.footer ?? {};
   const footer = {
-    description: f?.description ?? "Votre spécialiste de la pièce automobile d'occasion et du recyclage en Normandie.",
-    servicesLinks: Array.isArray(f?.servicesLinks) ? f.servicesLinks : [],
-    infoLinks: Array.isArray(f?.infoLinks) ? f.infoLinks : [],
+    description: f?.description ?? DEFAULT_SETTINGS.footer.description,
+    servicesLinks: Array.isArray(f?.servicesLinks) && f.servicesLinks.length > 0 ? f.servicesLinks : DEFAULT_SETTINGS.footer.servicesLinks,
+    infoLinks: Array.isArray(f?.infoLinks) && f.infoLinks.length > 0 ? f.infoLinks : DEFAULT_SETTINGS.footer.infoLinks,
   };
-  return { ...input, businessInfo, socialLinks, hero, pageContent, advancedSettings, footer } as SiteSettings;
+  return { ...input, businessInfo, socialLinks, hero, services, testimonials, pageContent, advancedSettings, footer } as SiteSettings;
 };
 
 // Default settings to use when API is not available
