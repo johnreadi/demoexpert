@@ -5,18 +5,24 @@ import CountdownTimer from '../components/CountdownTimer';
 import * as api from '../api';
 
 const AuctionCard: React.FC<{ auction: Auction }> = ({ auction }) => {
+    const v = auction?.vehicle ?? { name: '', brand: '', model: '', year: 0, mileage: 0, description: '', images: [] };
+    if (!auction) {
+      return (
+        <div className="bg-white rounded-lg shadow-lg p-6">Indisponible</div>
+      );
+    }
     return (
         <div className="bg-white rounded-lg shadow-lg overflow-hidden flex flex-col group transition-transform duration-300 hover:-translate-y-2">
             <div className="relative">
-                <img src={auction.vehicle?.images?.[0] || 'https://picsum.photos/seed/auction-card/800/600'} alt={auction.vehicle?.name || 'Véhicule'} className="w-full h-56 object-cover" />
+                <img src={v.images?.[0] || 'https://picsum.photos/seed/auction-card/800/600'} alt={v.name || 'Véhicule'} className="w-full h-56 object-cover" />
                 <div className="absolute top-0 right-0 bg-expert-blue text-white px-3 py-1 text-sm font-bold rounded-bl-lg">
                     <i className="fas fa-tags mr-2"></i>{auction.bidCount} offres
                 </div>
             </div>
             <div className="p-4 flex flex-col flex-grow">
-                <h3 className="text-xl font-bold font-heading text-expert-blue group-hover:text-expert-green transition-colors">{auction.vehicle?.name || 'Véhicule'}</h3>
-                <p className="text-sm text-gray-500">{auction.vehicle?.model || ''} - {auction.vehicle?.year ?? ''}</p>
-                <p className="text-sm text-gray-500 mb-3">{Number(auction.vehicle?.mileage ?? 0).toLocaleString()} km</p>
+                <h3 className="text-xl font-bold font-heading text-expert-blue group-hover:text-expert-green transition-colors">{v.name || 'Véhicule'}</h3>
+                <p className="text-sm text-gray-500">{v.model || ''} - {v.year ?? ''}</p>
+                <p className="text-sm text-gray-500 mb-3">{Number(v.mileage ?? 0).toLocaleString()} km</p>
                 
                 <div className="my-3">
                     <div className="text-sm text-gray-600">Offre actuelle</div>

@@ -161,7 +161,7 @@ export default function AuctionDetailPage(): React.ReactNode {
                         
                         <img src={mainImage} alt={auction.vehicle?.name || 'Véhicule'} className="w-full h-96 object-cover rounded-lg shadow-md mb-4" />
                         <div className="flex space-x-2">
-                            {Array.isArray(auction.vehicle?.images) && auction.vehicle!.images!.map((img, index) => (
+                            {(auction.vehicle?.images ?? []).map((img, index) => (
                                 <img 
                                     key={index}
                                     src={img} 
