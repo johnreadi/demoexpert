@@ -31,6 +31,11 @@ enum Status {
   pending
 }
 
+enum MessageStatus {
+  pending
+  replied
+}
+
 model Product {
   id           String   @id @default(cuid())
   name         String
@@ -95,4 +100,21 @@ model Contact {
   message   String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model AdminMessage {
+  id          String        @id @default(cuid())
+  from        String
+  senderName  String
+  senderEmail String
+  userId      String?
+  subject     String
+  content     String
+  receivedAt  DateTime      @default(now())
+  isRead      Boolean       @default(false)
+  isArchived  Boolean       @default(false)
+  status      MessageStatus @default(pending)
+  attachment  Json?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
 }

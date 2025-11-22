@@ -646,6 +646,12 @@ app.post('/api/contact', async (req, res) => {
       return res.status(400).json({ error: 'invalid_email_format' });
     }
     
+    // Check if we have a database connection
+    if (!process.env.DATABASE_URL) {
+      // Return mock success if no database connection
+      return res.status(201).json({ success: true, id: `mock-contact-${Date.now()}` });
+    }
+    
     // Store in database
     const contact = await prisma.contact.create({
       data: {
@@ -665,6 +671,21 @@ app.post('/api/contact', async (req, res) => {
 
 app.get('/api/contact', async (_req, res) => {
   try {
+    // Check if we have a database connection
+    if (!process.env.DATABASE_URL) {
+      // Return mock data if no database connection
+      return res.json([
+        { 
+          id: 'mock-contact-1', 
+          name: 'John Doe', 
+          email: 'john@example.com', 
+          subject: 'Question sur un produit', 
+          message: 'Bonjour, j\'aimerais savoir si vous avez en stock le produit REF123456 ?', 
+          createdAt: new Date(Date.now() - 86400000) 
+        }
+      ]);
+    }
+    
     const contacts = await prisma.contact.findMany({
       orderBy: { createdAt: 'desc' }
     });
@@ -735,4 +756,141 @@ ensureDefaultSettings().finally(() => {
     console.log(`API listening on 0.0.0.0:${PORT} (${NODE_ENV})`);
     console.log('Note: Some features may be limited without a database connection');
   });
+});
+
+// --- Admin Messages API ---
+app.get('/api/admin/messages', async (req, res) => {
+  try {
+    // Check if we have a database connection
+    if (!process.env.DATABASE_URL) {
+      // Return mock data if no database connection
+      return res.json([
+        { 
+          id: 'mock-msg-1', 
+          from: 'Formulaire de Contact', 
+          senderName: 'John Doe', 
+          senderEmail: 'john@example.com', 
+          subject: 'Question sur un produit', 
+          content: 'Bonjour, j\'aimerais savoir si vous avez en stock le produit REF123456 ?', 
+          receivedAt: new Date(Date.now() - 86400000), 
+          isRead: false, 
+          isArchived: false, 
+          status: 'pending' 
+        }
+      ]);
+    }
+    
+    const messages = await prisma.adminMessage.findMany({
+      orderBy: { receivedAt: 'desc' }
+    });
+    res.json(messages);
+  } catch (error) {
+    console.error('Failed to fetch admin messages:', error);
+    res.status(500).json({ error: 'failed_to_fetch_admin_messages' });
+  }
+});
+
+app.post('/api/admin/messages', async (req, res) => {
+  try {
+    const { from, senderName, senderEmail, subject, content, userId } = req.body || {};
+    
+    // Validate required fields
+    if (!from || !senderName || !senderEmail || !subject || !content) {
+      return res.status(400).json({ error: 'missing_required_fields' });
+    }
+    
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(senderEmail)) {
+      return res.status(400).json({ error: 'invalid_email_format' });
+    }
+    
+    // Check if we have a database connection
+    if (!process.env.DATABASE_URL) {
+      // Return mock success if no database connection
+      return res.status(201).json({ 
+        id: `mock-msg-${Date.now()}`, 
+        from, 
+        senderName, 
+        senderEmail, 
+        subject, 
+        content, 
+        userId,
+        receivedAt: new Date(),
+        isRead: false,
+        isArchived: false,
+        status: 'pending'
+      });
+    }
+    
+    // Store in database
+    const message = await prisma.adminMessage.create({
+      data: {
+        from,
+        senderName,
+        senderEmail,
+        subject,
+        content,
+        userId,
+        receivedAt: new Date()
+      }
+    });
+    
+    res.status(201).json(message);
+  } catch (error) {
+    console.error('Failed to create admin message:', error);
+    res.status(500).json({ error: 'failed_to_create_admin_message' });
+  }
+});
+
+app.put('/api/admin/messages/:id', async (req, res) => {
+  try {
+    const { isRead, isArchived, status } = req.body || {};
+    
+    // Check if we have a database connection
+    if (!process.env.DATABASE_URL) {
+      // Return mock success if no database connection
+      return res.json({ 
+        id: req.params.id,
+        isRead: isRead !== undefined ? isRead : false,
+        isArchived: isArchived !== undefined ? isArchived : false,
+        status: status || 'pending'
+      });
+    }
+    
+    // Update in database
+    const message = await prisma.adminMessage.update({
+      where: { id: req.params.id },
+      data: {
+        ...(isRead !== undefined && { isRead }),
+        ...(isArchived !== undefined && { isArchived }),
+        ...(status && { status })
+      }
+    });
+    
+    res.json(message);
+  } catch (error) {
+    console.error('Failed to update admin message:', error);
+    res.status(500).json({ error: 'failed_to_update_admin_message' });
+  }
+});
+
+app.delete('/api/admin/messages/:id', async (req, res) => {
+  try {
+    // Check if we have a database connection
+    if (!process.env.DATABASE_URL) {
+      // Return mock success if no database connection
+      return res.json({ success: true });
+    }
+    
+    // Delete from database
+    await prisma.adminMessage.delete({
+      where: { id: req.params.id }
+    });
+    
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Failed to delete admin message:', error);
+    res.status(500).json({ error: 'failed_to_delete_admin_message' });
+  }
 });

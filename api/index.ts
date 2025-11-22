@@ -146,16 +146,24 @@ export const submitQuoteRequest = (product: Product, quoteData: any): Promise<{ 
   USE_LOCAL_API ? simulateApiCall(db.submitQuoteRequest(product, quoteData)) : http<{ success: boolean }>(`/api/quote`, { method: 'POST', body: JSON.stringify({ product, ...quoteData }) });
 
 // --- Admin Messaging API ---
-export const sendAdminReply = (data: any): Promise<{ success: boolean }> => simulateApiCall(db.sendAdminReply(data));
-export const sendNewMessage = (data: any): Promise<{ success: boolean }> => simulateApiCall(db.sendNewMessage(data));
-export const archiveMessage = (messageId: string, isArchived: boolean): Promise<AdminMessage> => simulateApiCall(db.archiveMessage(messageId, isArchived));
+export const getAdminMessages = (): Promise<AdminMessage[]> => 
+  USE_LOCAL_API ? simulateApiCall(db.getAdminMessages()) : http<AdminMessage[]>(`/api/admin/messages`);
 
+export const sendAdminReply = (data: any): Promise<{ success: boolean }> => 
+  USE_LOCAL_API ? simulateApiCall(db.sendAdminReply(data)) : http<{ success: boolean }>(`/api/admin/messages`, { method: 'POST', body: JSON.stringify(data) });
+
+export const sendNewMessage = (data: any): Promise<{ success: boolean }> => 
+  USE_LOCAL_API ? simulateApiCall(db.sendNewMessage(data)) : http<{ success: boolean }>(`/api/admin/messages`, { method: 'POST', body: JSON.stringify(data) });
+
+export const archiveMessage = (messageId: string, isArchived: boolean): Promise<AdminMessage> => 
+  USE_LOCAL_API ? simulateApiCall(db.archiveMessage(messageId, isArchived)) : http<AdminMessage>(`/api/admin/messages/${messageId}`, { method: 'PUT', body: JSON.stringify({ isArchived }) });
 
 // --- Admin-specific API ---
 export const getAdminUsers = (): Promise<User[]> => simulateApiCall(db.getAdminUsers());
-export const getAdminMessages = (): Promise<AdminMessage[]> => simulateApiCall(db.getAdminMessages());
-export const getContacts = (): Promise<Contact[]> => simulateApiCall(db.getContacts());
-export const addContact = (contactData: Omit<Contact, 'id'>): Promise<Contact> => simulateApiCall(db.addContact(contactData));
+export const getContacts = (): Promise<Contact[]> => 
+  USE_LOCAL_API ? simulateApiCall(db.getContacts()) : http<Contact[]>(`/api/contact`);
+export const addContact = (contactData: Omit<Contact, 'id'>): Promise<Contact> => 
+  USE_LOCAL_API ? simulateApiCall(db.addContact(contactData)) : http<Contact>(`/api/contact`, { method: 'POST', body: JSON.stringify(contactData) });
 export const getLiftRentalBookings = (): Promise<LiftRentalBooking[]> => simulateApiCall(db.getLiftRentalBookings());
 export const getAuditLogs = (): Promise<AuditLogEntry[]> => simulateApiCall(db.getAuditLogs());
 export const updateLiftRentalBookingStatus = (bookingId: string, status: LiftRentalBooking['status']): Promise<LiftRentalBooking> => simulateApiCall(db.updateLiftRentalBookingStatus(bookingId, status));
