@@ -336,6 +336,38 @@ app.get('/api/products/:id', async (req, res) => {
   }
 });
 
+app.put('/api/products/:id', async (req, res) => {
+  try {
+    const data = req.body || {};
+    const updated = await prisma.product.update({ where: { id: req.params.id }, data: {
+      ...(data.name !== undefined ? { name: data.name } : {}),
+      ...(data.oemRef !== undefined ? { oemRef: data.oemRef } : {}),
+      ...(data.brand !== undefined ? { brand: data.brand } : {}),
+      ...(data.model !== undefined ? { model: data.model } : {}),
+      ...(data.year !== undefined ? { year: Number(data.year) } : {}),
+      ...(data.category !== undefined ? { category: String(data.category) } : {}),
+      ...(data.price !== undefined ? { price: String(data.price) } : {}),
+      ...(data.condition !== undefined ? { condition: data.condition } : {}),
+      ...(data.warranty !== undefined ? { warranty: data.warranty } : {}),
+      ...(data.compatibility !== undefined ? { compatibility: data.compatibility } : {}),
+      ...(data.images !== undefined ? { images: Array.isArray(data.images) ? data.images : [] } : {}),
+      ...(data.description !== undefined ? { description: data.description } : {}),
+    }});
+    res.json(updated);
+  } catch (e) {
+    res.status(400).json({ error: 'failed_to_update_product' });
+  }
+});
+
+app.delete('/api/products/:id', async (req, res) => {
+  try {
+    await prisma.product.delete({ where: { id: req.params.id } });
+    res.json({ success: true });
+  } catch (e) {
+    res.status(404).json({ error: 'not_found' });
+  }
+});
+
 app.get('/products', async (req, res) => {
   try {
     const { category, brand, model, limit } = req.query as any;
