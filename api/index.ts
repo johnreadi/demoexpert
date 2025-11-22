@@ -28,12 +28,12 @@ const normalizeAuction = (a: any): Auction => {
       : ['https://picsum.photos/seed/auction/800/600'];
 
   const safeVehicle = {
-    name: a?.vehicleName ?? rawVehicle.name ?? '',
-    brand: a?.brand ?? rawVehicle.brand ?? '',
-    model: a?.model ?? rawVehicle.model ?? '',
-    year: Number(a?.year ?? rawVehicle.year ?? 0),
-    mileage: Number(a?.mileage ?? rawVehicle.mileage ?? 0),
-    description: a?.description ?? rawVehicle.description ?? '',
+    name: rawVehicle.name ?? a?.vehicleName ?? '',
+    brand: rawVehicle.brand ?? a?.brand ?? '',
+    model: rawVehicle.model ?? a?.model ?? '',
+    year: Number(rawVehicle.year ?? a?.year ?? 0),
+    mileage: Number(rawVehicle.mileage ?? a?.mileage ?? 0),
+    description: rawVehicle.description ?? a?.description ?? '',
     images,
     videos: Array.isArray(rawVehicle.videos) ? rawVehicle.videos : [],
   };

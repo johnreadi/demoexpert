@@ -85,8 +85,54 @@ const MOCK_USERS: User[] = [
 ];
 
 const MOCK_AUCTIONS: Auction[] = [
-    { id: 'auc-1', vehicle: { name: 'Peugeot 208 GT Line', brand: 'Peugeot', model: '208', year: 2019, mileage: 55000, description: 'Superbe Peugeot 208 GT Line...', images: ['https://picsum.photos/seed/auc1-1/800/600'] }, startingPrice: 8000, currentBid: 8300, bidCount: 6, bids: [ { userId: 'user-staff-2', bidderName: 'Marie Curie', amount: 8300, timestamp: new Date(Date.now() - 3600000 * 1) } ], endDate: new Date(Date.now() + 1000 * 60 * 60 * 49) },
-    { id: 'auc-2', vehicle: { name: 'Volkswagen Golf VII', brand: 'Volkswagen', model: 'Golf', year: 2017, mileage: 89000, description: 'Volkswagen Golf 7 en excellent état...', images: ['https://picsum.photos/seed/auc2-1/800/600'] }, startingPrice: 10000, currentBid: 10500, bidCount: 8, bids: [ { userId: 'user-staff-1', bidderName: 'Jean Dupont', amount: 10500, timestamp: new Date(Date.now() - 3600000 * 1) } ], endDate: new Date(Date.now() + 1000 * 60 * 60 * 24 * 5) },
+  { 
+    id: 'auc-1', 
+    vehicle: { 
+      name: 'Peugeot 208 GT Line', 
+      brand: 'Peugeot', 
+      model: '208', 
+      year: 2019, 
+      mileage: 55000, 
+      description: 'Superbe Peugeot 208 GT Line...', 
+      images: ['https://picsum.photos/seed/auc1-1/800/600'] 
+    }, 
+    startingPrice: 8000, 
+    currentBid: 8300, 
+    bidCount: 6, 
+    bids: [ 
+      { 
+        userId: 'user-staff-2', 
+        bidderName: 'Marie Curie', 
+        amount: 8300, 
+        timestamp: new Date(Date.now() - 3600000 * 1) 
+      } 
+    ], 
+    endDate: new Date(Date.now() + 1000 * 60 * 60 * 49) 
+  },
+  { 
+    id: 'auc-2', 
+    vehicle: { 
+      name: 'Volkswagen Golf VII', 
+      brand: 'Volkswagen', 
+      model: 'Golf', 
+      year: 2017, 
+      mileage: 89000, 
+      description: 'Volkswagen Golf 7 en excellent état...', 
+      images: ['https://picsum.photos/seed/auc2-1/800/600'] 
+    }, 
+    startingPrice: 10000, 
+    currentBid: 10500, 
+    bidCount: 8, 
+    bids: [ 
+      { 
+        userId: 'user-staff-1', 
+        bidderName: 'Jean Dupont', 
+        amount: 10500, 
+        timestamp: new Date(Date.now() - 3600000 * 1) 
+      } 
+    ], 
+    endDate: new Date(Date.now() + 1000 * 60 * 60 * 24 * 5) 
+  },
 ];
 
 const MOCK_ADMIN_MESSAGES: AdminMessage[] = [
