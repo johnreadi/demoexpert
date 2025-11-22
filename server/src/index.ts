@@ -501,12 +501,12 @@ app.get('/api/settings', async (_req, res) => {
   try {
     const settings = await prisma.settings.findUnique({ where: { key: 'site_settings' } });
     if (!settings) {
-      return res.json(DEFAULT_SETTINGS);
+      return res.json(normalizeSettings(DEFAULT_SETTINGS));
     }
     res.json(normalizeSettings(settings.value));
   } catch (error) {
     console.error("Failed to fetch settings from database:", error);
-    return res.json(DEFAULT_SETTINGS);
+    return res.json(normalizeSettings(DEFAULT_SETTINGS));
   }
 });
 

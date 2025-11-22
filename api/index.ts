@@ -84,12 +84,12 @@ export const deleteProduct = async (productId: string): Promise<{ success: boole
 export const getAuctions = async (): Promise<Auction[]> => {
   if (USE_LOCAL_API) return simulateApiCall(db.getAuctions());
   const data = await http<any[]>(`/api/auctions`);
-  return data.map(normalizeAuction);
+  return Array.isArray(data) ? data.map(normalizeAuction) : [];
 };
 export const getAuctionById = async (id: string): Promise<Auction | undefined> => {
   if (USE_LOCAL_API) return simulateApiCall(db.getAuctionById(id));
   const a = await http<any>(`/api/auctions/${id}`);
-  return normalizeAuction(a);
+  return a ? normalizeAuction(a) : undefined;
 };
 export const addBid = async (auctionId: string, bidAmount: number, userId: string, bidderName: string): Promise<Auction> => {
   if (USE_LOCAL_API) return simulateApiCall(db.addBid(auctionId, bidAmount, userId, bidderName));
