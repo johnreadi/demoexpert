@@ -124,6 +124,12 @@ export default function AuctionsPage(): React.ReactNode {
             return 0;
         });
 
+        // 4. Sécurité : ne garder que les enchères avec un véhicule et un tableau d'images
+        auctions = auctions.filter(a => {
+            const v: any = (a as any).vehicle;
+            return v && Array.isArray(v.images);
+        });
+
         return auctions;
     }, [allAuctions, filters]);
 
