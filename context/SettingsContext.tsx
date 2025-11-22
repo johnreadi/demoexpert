@@ -13,6 +13,19 @@ const SettingsContext = createContext<SettingsContextType | undefined>(undefined
 const normalizeSettings = (input: any): SiteSettings => {
   const heroBg = input?.hero?.background ?? (input?.hero?.backgroundImage ? { type: 'image', value: input.hero.backgroundImage } : { type: 'color', value: '#003366' });
   const hero = { title: input?.hero?.title ?? '', subtitle: input?.hero?.subtitle ?? '', background: heroBg };
+  const businessInfo = {
+    name: input?.businessInfo?.name ?? 'Démolition Expert',
+    logoUrl: input?.businessInfo?.logoUrl ?? '',
+    address: input?.businessInfo?.address ?? '450 Route de Gournay, 76160 Saint-Jacques-sur-Darnétal, France',
+    phone: input?.businessInfo?.phone ?? '02 35 08 18 55',
+    email: input?.businessInfo?.email ?? 'contact@casseautopro.fr',
+    openingHours: input?.businessInfo?.openingHours ?? 'Lun-Ven: 8h00 - 18h00, Sam: 9h00 - 12h00',
+  };
+  const socialLinks = {
+    facebook: input?.socialLinks?.facebook ?? 'https://facebook.com',
+    twitter: input?.socialLinks?.twitter ?? 'https://twitter.com',
+    linkedin: input?.socialLinks?.linkedin ?? 'https://linkedin.com',
+  };
   const pc = input?.pageContent ?? {};
   const normalizePage = (p: any) => ({ heroTitle: p?.heroTitle ?? '', heroSubtitle: p?.heroSubtitle ?? '', heroImage: p?.heroImage ?? '', contentTitle: p?.contentTitle ?? '', contentDescription: p?.contentDescription ?? '', contentImage: p?.contentImage ?? '', features: Array.isArray(p?.features) ? p.features : [] });
   const pageContent = { repairs: normalizePage(pc?.repairs ?? {}), maintenance: normalizePage(pc?.maintenance ?? {}), tires: normalizePage(pc?.tires ?? {}) };
@@ -23,7 +36,13 @@ const normalizeSettings = (input: any): SiteSettings => {
     seo: { metaTitle: adv?.seo?.metaTitle ?? '', metaDescription: adv?.seo?.metaDescription ?? '', keywords: adv?.seo?.keywords ?? '' },
     security: { allowPublicRegistration: adv?.security?.allowPublicRegistration ?? true }
   };
-  return { ...input, hero, pageContent, advancedSettings } as SiteSettings;
+  const f = input?.footer ?? {};
+  const footer = {
+    description: f?.description ?? "Votre spécialiste de la pièce automobile d'occasion et du recyclage en Normandie.",
+    servicesLinks: Array.isArray(f?.servicesLinks) ? f.servicesLinks : [],
+    infoLinks: Array.isArray(f?.infoLinks) ? f.infoLinks : [],
+  };
+  return { ...input, businessInfo, socialLinks, hero, pageContent, advancedSettings, footer } as SiteSettings;
 };
 
 // Default settings to use when API is not available

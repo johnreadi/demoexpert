@@ -41,7 +41,7 @@ export default function AuctionDetailPage(): React.ReactNode {
                 if(foundAuction) {
                     const processedAuction = processAuctionData(foundAuction);
                     setAuction(processedAuction);
-                    setMainImage(processedAuction.vehicle.images[0]);
+                    setMainImage(processedAuction.vehicle.images?.[0] || 'https://picsum.photos/seed/auction-detail/800/600');
                     if (processedAuction.endDate < new Date()) {
                         setIsEnded(true);
                     }
@@ -161,7 +161,7 @@ export default function AuctionDetailPage(): React.ReactNode {
                         
                         <img src={mainImage} alt={auction.vehicle.name} className="w-full h-96 object-cover rounded-lg shadow-md mb-4" />
                         <div className="flex space-x-2">
-                            {auction.vehicle.images.map((img, index) => (
+                            {Array.isArray(auction.vehicle.images) && auction.vehicle.images.map((img, index) => (
                                 <img 
                                     key={index}
                                     src={img} 
