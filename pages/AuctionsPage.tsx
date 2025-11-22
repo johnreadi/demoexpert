@@ -87,11 +87,13 @@ export default function AuctionsPage(): React.ReactNode {
 
         // 3. Sort
         auctions.sort((a, b) => {
+            const ta = a.endDate instanceof Date ? a.endDate.getTime() : Number.MAX_SAFE_INTEGER;
+            const tb = b.endDate instanceof Date ? b.endDate.getTime() : Number.MAX_SAFE_INTEGER;
             if (filters.sortBy === 'endingSoon') {
-                return a.endDate.getTime() - b.endDate.getTime();
+                return ta - tb;
             }
             if (filters.sortBy === 'oldest') {
-                return b.endDate.getTime() - a.endDate.getTime();
+                return tb - ta;
             }
             return 0;
         });
