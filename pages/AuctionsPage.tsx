@@ -5,16 +5,29 @@ import CountdownTimer from '../components/CountdownTimer';
 import * as api from '../api';
 
 const AuctionCard: React.FC<{ auction: Auction }> = ({ auction }) => {
-    const v = auction?.vehicle ?? { name: '', brand: '', model: '', year: 0, mileage: 0, description: '', images: [] };
-    if (!auction) {
-      return (
-        <div className="bg-white rounded-lg shadow-lg p-6">Indisponible</div>
-      );
-    }
-    return (
+	if (!auction) {
+	  return (
+		<div className="bg-white rounded-lg shadow-lg p-6">Indisponible</div>
+	  );
+	}
+
+	const rawVehicle: any = (auction as any).vehicle ?? {};
+	const images: string[] = Array.isArray(rawVehicle.images) ? rawVehicle.images : [];
+	const v = {
+		name: rawVehicle.name ?? '',
+		brand: rawVehicle.brand ?? '',
+		model: rawVehicle.model ?? '',
+		year: Number(rawVehicle.year ?? 0),
+		mileage: Number(rawVehicle.mileage ?? 0),
+		description: rawVehicle.description ?? '',
+		images,
+	};
+	const mainImage = images[0] || 'https://picsum.photos/seed/auction-card/800/600';
+
+	return (
         <div className="bg-white rounded-lg shadow-lg overflow-hidden flex flex-col group transition-transform duration-300 hover:-translate-y-2">
             <div className="relative">
-                <img src={v.images?.[0] || 'https://picsum.photos/seed/auction-card/800/600'} alt={v.name || 'Véhicule'} className="w-full h-56 object-cover" />
+                <img src={mainImage} alt={v.name || 'Véhicule'} className="w-full h-56 object-cover" />
                 <div className="absolute top-0 right-0 bg-expert-blue text-white px-3 py-1 text-sm font-bold rounded-bl-lg">
                     <i className="fas fa-tags mr-2"></i>{auction.bidCount} offres
                 </div>
