@@ -155,22 +155,24 @@ export default function AuctionDetailPage(): React.ReactNode {
         return <div className="text-center py-20">Offre non trouvée.</div>;
     }
 
+    const v = auction?.vehicle ?? { name: '', brand: '', model: '', year: 0, mileage: 0, description: '', images: [] } as any;
+
     return (
         <div className="w-full mx-auto px-4 py-12 sm:px-6 lg:px-8">
             <div className="bg-white p-6 md:p-8 rounded-lg shadow-xl">
                 <div className="grid lg:grid-cols-3 gap-8">
                     {/* Image Gallery & Description (col-span-2) */}
                     <div className="lg:col-span-2">
-                        <h1 className="text-3xl md:text-4xl font-bold font-heading text-expert-blue mb-2">{auction.vehicle?.name || 'Véhicule'}</h1>
-                        <p className="text-lg text-gray-500 mb-6">{auction.vehicle?.brand || ''} {auction.vehicle?.model || ''} ({auction.vehicle?.year ?? ''})</p>
+                        <h1 className="text-3xl md:text-4xl font-bold font-heading text-expert-blue mb-2">{v.name || 'Véhicule'}</h1>
+                        <p className="text-lg text-gray-500 mb-6">{v.brand || ''} {v.model || ''} ({v.year ?? ''})</p>
                         
-                        <img src={mainImage} alt={auction.vehicle?.name || 'Véhicule'} className="w-full h-96 object-cover rounded-lg shadow-md mb-4" />
+                        <img src={mainImage} alt={v.name || 'Véhicule'} className="w-full h-96 object-cover rounded-lg shadow-md mb-4" />
                         <div className="flex space-x-2">
-                            {(auction.vehicle?.images ?? []).map((img, index) => (
+                            {(v.images ?? []).map((img, index) => (
                                 <img 
                                     key={index}
                                     src={img} 
-                                    alt={`${auction.vehicle?.name || 'Véhicule'} thumbnail ${index + 1}`}
+                                    alt={`${v.name || 'Véhicule'} thumbnail ${index + 1}`}
                                     className={`w-20 h-20 object-cover rounded cursor-pointer border-2 ${mainImage === img ? 'border-expert-blue' : 'border-transparent'}`}
                                     onClick={() => setMainImage(img)}
                                 />
@@ -180,12 +182,12 @@ export default function AuctionDetailPage(): React.ReactNode {
                         <div className="mt-8">
                             <h3 className="text-2xl font-bold font-heading text-expert-blue border-b-2 border-expert-light-gray pb-2 mb-4">Détails du Véhicule</h3>
                             <div className="grid grid-cols-2 gap-4 text-lg">
-                                <p><strong className="font-semibold">Kilométrage:</strong> {Number(auction.vehicle?.mileage ?? 0).toLocaleString()} km</p>
-                                <p><strong className="font-semibold">Année:</strong> {auction.vehicle?.year ?? ''}</p>
-                                <p><strong className="font-semibold">Marque:</strong> {auction.vehicle?.brand || ''}</p>
-                                <p><strong className="font-semibold">Modèle:</strong> {auction.vehicle?.model || ''}</p>
+                                <p><strong className="font-semibold">Kilométrage:</strong> {Number(v.mileage ?? 0).toLocaleString()} km</p>
+                                <p><strong className="font-semibold">Année:</strong> {v.year ?? ''}</p>
+                                <p><strong className="font-semibold">Marque:</strong> {v.brand || ''}</p>
+                                <p><strong className="font-semibold">Modèle:</strong> {v.model || ''}</p>
                             </div>
-                            <p className="mt-4 text-gray-700">{auction.vehicle.description}</p>
+                            <p className="mt-4 text-gray-700">{v.description || ''}</p>
                         </div>
                     </div>
 

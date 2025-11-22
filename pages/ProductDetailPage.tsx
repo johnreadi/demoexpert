@@ -74,7 +74,7 @@ export default function ProductDetailPage(): React.ReactNode {
                 const foundProduct = await api.getProductById(id);
                 if (foundProduct) {
                     setProduct(foundProduct);
-                    setMainImage(foundProduct.images[0]);
+                    setMainImage(foundProduct.images?.[0] || 'https://picsum.photos/seed/product-detail/800/600');
                     
                     const related = await api.getProducts({ category: foundProduct.category, limit: 4 });
                     setSimilarProducts(related.filter(p => p.id !== foundProduct.id).slice(0, 3));
@@ -112,7 +112,7 @@ export default function ProductDetailPage(): React.ReactNode {
                     <div>
                         <img src={mainImage} alt={product.name} className="w-full h-96 object-cover rounded-lg shadow-md mb-4" />
                         <div className="flex space-x-2">
-                            {product.images.map((img, index) => (
+                            {(product.images ?? []).map((img, index) => (
                                 <img 
                                     key={index}
                                     src={img} 
@@ -157,7 +157,7 @@ export default function ProductDetailPage(): React.ReactNode {
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
                         {similarProducts.map(p => (
                             <div key={p.id} className="bg-white rounded-lg shadow-md overflow-hidden group">
-                                <img src={p.images[0]} alt={p.name} className="w-full h-48 object-cover"/>
+                                <img src={p.images?.[0] || 'https://picsum.photos/seed/similar-product/800/600'} alt={p.name} className="w-full h-48 object-cover"/>
                                 <div className="p-4">
                                     <h4 className="font-bold text-lg text-expert-blue truncate">{p.name}</h4>
                                     <p className="text-sm text-gray-500">{p.brand} {p.model}</p>

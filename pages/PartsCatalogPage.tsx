@@ -8,7 +8,7 @@ import ErrorMessage from '../components/ErrorMessage';
 const ProductCard: React.FC<{ product: Product }> = ({ product }) => (
     <div className="bg-white rounded-lg shadow-md overflow-hidden flex flex-col group">
         <div className="relative">
-            <img src={product.images[0]} alt={product.name} className="w-full h-48 object-cover" />
+            <img src={product.images?.[0] || 'https://picsum.photos/seed/product-card/800/600'} alt={product.name} className="w-full h-48 object-cover" />
             <div className="absolute top-2 right-2 bg-expert-blue text-white text-xs font-bold px-2 py-1 rounded">{product.category}</div>
         </div>
         <div className="p-4 flex flex-col flex-grow">
