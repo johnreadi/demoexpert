@@ -24,7 +24,7 @@ const AuctionCard: React.FC<{ auction: Auction }> = ({ auction }) => {
                 </div>
 
                 <div className="my-3">
-                     <CountdownTimer endDate={new Date(auction.endDate)} />
+                     <CountdownTimer endDate={typeof auction.endDate === 'string' ? new Date(auction.endDate) : auction.endDate} />
                 </div>
                 
                 <div className="mt-auto pt-4">
@@ -55,7 +55,7 @@ export default function AuctionsPage(): React.ReactNode {
                 // Ensure dates are Date objects for proper comparison
                 const processedData = data.map(auction => ({
                     ...auction,
-                    endDate: new Date(auction.endDate),
+                    endDate: typeof auction.endDate === 'string' ? new Date(auction.endDate) : auction.endDate,
                 }));
                 setAllAuctions(processedData);
             } catch (error) {

@@ -11,10 +11,10 @@ import { useAuth } from '../context/AuthContext';
 const processAuctionData = (auctionData: AuctionType): AuctionType => {
     return {
         ...auctionData,
-        endDate: new Date(auctionData.endDate),
+        endDate: typeof auctionData.endDate === 'string' ? new Date(auctionData.endDate) : auctionData.endDate,
         bids: auctionData.bids.map(bid => ({
             ...bid,
-            timestamp: new Date(bid.timestamp)
+            timestamp: typeof bid.timestamp === 'string' ? new Date(bid.timestamp) : bid.timestamp
         }))
     };
 };
