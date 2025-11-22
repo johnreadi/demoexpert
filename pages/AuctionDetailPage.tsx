@@ -156,16 +156,16 @@ export default function AuctionDetailPage(): React.ReactNode {
                 <div className="grid lg:grid-cols-3 gap-8">
                     {/* Image Gallery & Description (col-span-2) */}
                     <div className="lg:col-span-2">
-                        <h1 className="text-3xl md:text-4xl font-bold font-heading text-expert-blue mb-2">{auction.vehicle.name}</h1>
-                        <p className="text-lg text-gray-500 mb-6">{auction.vehicle.brand} {auction.vehicle.model} ({auction.vehicle.year})</p>
+                        <h1 className="text-3xl md:text-4xl font-bold font-heading text-expert-blue mb-2">{auction.vehicle?.name || 'Véhicule'}</h1>
+                        <p className="text-lg text-gray-500 mb-6">{auction.vehicle?.brand || ''} {auction.vehicle?.model || ''} ({auction.vehicle?.year ?? ''})</p>
                         
-                        <img src={mainImage} alt={auction.vehicle.name} className="w-full h-96 object-cover rounded-lg shadow-md mb-4" />
+                        <img src={mainImage} alt={auction.vehicle?.name || 'Véhicule'} className="w-full h-96 object-cover rounded-lg shadow-md mb-4" />
                         <div className="flex space-x-2">
-                            {Array.isArray(auction.vehicle.images) && auction.vehicle.images.map((img, index) => (
+                            {Array.isArray(auction.vehicle?.images) && auction.vehicle!.images!.map((img, index) => (
                                 <img 
                                     key={index}
                                     src={img} 
-                                    alt={`${auction.vehicle.name} thumbnail ${index + 1}`}
+                                    alt={`${auction.vehicle?.name || 'Véhicule'} thumbnail ${index + 1}`}
                                     className={`w-20 h-20 object-cover rounded cursor-pointer border-2 ${mainImage === img ? 'border-expert-blue' : 'border-transparent'}`}
                                     onClick={() => setMainImage(img)}
                                 />
