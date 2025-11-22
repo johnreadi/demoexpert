@@ -27,7 +27,7 @@ const normalizeAuction = (a: any): Auction => ({
     year: Number(a.year ?? a.vehicle?.year ?? 0),
     mileage: Number(a.mileage ?? a.vehicle?.mileage ?? 0),
     description: a.description ?? a.vehicle?.description ?? '',
-    images: Array.isArray(a.images) ? a.images : (a.vehicle?.images ?? []),
+    images: Array.isArray(a.images) ? a.images : (Array.isArray(a.vehicle?.images) ? a.vehicle.images : ['https://picsum.photos/seed/auction/800/600']),
   },
   startingPrice: Number(a.startingPrice ?? 0),
   currentBid: Number(a.currentBid ?? 0),
@@ -37,10 +37,10 @@ const normalizeAuction = (a: any): Auction => ({
         userId: b.userId ?? '',
         bidderName: b.bidderName ?? '',
         amount: Number(b.amount ?? 0),
-        timestamp: new Date(b.timestamp),
+        timestamp: b?.timestamp ? new Date(b.timestamp) : new Date(),
       }))
     : [],
-  endDate: new Date(a.endDate),
+  endDate: a?.endDate ? new Date(a.endDate) : new Date(Date.now() + 1000 * 60 * 60 * 24 * 3),
 });
 
 

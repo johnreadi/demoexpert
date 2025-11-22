@@ -69,7 +69,7 @@ const ServicesSection = () => {
 
 const FeaturedProductCard: React.FC<{ product: Product }> = ({ product }) => (
     <div className="bg-white rounded-lg shadow-md overflow-hidden mx-2">
-        <img src={product.images[0]} alt={product.name} className="w-full h-48 object-cover"/>
+        <img src={product.images?.[0] || 'https://picsum.photos/seed/product-card/800/600'} alt={product.name} className="w-full h-48 object-cover"/>
         <div className="p-4">
             <h4 className="font-bold text-lg text-expert-blue truncate">{product.name}</h4>
             <p className="text-sm text-gray-500">{product.brand} {product.model}</p>

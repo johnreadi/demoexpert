@@ -36,8 +36,24 @@ const normalizeSettings = (input: any): SiteSettings => {
     seo: { metaTitle: adv?.seo?.metaTitle ?? '', metaDescription: adv?.seo?.metaDescription ?? '', keywords: adv?.seo?.keywords ?? '' },
     security: { allowPublicRegistration: adv?.security?.allowPublicRegistration ?? true }
   };
-  const services = Array.isArray(input?.services) && input.services.length > 0 ? input.services : DEFAULT_SETTINGS.services;
+  const withDefaultService = (svc: any, idx: number) => {
+    const def = DEFAULT_SETTINGS.services[idx] ?? DEFAULT_SETTINGS.services[0];
+    return {
+      id: svc?.id ?? def.id,
+      icon: svc?.icon ?? def.icon,
+      title: svc?.title ?? def.title,
+      description: svc?.description ?? def.description,
+      link: svc?.link ?? def.link,
+    };
+  };
+  const inputServices = Array.isArray(input?.services) ? input.services : [];
+  const normalizedServices = inputServices.map((s: any, idx: number) => withDefaultService(s, idx)).filter(s => s.title && s.link);
+  const services = normalizedServices.length >= DEFAULT_SETTINGS.services.length
+    ? normalizedServices
+    : [...normalizedServices, ...DEFAULT_SETTINGS.services.slice(normalizedServices.length)];
+
   const testimonials = Array.isArray(input?.testimonials) && input.testimonials.length > 0 ? input.testimonials : DEFAULT_SETTINGS.testimonials;
+
   const f = input?.footer ?? {};
   const footer = {
     description: f?.description ?? DEFAULT_SETTINGS.footer.description,
