@@ -759,7 +759,7 @@ app.post('/api/auctions/import', requireAdmin, async (req, res) => {
     let count = 0;
     for (const a of items) {
       const v = a?.vehicle || {};
-      await prisma.auction.create({ data: {
+      const created = await prisma.auction.create({ data: {
         vehicleName: v.name || a.vehicleName || '',
         brand: v.brand || a.brand || '',
         model: v.model || a.model || '',
@@ -772,6 +772,20 @@ app.post('/api/auctions/import', requireAdmin, async (req, res) => {
         bidCount: Number(a.bidCount || 0),
         endDate: new Date(a.endDate || Date.now() + 1000 * 60 * 60 * 24 * 3),
       }});
+      if (Array.isArray(a.bids)) {
+        for (const b of a.bids) {
+          await prisma.bid.create({ data: {
+            auctionId: created.id,
+            userId: b.userId || '',
+            bidderName: b.bidderName || 'Anonymous',
+            amount: String(b.amount || created.currentBid),
+            timestamp: b.timestamp ? new Date(b.timestamp) : new Date(),
+          }});
+        }
+        const nextBidCount = await prisma.bid.count({ where: { auctionId: created.id } });
+        const lastBid = await prisma.bid.findFirst({ where: { auctionId: created.id }, orderBy: { timestamp: 'desc' }, select: { amount: true } });
+        await prisma.auction.update({ where: { id: created.id }, data: { bidCount: nextBidCount, currentBid: lastBid?.amount || created.currentBid } });
+      }
       count++;
     }
     res.json({ imported: count });
@@ -804,6 +818,116 @@ app.put('/api/settings', async (req, res) => {
     res.json(settings.value);
   } catch {
     res.status(500).json({ error: 'failed_to_update_settings' });
+  }
+});
+
+app.post('/api/settings/import', requireAdmin, async (req, res) => {
+  try {
+    const value = req.body?.settings ?? req.body;
+    await prisma.settings.upsert({
+      where: { key: 'site_settings' },
+      update: { value },
+      create: { key: 'site_settings', value }
+    });
+    res.json({ imported: 1 });
+  } catch {
+    res.status(500).json({ error: 'failed_to_import_settings' });
+  }
+});
+
+app.post('/api/products/import', requireAdmin, async (req, res) => {
+  try {
+    const items = Array.isArray(req.body?.products) ? req.body.products : [];
+    if (!items.length) return res.json({ imported: 0 });
+    for (const p of items) {
+      await prisma.product.create({
+        data: {
+          name: p.name || '',
+          oemRef: p.oemRef || `REF${Date.now()}`,
+          brand: p.brand || '',
+          model: p.model || '',
+          year: Number(p.year || 0),
+          category: String(p.category || ''),
+          price: String(p.price || 0),
+          condition: String(p.condition || ''),
+          warranty: String(p.warranty || ''),
+          compatibility: p.compatibility || null,
+          images: Array.isArray(p.images) ? p.images : [],
+          description: p.description || ''
+        }
+      });
+    }
+    res.json({ imported: items.length });
+  } catch {
+    res.status(500).json({ error: 'failed_to_import_products' });
+  }
+});
+
+app.post('/api/contacts/import', requireAdmin, async (req, res) => {
+  try {
+    const items = Array.isArray(req.body?.contacts) ? req.body.contacts : [];
+    let count = 0;
+    for (const c of items) {
+      await prisma.contact.create({ data: {
+        name: c.name || '',
+        email: c.email || '',
+        subject: c.subject || '',
+        message: c.message || ''
+      }});
+      count++;
+    }
+    res.json({ imported: count });
+  } catch {
+    res.status(500).json({ error: 'failed_to_import_contacts' });
+  }
+});
+
+app.post('/api/admin/messages/import', requireAdmin, async (req, res) => {
+  try {
+    const items = Array.isArray(req.body?.messages) ? req.body.messages : [];
+    let count = 0;
+    for (const m of items) {
+      await prisma.adminMessage.create({ data: {
+        from: m.from || '',
+        senderName: m.senderName || '',
+        senderEmail: m.senderEmail || '',
+        userId: m.userId || null,
+        subject: m.subject || '',
+        content: m.content || '',
+        isRead: Boolean(m.isRead),
+        isArchived: Boolean(m.isArchived),
+        status: m.status || 'pending',
+        attachment: m.attachment || null
+      }});
+      count++;
+    }
+    res.json({ imported: count });
+  } catch {
+    res.status(500).json({ error: 'failed_to_import_messages' });
+  }
+});
+
+app.post('/api/users/import', requireAdmin, async (req, res) => {
+  try {
+    const items = Array.isArray(req.body?.users) ? req.body.users : [];
+    let count = 0;
+    for (const u of items) {
+      const name = u.name || '';
+      const email = u.email || '';
+      const role = (u.role === 'Admin' || u.role === 'Staff') ? u.role : 'Staff';
+      const status = (u.status === 'pending' || u.status === 'approved') ? u.status : 'approved';
+      const pwd = u.password || 'password123';
+      const hash = await bcrypt.hash(pwd, 10);
+      await prisma.user.upsert({
+        where: { email },
+        update: { name, role, status, password: hash },
+        create: { name, email, role, status, password: hash }
+      });
+      count++;
+    }
+    res.json({ imported: count });
+  } catch {
+    res.status(500).json({ error: 'failed_to_import_users' });
   }
 });
 
