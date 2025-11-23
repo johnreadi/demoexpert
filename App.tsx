@@ -1,5 +1,5 @@
-import React, { ReactNode, useState, useEffect } from 'react';
-import { HashRouter as Router, Routes, Route, Outlet, useLocation } from 'react-router-dom';
+import React, { ReactNode } from 'react';
+import { HashRouter as Router, Routes, Route } from 'react-router-dom';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import HomePage from './pages/HomePage';
@@ -26,7 +26,7 @@ import RepairsPage from './pages/RepairsPage';
 import MaintenancePage from './pages/MaintenancePage';
 import TiresPage from './pages/TiresPage';
 import AccountPage from './pages/AccountPage';
-import { ToastProvider } from './context/ToastContext';
+
 import TestMinimalApiImport from './TestMinimalApiImport';
 import TestApiFunctions from './TestApiFunctions';
 import TestApiImportComponent from './test-api-import';
@@ -52,39 +52,28 @@ const ErrorFallback: React.FC = () => (
 );
 
 // Wrapper component with error handling
-const AppWrapper: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [hasError, setHasError] = useState(false);
-
-  useEffect(() => {
-    const errorHandler = (error: ErrorEvent) => {
-      console.error('Global error caught:', error);
-      setHasError(true);
-    };
-
-    const rejectionHandler = (event: PromiseRejectionEvent) => {
-      console.error('Unhandled promise rejection:', event.reason);
-      setHasError(true);
-    };
-
-    window.addEventListener('error', errorHandler);
-    window.addEventListener('unhandledrejection', rejectionHandler);
-
-    return () => {
-      window.removeEventListener('error', errorHandler);
-      window.removeEventListener('unhandledrejection', rejectionHandler);
-    };
-  }, []);
-
-  if (hasError) {
-    return <ErrorFallback />;
+class ErrorBoundary extends React.Component<{ children: ReactNode }, { hasError: boolean }> {
+  constructor(props: any) {
+    super(props);
+    this.state = { hasError: false };
   }
+  static getDerivedStateFromError(error: Error) {
+    console.error('ErrorBoundary', error);
+    return { hasError: true };
+  }
+  componentDidCatch(error: Error, info: React.ErrorInfo) {
+    console.error('ErrorBoundary', error, info);
+  }
+  render(): React.ReactNode {
+    return this.state.hasError ? <ErrorFallback /> : this.props.children;
+  }
+}
 
-  return <>{children}</>;
-};
+
 
 function App() {
   return (
-    <AppWrapper>
+    <ErrorBoundary>
       <AuthProvider>
         <SettingsProvider>
           <Router>
@@ -101,8 +90,8 @@ function App() {
                   <Route path="/" element={<HomePage />} />
                   <Route path="/pieces" element={<PartsCatalogPage />} />
                   <Route path="/pieces/:id" element={<ProductDetailPage />} />
-                  <Route path="/offres" element={<AuctionsPage />} />
-                  <Route path="/offres/:id" element={<AuctionDetailPage />} />
+                  <Route path="/offres" element={<ErrorBoundary><AuctionsPage /></ErrorBoundary>} />
+                  <Route path="/offres/:id" element={<ErrorBoundary><AuctionDetailPage /></ErrorBoundary>} />
                   <Route path="/rachat-vehicule" element={<VehicleBuybackPage />} />
                   <Route path="/enlevement-epave" element={<ScrapRemovalPage />} />
                   <Route path="/pare-brise" element={<WindshieldPage />} />
@@ -142,7 +131,7 @@ function App() {
           </Router>
         </SettingsProvider>
       </AuthProvider>
-    </AppWrapper>
+    </ErrorBoundary>
   );
 }
 
