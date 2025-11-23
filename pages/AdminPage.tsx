@@ -1212,8 +1212,140 @@ export default function AdminPage(): React.ReactNode {
                     
                      {/* Page Content */}
                     <div className="bg-white p-6 rounded-lg shadow-md">
+                        <h3 className="text-xl font-bold font-heading text-expert-blue mb-4 border-b pb-2">Aspect du site</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          <div>
+                            <label className="block text-sm font-medium">Couleur du Header</label>
+                            <input type="color" value={settingsFormData.themeColors.headerBg} onChange={e => handleSettingsChange('themeColors.headerBg', e.target.value)} className="w-16 h-10 p-0 border rounded" />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium">Couleur du Footer</label>
+                            <input type="color" value={settingsFormData.themeColors.footerBg} onChange={e => handleSettingsChange('themeColors.footerBg', e.target.value)} className="w-16 h-10 p-0 border rounded" />
+                          </div>
+                        </div>
+                        <div className="mt-6 space-y-2">
+                          <h4 className="font-semibold text-lg text-expert-blue">Section Héro (Accueil)</h4>
+                          <input value={settingsFormData.hero.title} onChange={e => handleSettingsChange('hero.title', e.target.value)} className="w-full p-2 border rounded" placeholder="Titre principal" />
+                          <input value={settingsFormData.hero.subtitle} onChange={e => handleSettingsChange('hero.subtitle', e.target.value)} className="w-full p-2 border rounded" placeholder="Sous-titre" />
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <select value={settingsFormData.hero.background.type} onChange={e => handleSettingsChange('hero.background.type', e.target.value)} className="p-2 border rounded bg-white">
+                              <option value="image">Image</option>
+                              <option value="color">Couleur</option>
+                            </select>
+                            {settingsFormData.hero.background.type === 'image' ? (
+                              <div className="md:col-span-2">
+                                <input type="text" value={settingsFormData.hero.background.value} onChange={e => handleSettingsChange('hero.background.value', e.target.value)} className="w-full p-2 border rounded mb-1" placeholder="URL de l'image" />
+                                <input type="file" accept="image/*" onChange={e => handleSettingsFileUpload(e, 'hero.background.value')} className="text-sm" />
+                              </div>
+                            ) : (
+                              <div className="md:col-span-2">
+                                <input type="color" value={settingsFormData.hero.background.value} onChange={e => handleSettingsChange('hero.background.value', e.target.value)} className="w-16 h-10 p-0 border rounded" />
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                        <div className="mt-6">
+                          <h4 className="font-semibold text-lg text-expert-blue mb-2">Réseaux sociaux</h4>
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <input value={settingsFormData.socialLinks.facebook} onChange={e => handleSettingsChange('socialLinks.facebook', e.target.value)} className="w-full p-2 border rounded" placeholder="Lien Facebook" />
+                            <input value={settingsFormData.socialLinks.twitter} onChange={e => handleSettingsChange('socialLinks.twitter', e.target.value)} className="w-full p-2 border rounded" placeholder="Lien X/Twitter" />
+                            <input value={settingsFormData.socialLinks.linkedin} onChange={e => handleSettingsChange('socialLinks.linkedin', e.target.value)} className="w-full p-2 border rounded" placeholder="Lien LinkedIn" />
+                          </div>
+                        </div>
+                    </div>
+
+                    <div className="bg-white p-6 rounded-lg shadow-md">
+                        <h3 className="text-xl font-bold font-heading text-expert-blue mb-4 border-b pb-2">Sections d'accueil</h3>
+                        <div className="space-y-4">
+                          {settingsFormData.services.map((s, index) => (
+                            <div key={s.id} className="grid grid-cols-1 md:grid-cols-4 gap-4 bg-gray-50 p-3 rounded">
+                              <input value={s.icon} onChange={e => handleServiceChange(index, 'icon', e.target.value)} className="p-2 border rounded" placeholder="Icône (fa cogs...)" />
+                              <input value={s.title} onChange={e => handleServiceChange(index, 'title', e.target.value)} className="p-2 border rounded" placeholder="Titre" />
+                              <input value={s.link} onChange={e => handleServiceChange(index, 'link', e.target.value)} className="p-2 border rounded" placeholder="Lien" />
+                              <div className="flex items-center justify-between gap-2">
+                                <input value={s.description} onChange={e => handleServiceChange(index, 'description', e.target.value)} className="p-2 border rounded w-full" placeholder="Description" />
+                                <button type="button" onClick={() => handleDeleteService(s.id)} className="text-red-500"><i className="fas fa-trash"></i></button>
+                              </div>
+                            </div>
+                          ))}
+                          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 bg-gray-100 p-3 rounded">
+                            <input value={newService.icon} onChange={e => setNewService(prev => ({...prev, icon: e.target.value}))} className="p-2 border rounded" placeholder="Icône" />
+                            <input value={newService.title} onChange={e => setNewService(prev => ({...prev, title: e.target.value}))} className="p-2 border rounded" placeholder="Titre" />
+                            <input value={newService.link} onChange={e => setNewService(prev => ({...prev, link: e.target.value}))} className="p-2 border rounded" placeholder="Lien" />
+                            <div className="flex items-center gap-2">
+                              <input value={newService.description} onChange={e => setNewService(prev => ({...prev, description: e.target.value}))} className="p-2 border rounded w-full" placeholder="Description" />
+                              <button type="button" onClick={handleAddService} className="bg-expert-blue text-white font-bold p-2 rounded">Ajouter</button>
+                            </div>
+                          </div>
+                        </div>
+                    </div>
+
+                    <div className="bg-white p-6 rounded-lg shadow-md">
+                        <h3 className="text-xl font-bold font-heading text-expert-blue mb-4 border-b pb-2">Bas de page</h3>
+                        <textarea value={settingsFormData.footer.description} onChange={e => handleSettingsChange('footer.description', e.target.value)} className="w-full p-2 border rounded mb-4" rows={3} placeholder="Description du bas de page" />
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          <div>
+                            <h4 className="font-semibold mb-2">Liens Services</h4>
+                            <div className="space-y-2">
+                              {settingsFormData.footer.servicesLinks.map(link => (
+                                <div key={link.id} className="grid grid-cols-3 gap-2">
+                                  <input value={link.text} onChange={e => handleFooterLinkChange('servicesLinks', link.id, 'text', e.target.value)} className="p-2 border rounded" placeholder="Texte" />
+                                  <input value={link.url} onChange={e => handleFooterLinkChange('servicesLinks', link.id, 'url', e.target.value)} className="p-2 border rounded" placeholder="URL" />
+                                  <button type="button" onClick={() => handleDeleteFooterLink('servicesLinks', link.id)} className="text-red-500"><i className="fas fa-trash"></i></button>
+                                </div>
+                              ))}
+                              <div className="grid grid-cols-3 gap-2 bg-gray-100 p-2 rounded">
+                                <input value={newFooterServiceLink.text} onChange={e => setNewFooterServiceLink(prev => ({...prev, text: e.target.value}))} className="p-2 border rounded" placeholder="Texte" />
+                                <input value={newFooterServiceLink.url} onChange={e => setNewFooterServiceLink(prev => ({...prev, url: e.target.value}))} className="p-2 border rounded" placeholder="URL" />
+                                <button type="button" onClick={() => handleAddFooterLink('servicesLinks')} className="bg-expert-blue text-white font-bold p-2 rounded">Ajouter</button>
+                              </div>
+                            </div>
+                          </div>
+                          <div>
+                            <h4 className="font-semibold mb-2">Liens Informations</h4>
+                            <div className="space-y-2">
+                              {settingsFormData.footer.infoLinks.map(link => (
+                                <div key={link.id} className="grid grid-cols-3 gap-2">
+                                  <input value={link.text} onChange={e => handleFooterLinkChange('infoLinks', link.id, 'text', e.target.value)} className="p-2 border rounded" placeholder="Texte" />
+                                  <input value={link.url} onChange={e => handleFooterLinkChange('infoLinks', link.id, 'url', e.target.value)} className="p-2 border rounded" placeholder="URL" />
+                                  <button type="button" onClick={() => handleDeleteFooterLink('infoLinks', link.id)} className="text-red-500"><i className="fas fa-trash"></i></button>
+                                </div>
+                              ))}
+                              <div className="grid grid-cols-3 gap-2 bg-gray-100 p-2 rounded">
+                                <input value={newFooterInfoLink.text} onChange={e => setNewFooterInfoLink(prev => ({...prev, text: e.target.value}))} className="p-2 border rounded" placeholder="Texte" />
+                                <input value={newFooterInfoLink.url} onChange={e => setNewFooterInfoLink(prev => ({...prev, url: e.target.value}))} className="p-2 border rounded" placeholder="URL" />
+                                <button type="button" onClick={() => handleAddFooterLink('infoLinks')} className="bg-expert-blue text-white font-bold p-2 rounded">Ajouter</button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                    </div>
+
+                    <div className="bg-white p-6 rounded-lg shadow-md">
+                        <h3 className="text-xl font-bold font-heading text-expert-blue mb-4 border-b pb-2">Témoignages</h3>
+                        <div className="space-y-2">
+                          {settingsFormData.testimonials.map(t => (
+                            <div key={t.id} className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                              <textarea value={t.text} onChange={e => handleTestimonialChange(t.id, 'text', e.target.value)} className="p-2 border rounded md:col-span-2" rows={3} placeholder="Texte" />
+                              <div className="flex items-center gap-2">
+                                <input value={t.author} onChange={e => handleTestimonialChange(t.id, 'author', e.target.value)} className="p-2 border rounded w-full" placeholder="Auteur" />
+                                <button type="button" onClick={() => handleDeleteTestimonial(t.id)} className="text-red-500"><i className="fas fa-trash"></i></button>
+                              </div>
+                            </div>
+                          ))}
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-2 bg-gray-100 p-3 rounded">
+                            <textarea value={newTestimonial.text} onChange={e => setNewTestimonial(prev => ({...prev, text: e.target.value}))} className="p-2 border rounded md:col-span-2" rows={3} placeholder="Texte" />
+                            <div className="flex items-center gap-2">
+                              <input value={newTestimonial.author} onChange={e => setNewTestimonial(prev => ({...prev, author: e.target.value}))} className="p-2 border rounded w-full" placeholder="Auteur" />
+                              <button type="button" onClick={handleAddTestimonial} className="bg-expert-blue text-white font-bold p-2 rounded">Ajouter</button>
+                            </div>
+                          </div>
+                        </div>
+                    </div>
+
+                    <div className="bg-white p-6 rounded-lg shadow-md">
                         <h3 className="text-xl font-bold font-heading text-expert-blue mb-4 border-b pb-2">Contenu des Pages de Service</h3>
-                         <div className="flex border-b mb-4">
+                        <div className="flex border-b mb-4">
                             {(['repairs', 'maintenance', 'tires'] as ServicePageTab[]).map(tab => (
                                 <button
                                     key={tab}
