@@ -155,7 +155,15 @@ export default function AuctionDetailPage(): React.ReactNode {
         return <div className="text-center py-20">Offre non trouvée.</div>;
     }
 
-    const v = auction?.vehicle ?? { name: '', brand: '', model: '', year: 0, mileage: 0, description: '', images: [] } as any;
+    const v = (auction?.vehicle ?? {
+        name: (auction as any)?.vehicleName || (auction as any)?.name || '',
+        brand: (auction as any)?.brand || '',
+        model: (auction as any)?.model || '',
+        year: Number((auction as any)?.year || 0),
+        mileage: Number((auction as any)?.mileage || 0),
+        description: (auction as any)?.description || '',
+        images: (auction as any)?.images || []
+    }) as any;
 
     return (
         <div className="w-full mx-auto px-4 py-12 sm:px-6 lg:px-8">

@@ -13,26 +13,19 @@ const AuctionCard: React.FC<{ auction: Auction }> = ({ auction }) => {
 	  );
 	}
 
-	// Additional defensive checks for vehicle property
-	const vehicle = auction?.vehicle;
-	if (!vehicle) {
-	  console.log("Vehicle is null or undefined");
-	  return (
-		<div className="bg-white rounded-lg shadow-lg p-6">Indisponible</div>
-	  );
-	}
-
-	const images: string[] = Array.isArray(vehicle.images) ? vehicle.images : [];
-	const v = {
-		name: vehicle.name ?? '',
-		brand: vehicle.brand ?? '',
-		model: vehicle.model ?? '',
-		year: Number(vehicle.year ?? 0),
-		mileage: Number(vehicle.mileage ?? 0),
-		description: vehicle.description ?? '',
-		images,
+	// Defensive build of vehicle from nested or flat data
+	const vRaw: any = auction?.vehicle ?? {
+		name: (auction as any)?.vehicleName || (auction as any)?.name || '',
+		brand: (auction as any)?.brand || '',
+		model: (auction as any)?.model || '',
+		year: Number((auction as any)?.year || 0),
+		mileage: Number((auction as any)?.mileage || 0),
+		description: (auction as any)?.description || '',
+		images: (auction as any)?.images || []
 	};
-	const mainImage = images[0] || 'https://picsum.photos/seed/auction-card/800/600';
+	const images: string[] = Array.isArray(vRaw.images) && vRaw.images.length > 0 ? vRaw.images : ['https://picsum.photos/seed/auction-card/800/600'];
+	const v = { ...vRaw, images };
+	const mainImage = images[0];
 
 	return (
         <div className="bg-white rounded-lg shadow-lg overflow-hidden flex flex-col group transition-transform duration-300 hover:-translate-y-2">
