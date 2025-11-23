@@ -511,7 +511,24 @@ app.get('/api/auctions', async (_req, res) => {
     }
     
     const auctions = await prisma.auction.findMany({ orderBy: { createdAt: 'desc' } });
-    res.json(auctions);
+    const transformed = auctions.map(a => ({
+      id: a.id,
+      vehicle: {
+        name: a.vehicleName,
+        brand: a.brand,
+        model: a.model,
+        year: a.year,
+        mileage: a.mileage,
+        description: a.description,
+        images: Array.isArray(a.images) ? a.images : []
+      },
+      startingPrice: Number(a.startingPrice),
+      currentBid: Number(a.currentBid),
+      bidCount: a.bidCount,
+      bids: [],
+      endDate: a.endDate
+    }));
+    res.json(transformed);
   } catch (error) {
     console.error("Failed to list auctions:", error);
     // Return mock data as fallback
@@ -551,9 +568,31 @@ app.get('/api/auctions/:id', async (req, res) => {
       return res.json(mockAuction);
     }
     
-    const auction = await prisma.auction.findUnique({ where: { id: req.params.id }, include: { bids: { orderBy: { timestamp: 'desc' } } } });
-    if (!auction) return res.status(404).json({ error: 'not_found' });
-    res.json(auction);
+    const a = await prisma.auction.findUnique({ where: { id: req.params.id }, include: { bids: { orderBy: { timestamp: 'desc' } } } });
+    if (!a) return res.status(404).json({ error: 'not_found' });
+    const transformed = {
+      id: a.id,
+      vehicle: {
+        name: a.vehicleName,
+        brand: a.brand,
+        model: a.model,
+        year: a.year,
+        mileage: a.mileage,
+        description: a.description,
+        images: Array.isArray(a.images) ? a.images : []
+      },
+      startingPrice: Number(a.startingPrice),
+      currentBid: Number(a.currentBid),
+      bidCount: a.bidCount,
+      bids: (a as any).bids?.map((b: any) => ({
+        userId: b.userId,
+        bidderName: b.bidderName,
+        amount: Number(b.amount),
+        timestamp: b.timestamp
+      })) || [],
+      endDate: a.endDate
+    };
+    res.json(transformed);
   } catch (error) {
     console.error("Failed to get auction:", error);
     // Return mock data as fallback
