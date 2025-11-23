@@ -26,7 +26,7 @@ app.use(helmet({
       scriptSrc: ["'self'", "https://cdn.tailwindcss.com"],
       styleSrc: ["'self'", "https:", "'unsafe-inline'"],
       fontSrc: ["'self'", "https:", "data:"],
-      imgSrc: ["'self'", "data:"],
+      imgSrc: ["'self'", "data:", "https:"],
       connectSrc: ["'self'", CORS_ORIGIN]
     }
   }
