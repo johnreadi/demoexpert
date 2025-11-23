@@ -666,7 +666,51 @@ app.post('/auctions', requireAdmin, async (req, res) => {
   }
 });
 
+app.post('/api/auctions', requireAdmin, async (req, res) => {
+  try {
+    const d = req.body || {};
+    const created = await prisma.auction.create({ data: {
+      vehicleName: d.vehicleName,
+      brand: d.brand,
+      model: d.model,
+      year: Number(d.year),
+      mileage: Number(d.mileage),
+      description: d.description,
+      images: Array.isArray(d.images) ? d.images : [],
+      startingPrice: String(d.startingPrice),
+      currentBid: String(d.startingPrice),
+      bidCount: 0,
+      endDate: new Date(d.endDate),
+    }});
+    res.status(201).json(created);
+  } catch {
+    res.status(400).json({ error: 'failed_to_create_auction' });
+  }
+});
+
 app.put('/auctions/:id', requireAdmin, async (req, res) => {
+  try {
+    const d = req.body || {};
+    const updated = await prisma.auction.update({ where: { id: req.params.id }, data: {
+      ...(d.vehicleName !== undefined ? { vehicleName: d.vehicleName } : {}),
+      ...(d.brand !== undefined ? { brand: d.brand } : {}),
+      ...(d.model !== undefined ? { model: d.model } : {}),
+      ...(d.year !== undefined ? { year: Number(d.year) } : {}),
+      ...(d.mileage !== undefined ? { mileage: Number(d.mileage) } : {}),
+      ...(d.description !== undefined ? { description: d.description } : {}),
+      ...(d.images !== undefined ? { images: Array.isArray(d.images) ? d.images : [] } : {}),
+      ...(d.startingPrice !== undefined ? { startingPrice: String(d.startingPrice) } : {}),
+      ...(d.currentBid !== undefined ? { currentBid: String(d.currentBid) } : {}),
+      ...(d.bidCount !== undefined ? { bidCount: Number(d.bidCount) } : {}),
+      ...(d.endDate !== undefined ? { endDate: new Date(d.endDate) } : {}),
+    }});
+    res.json(updated);
+  } catch {
+    res.status(400).json({ error: 'failed_to_update_auction' });
+  }
+});
+
+app.put('/api/auctions/:id', requireAdmin, async (req, res) => {
   try {
     const d = req.body || {};
     const updated = await prisma.auction.update({ where: { id: req.params.id }, data: {
@@ -755,7 +799,8 @@ app.get('/api/contact', async (_req, res) => {
     const contacts = await prisma.contact.findMany({
       orderBy: { createdAt: 'desc' }
     });
-    res.json(contacts);
+    const mapped = contacts.map((c: any) => ({ id: c.id, name: c.name, email: c.email, source: 'Message entrant' }));
+    res.json(mapped);
   } catch (error) {
     console.error('Failed to fetch contacts:', error);
     res.status(500).json({ error: 'failed_to_fetch_contacts' });
