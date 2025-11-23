@@ -251,6 +251,7 @@ app.post('/auth/logout', (req, res) => {
 
 app.post('/api/ai/chat', async (req, res) => {
   try {
+    const { message, history, settings } = req.body || {};
     const apiKey = process.env.GEMINI_API_KEY;
 
     const fallback = () => {
@@ -260,10 +261,11 @@ app.post('/api/ai/chat', async (req, res) => {
       if (q.includes('contact') || q.includes('email') || q.includes('téléphone')) return `Contact: ${settings?.businessInfo?.phone || ''} / ${settings?.businessInfo?.email || ''}.`;
       return "Je suis un assistant. L’IA n’est pas disponible pour le moment.";
     };
+
     if (!apiKey) {
       return res.json({ text: fallback() });
     }
-    const { message, history, settings } = req.body || {};
+
     const intro = settings?.businessInfo ? `Vous êtes un assistant virtuel pour '${settings.businessInfo.name}', une casse automobile en Normandie, France. Votre nom est 'ExpertBot'.
 - Répondez de manière amicale, professionnelle et concise en français.
 - Services principaux : Vente de pièces auto d'occasion, rachat de véhicules, enlèvement gratuit d'épaves, réparation pare-brise, location de pont, entretien, pneus.
@@ -279,31 +281,24 @@ app.post('/api/ai/chat', async (req, res) => {
       ? history.map((m: any) => `${m.sender === 'user' ? 'Utilisateur' : 'Bot'}: ${m.text}`).join('\n')
       : '';
 
-    const prompt = `${intro}
-
-Historique:
-${historyText}
-
-Dernière question utilisateur: ${String(message ?? '').trim()}`;
+    const prompt = `${intro}\n\nHistorique:\n${historyText}\n\nDernière question utilisateur: ${String(message ?? '').trim()}`;
 
     const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [
-          { role: 'user', parts: [{ text: prompt }] }
-        ]
-      })
+      body: JSON.stringify({ contents: [{ role: 'user', parts: [{ text: prompt }] }] })
     });
+
     if (!r.ok) {
-      const text = await r.text().catch(() => '');
-      return res.status(502).json({ error: 'ai_call_failed', details: text });
+      const details = await r.text().catch(() => '');
+      return res.json({ text: fallback(), error: 'ai_call_failed', details });
     }
+
     const data = await r.json();
-    const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || 'Désolé, je n’ai pas pu générer de réponse.';
+    const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || fallback();
     return res.json({ text });
   } catch (e: any) {
-    return res.status(500).json({ error: 'ai_internal_error' });
+    return res.json({ text: "Je suis un assistant. L’IA n’est pas disponible pour le moment." });
   }
 });
 
@@ -970,10 +965,6 @@ app.post('/api/users/import', requireAdmin, async (req, res) => {
   }
 });
 
-app.use('/api', (_req, res) => {
-  res.status(404).json({ error: 'not_found' });
-});
-
 ensureDefaultSettings().finally(() => {
   app.listen(PORT, '0.0.0.0', () => {
     console.log(`API listening on 0.0.0.0:${PORT} (${NODE_ENV})`);
@@ -1116,4 +1107,9 @@ app.delete('/api/admin/messages/:id', async (req, res) => {
     console.error('Failed to delete admin message:', error);
     res.status(500).json({ error: 'failed_to_delete_admin_message' });
   }
+});
+
+// Catch-all 404 for API (must be last)
+app.use('/api', (_req, res) => {
+  res.status(404).json({ error: 'not_found' });
 });
