@@ -19,21 +19,31 @@ const simulateApiError = (message: string, delay = 200): Promise<any> => {
 
 const USE_LOCAL_API = import.meta.env.MODE !== 'production' && import.meta.env.VITE_USE_LOCAL_API === 'true';
 const normalizeAuction = (a: any): Auction => {
-  const rawVehicle = a?.vehicle ?? {};
+  // Handle case where auction data comes directly from database (flat structure)
+  const rawVehicle = a?.vehicle ?? {
+    name: a?.vehicleName ?? a?.name ?? '',
+    brand: a?.brand ?? '',
+    model: a?.model ?? '',
+    year: a?.year ?? 0,
+    mileage: a?.mileage ?? 0,
+    description: a?.description ?? '',
+    images: a?.images ?? [],
+    videos: a?.videos ?? []
+  };
 
-  const images = Array.isArray(a?.images)
-    ? a.images
-    : Array.isArray(rawVehicle.images)
-      ? rawVehicle.images
+  const images = (Array.isArray(rawVehicle.images) && rawVehicle.images.length > 0)
+    ? rawVehicle.images
+    : (Array.isArray(a?.images) && a.images.length > 0)
+      ? a.images
       : ['https://picsum.photos/seed/auction/800/600'];
 
   const safeVehicle = {
-    name: rawVehicle.name ?? a?.vehicleName ?? '',
-    brand: rawVehicle.brand ?? a?.brand ?? '',
-    model: rawVehicle.model ?? a?.model ?? '',
-    year: Number(rawVehicle.year ?? a?.year ?? 0),
-    mileage: Number(rawVehicle.mileage ?? a?.mileage ?? 0),
-    description: rawVehicle.description ?? a?.description ?? '',
+    name: rawVehicle.name || a?.vehicleName || a?.name || '',
+    brand: rawVehicle.brand || a?.brand || '',
+    model: rawVehicle.model || a?.model || '',
+    year: Number(rawVehicle.year || a?.year || 0),
+    mileage: Number(rawVehicle.mileage || a?.mileage || 0),
+    description: rawVehicle.description || a?.description || '',
     images,
     videos: Array.isArray(rawVehicle.videos) ? rawVehicle.videos : [],
   };
@@ -46,8 +56,8 @@ const normalizeAuction = (a: any): Auction => {
     bidCount: Number(a?.bidCount ?? 0),
     bids: Array.isArray(a?.bids)
       ? a.bids.map((b: any) => ({
-          userId: b?.userId ?? '',
-          bidderName: b?.bidderName ?? '',
+          userId: b?.userId ?? b?.user?.id ?? '',
+          bidderName: b?.bidderName ?? b?.user?.name ?? 'Anonymous',
           amount: Number(b?.amount ?? 0),
           timestamp: b?.timestamp ? new Date(b.timestamp) : new Date(),
         }))

@@ -260,7 +260,7 @@ export const getBidsForUser = (userId: string): any[] => {
         const userHighestBid = auction.bids.filter(bid => bid.userId === userId).sort((a, b) => b.amount - a.amount)[0];
         if (!userHighestBid) return null;
         return {
-            auctionId: auction.id, vehicleName: auction.vehicle.name, isWinning: auction.bids[0]?.userId === userId,
+            auctionId: auction.id, vehicleName: auction.vehicle?.name || 'Véhicule', isWinning: auction.bids[0]?.userId === userId,
             userHighestBid: userHighestBid.amount, currentHighestBid: auction.currentBid, endDate: auction.endDate,
             status: new Date(auction.endDate) > new Date() ? 'active' : 'terminated'
         };

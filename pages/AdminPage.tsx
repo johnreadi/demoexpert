@@ -257,8 +257,8 @@ export default function AdminPage(): React.ReactNode {
     });
   };
   const handleAddAuctionImage = () => {
-      if (auctionImageInput && !auctionFormData.vehicle.images.includes(auctionImageInput)) {
-          setAuctionFormData(prev => ({ ...prev, vehicle: {...prev.vehicle, images: [...prev.vehicle.images, auctionImageInput]}}));
+      if (auctionImageInput && !auctionFormData.vehicle?.images?.includes(auctionImageInput)) {
+          setAuctionFormData(prev => ({ ...prev, vehicle: {...prev.vehicle, images: [...(prev.vehicle?.images || []), auctionImageInput]}}));
           setAuctionImageInput('');
       }
   };
@@ -268,23 +268,23 @@ export default function AdminPage(): React.ReactNode {
         const reader = new FileReader();
         reader.onloadend = () => {
             const base64String = reader.result as string;
-            setAuctionFormData(prev => ({ ...prev, vehicle: { ...prev.vehicle, images: [...prev.vehicle.images, base64String] } }));
+            setAuctionFormData(prev => ({ ...prev, vehicle: { ...prev.vehicle, images: [...(prev.vehicle?.images || []), base64String] } }));
         };
         reader.readAsDataURL(file);
         e.target.value = '';
     }
   };
   const handleRemoveAuctionImage = (imgUrl: string) => {
-      setAuctionFormData(prev => ({ ...prev, vehicle: {...prev.vehicle, images: prev.vehicle.images.filter(img => img !== imgUrl)}}));
+      setAuctionFormData(prev => ({ ...prev, vehicle: {...prev.vehicle, images: (prev.vehicle?.images || []).filter(img => img !== imgUrl)}}));
   };
   const handleAddAuctionVideo = () => {
-      if (auctionVideoInput && !auctionFormData.vehicle.videos?.includes(auctionVideoInput)) {
-          setAuctionFormData(prev => ({ ...prev, vehicle: {...prev.vehicle, videos: [...(prev.vehicle.videos || []), auctionVideoInput]}}));
+      if (auctionVideoInput && !auctionFormData.vehicle?.videos?.includes(auctionVideoInput)) {
+          setAuctionFormData(prev => ({ ...prev, vehicle: {...prev.vehicle, videos: [...(prev.vehicle?.videos || []), auctionVideoInput]}}));
           setAuctionVideoInput('');
       }
   };
   const handleRemoveAuctionVideo = (videoUrl: string) => {
-      setAuctionFormData(prev => ({ ...prev, vehicle: {...prev.vehicle, videos: prev.vehicle.videos?.filter(v => v !== videoUrl)}}));
+      setAuctionFormData(prev => ({ ...prev, vehicle: {...prev.vehicle, videos: (prev.vehicle?.videos || []).filter(v => v !== videoUrl)}}));
   };
 
   const handleAuctionSubmit = async (e: React.FormEvent) => {
@@ -1316,13 +1316,13 @@ export default function AdminPage(): React.ReactNode {
             <form onSubmit={handleAuctionSubmit} className="space-y-4">
                 <h4 className="font-semibold">Détails du Véhicule</h4>
                 <div className="grid grid-cols-2 gap-4">
-                    <input name="vehicle.name" placeholder="Nom complet (ex: Peugeot 208)" value={auctionFormData.vehicle.name} onChange={handleAuctionFormChange} className="p-2 border rounded col-span-2"/>
-                    <input name="vehicle.brand" placeholder="Marque" value={auctionFormData.vehicle.brand} onChange={handleAuctionFormChange} className="p-2 border rounded"/>
-                    <input name="vehicle.model" placeholder="Modèle" value={auctionFormData.vehicle.model} onChange={handleAuctionFormChange} className="p-2 border rounded"/>
-                    <input name="vehicle.year" type="number" placeholder="Année" value={auctionFormData.vehicle.year} onChange={handleAuctionFormChange} className="p-2 border rounded"/>
-                    <input name="vehicle.mileage" type="number" placeholder="Kilométrage" value={auctionFormData.vehicle.mileage} onChange={handleAuctionFormChange} className="p-2 border rounded"/>
+                    <input name="vehicle.name" placeholder="Nom complet (ex: Peugeot 208)" value={auctionFormData.vehicle?.name || ''} onChange={handleAuctionFormChange} className="p-2 border rounded col-span-2"/>
+                    <input name="vehicle.brand" placeholder="Marque" value={auctionFormData.vehicle?.brand || ''} onChange={handleAuctionFormChange} className="p-2 border rounded"/>
+                    <input name="vehicle.model" placeholder="Modèle" value={auctionFormData.vehicle?.model || ''} onChange={handleAuctionFormChange} className="p-2 border rounded"/>
+                    <input name="vehicle.year" type="number" placeholder="Année" value={auctionFormData.vehicle?.year || ''} onChange={handleAuctionFormChange} className="p-2 border rounded"/>
+                    <input name="vehicle.mileage" type="number" placeholder="Kilométrage" value={auctionFormData.vehicle?.mileage || ''} onChange={handleAuctionFormChange} className="p-2 border rounded"/>
                 </div>
-                <textarea name="vehicle.description" placeholder="Description du véhicule" value={auctionFormData.vehicle.description} onChange={handleAuctionFormChange} rows={3} className="w-full p-2 border rounded"/>
+                <textarea name="vehicle.description" placeholder="Description du véhicule" value={auctionFormData.vehicle?.description || ''} onChange={handleAuctionFormChange} rows={3} className="w-full p-2 border rounded"/>
                 
                 <h4 className="font-semibold">Détails de l'Offre</h4>
                 <div className="grid grid-cols-2 gap-4">
@@ -1344,7 +1344,7 @@ export default function AdminPage(): React.ReactNode {
                     </label>
                     <input type="file" id="local-image-upload-auction" accept="image/*" onChange={handleLocalAuctionImageUpload} className="hidden"/>
                     <div className="flex flex-wrap gap-2 mt-2">
-                        {auctionFormData.vehicle.images.map(img => (
+                        {auctionFormData.vehicle?.images?.map(img => (
                             <div key={img} className="relative">
                                 <img src={img} alt="Aperçu" className="h-20 w-20 object-cover rounded"/>
                                 <button type="button" onClick={() => handleRemoveAuctionImage(img)} className="absolute top-0 right-0 bg-red-500 text-white rounded-full h-5 w-5 flex items-center justify-center text-xs">&times;</button>
@@ -1360,7 +1360,7 @@ export default function AdminPage(): React.ReactNode {
                         <button type="button" onClick={handleAddAuctionVideo} className="bg-expert-blue text-white font-bold p-2 rounded hover:bg-expert-blue/80 flex-shrink-0">Ajouter</button>
                     </div>
                     <div className="flex flex-wrap gap-2 mt-2">
-                        {auctionFormData.vehicle.videos?.map(video => (
+                        {auctionFormData.vehicle?.videos?.map(video => (
                             <div key={video} className="relative p-2 bg-gray-100 rounded text-sm">
                                 <span>{video.substring(0,30)}...</span>
                                 <button type="button" onClick={() => handleRemoveAuctionVideo(video)} className="ml-2 text-red-500">&times;</button>

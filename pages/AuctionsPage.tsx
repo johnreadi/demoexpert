@@ -13,15 +13,23 @@ const AuctionCard: React.FC<{ auction: Auction }> = ({ auction }) => {
 	  );
 	}
 
-	const rawVehicle: any = (auction as any).vehicle ?? {};
-	const images: string[] = Array.isArray(rawVehicle.images) ? rawVehicle.images : [];
+	// Additional defensive checks for vehicle property
+	const vehicle = auction?.vehicle;
+	if (!vehicle) {
+	  console.log("Vehicle is null or undefined");
+	  return (
+		<div className="bg-white rounded-lg shadow-lg p-6">Indisponible</div>
+	  );
+	}
+
+	const images: string[] = Array.isArray(vehicle.images) ? vehicle.images : [];
 	const v = {
-		name: rawVehicle.name ?? '',
-		brand: rawVehicle.brand ?? '',
-		model: rawVehicle.model ?? '',
-		year: Number(rawVehicle.year ?? 0),
-		mileage: Number(rawVehicle.mileage ?? 0),
-		description: rawVehicle.description ?? '',
+		name: vehicle.name ?? '',
+		brand: vehicle.brand ?? '',
+		model: vehicle.model ?? '',
+		year: Number(vehicle.year ?? 0),
+		mileage: Number(vehicle.mileage ?? 0),
+		description: vehicle.description ?? '',
 		images,
 	};
 	const mainImage = images[0] || 'https://picsum.photos/seed/auction-card/800/600';

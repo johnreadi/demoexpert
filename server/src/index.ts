@@ -752,6 +752,34 @@ app.post('/api/auctions/:id/bids', async (req, res) => {
   }
 });
 
+app.post('/api/auctions/import', requireAdmin, async (req, res) => {
+  try {
+    const items = Array.isArray(req.body?.auctions) ? req.body.auctions : [];
+    if (items.length === 0) return res.json({ imported: 0 });
+    let count = 0;
+    for (const a of items) {
+      const v = a?.vehicle || {};
+      await prisma.auction.create({ data: {
+        vehicleName: v.name || a.vehicleName || '',
+        brand: v.brand || a.brand || '',
+        model: v.model || a.model || '',
+        year: Number(v.year || a.year || 0),
+        mileage: Number(v.mileage || a.mileage || 0),
+        description: v.description || a.description || '',
+        images: Array.isArray(v.images) ? v.images : (Array.isArray(a.images) ? a.images : []),
+        startingPrice: String(a.startingPrice || 0),
+        currentBid: String(a.currentBid || a.startingPrice || 0),
+        bidCount: Number(a.bidCount || 0),
+        endDate: new Date(a.endDate || Date.now() + 1000 * 60 * 60 * 24 * 3),
+      }});
+      count++;
+    }
+    res.json({ imported: count });
+  } catch {
+    res.status(500).json({ error: 'failed_to_import' });
+  }
+});
+
 app.get('/api/settings', async (_req, res) => {
   try {
     const settings = await prisma.settings.findUnique({ where: { key: 'site_settings' } });
