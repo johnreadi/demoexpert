@@ -45,6 +45,58 @@
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
+    <meta name="description" content="Pièces d'occasion auto garanties, démolition VHU agréée, vente et rachat de véhicules, réparation et location de ponts élévateurs en Normandie.">
+    <meta name="keywords" content="pièces d'occasion auto, casse automobile, VHU agréé, rachat de véhicules, véhicules d'occasion, réparation automobile, location pont élévateur, enlèvement épave, Normandie, Rouen, Seine-Maritime">
+    <meta name="robots" id="robotsMeta" content="index,follow">
+    <link rel="canonical" id="canonicalLink" href="/">
+
+    <meta property="og:title" content="Démolition Expert – Pièces auto d'occasion, VHU agréé, réparation & rachat">
+    <meta property="og:description" content="Pièces auto d'occasion garanties, démolition VHU agréée, rachat et vente de véhicules, réparation, location de ponts en Normandie.">
+    <meta property="og:type" content="website">
+    <meta property="og:locale" content="fr_FR">
+    <meta property="og:site_name" content="Démolition Expert">
+    <meta property="og:image" content="https://picsum.photos/seed/hero/1200/630">
+
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Démolition Expert – Pièces auto d'occasion, VHU agréé, réparation & rachat">
+    <meta name="twitter:description" content="Pièces auto d'occasion garanties, démolition VHU agréée, rachat et vente de véhicules, réparation, location de ponts en Normandie.">
+
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "AutoPartsStore",
+      "@id": "#demolition-expert",
+      "name": "Démolition Expert",
+      "address": {
+        "@type": "PostalAddress",
+        "streetAddress": "450 Route de Gournay",
+        "addressLocality": "Saint-Jacques-sur-Darnétal",
+        "postalCode": "76160",
+        "addressCountry": "FR"
+      },
+      "telephone": "+33 2 35 08 18 55",
+      "openingHours": "Mo-Fr 08:00-18:00, Sa 09:00-12:00",
+      "areaServed": ["Normandie", "Seine-Maritime", "Rouen"],
+      "sameAs": [
+        "https://facebook.com",
+        "https://twitter.com",
+        "https://linkedin.com"
+      ]
+    }
+    </script>
+
+    <script>
+      (function() {
+        var origin = window.location.origin || (window.location.protocol + '//' + window.location.host);
+        var canonical = document.getElementById('canonicalLink');
+        if (canonical) canonical.setAttribute('href', origin + '/');
+        var robots = document.getElementById('robotsMeta');
+        var hash = window.location.hash || '';
+        var noindexRoutes = ['#/admin', '#/connexion'];
+        var shouldNoindex = noindexRoutes.some(function(r){ return hash.indexOf(r) === 0; });
+        if (robots) robots.setAttribute('content', shouldNoindex ? 'noindex,nofollow' : 'index,follow');
+      })();
+    </script>
 </head>
 <body>
     <div id="root"></div>

@@ -7,6 +7,7 @@ import PartsCatalogPage from './pages/PartsCatalogPage';
 import ProductDetailPage from './pages/ProductDetailPage';
 import VehicleBuybackPage from './pages/VehicleBuybackPage';
 import ScrapRemovalPage from './pages/ScrapRemovalPage';
+import VHUPage from './pages/VHUPage';
 import ContactPage from './pages/ContactPage';
 import LegalPage from './pages/LegalPage';
 import ChatWidget from './components/ChatWidget';
@@ -94,6 +95,7 @@ function App() {
                   <Route path="/offres/:id" element={<ErrorBoundary><AuctionDetailPage /></ErrorBoundary>} />
                   <Route path="/rachat-vehicule" element={<VehicleBuybackPage />} />
                   <Route path="/enlevement-epave" element={<ScrapRemovalPage />} />
+                  <Route path="/vhu" element={<VHUPage />} />
                   <Route path="/pare-brise" element={<WindshieldPage />} />
                   <Route path="/location-pont" element={<LiftRentalPage />} />
                   <Route path="/reparation" element={<RepairsPage />} />

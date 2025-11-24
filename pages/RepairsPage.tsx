@@ -66,6 +66,15 @@ export default function RepairsPage(): React.ReactNode {
           </Link>
         </div>
       </div>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": [
+          { "@type": "Question", "name": "Quels types de réparations proposez-vous ?", "acceptedAnswer": { "@type": "Answer", "text": "Diagnostic électronique, réparation moteur, freinage, pare-brise, entretien et pneus." } },
+          { "@type": "Question", "name": "Proposez-vous des devis ?", "acceptedAnswer": { "@type": "Answer", "text": "Oui, un devis précis est établi après diagnostic. Contactez-nous pour une estimation." } },
+          { "@type": "Question", "name": "Quels sont les délais ?", "acceptedAnswer": { "@type": "Answer", "text": "Selon la prestation et la disponibilité des pièces. Nous vous communiquons un délai dès le diagnostic." } }
+        ]
+      }) }} />
     </div>
   );
 }

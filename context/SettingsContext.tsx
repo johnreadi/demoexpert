@@ -103,8 +103,10 @@ const DEFAULT_SETTINGS: SiteSettings = {
     ],
     infoLinks: [
       { id: "fil-1", text: "Contact", url: "/contact" },
-      { id: "fil-3", text: "CGV", url: "/cgv" },
-      { id: "fil-4", text: "Mentions Légales", url: "/mentions-legales" }
+      { id: "fil-2", text: "VHU agréé", url: "/vhu" },
+      { id: "fil-3", text: "FAQ", url: "/faq" },
+      { id: "fil-4", text: "CGV", url: "/cgv" },
+      { id: "fil-5", text: "Mentions Légales", url: "/mentions-legales" }
     ]
   },
   legal: {

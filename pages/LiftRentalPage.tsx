@@ -164,6 +164,15 @@ export default function LiftRentalPage(): React.ReactNode {
                     </div>
                 </div>
             </div>
+          <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "FAQPage",
+            "mainEntity": [
+              { "@type": "Question", "name": "Quels sont les tarifs de location ?", "acceptedAnswer": { "@type": "Answer", "text": "Les tarifs dépendent de la durée. Consultez les paliers affichés et réservez en ligne." } },
+              { "@type": "Question", "name": "Quelles sont les conditions d'utilisation ?", "acceptedAnswer": { "@type": "Answer", "text": "Respect des consignes de sécurité, véhicule conforme et ponctualité aux créneaux réservés." } },
+              { "@type": "Question", "name": "Proposez-vous de l'outillage ?", "acceptedAnswer": { "@type": "Answer", "text": "Un outillage de base peut être proposé en option selon disponibilité." } }
+            ]
+          }) }} />
         </div>
     );
 }

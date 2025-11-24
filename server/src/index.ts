@@ -1010,6 +1010,28 @@ app.post('/api/users/import', requireAdmin, async (req, res) => {
   }
 });
 
+app.get('/robots.txt', (req, res) => {
+  const host = `${req.protocol}://${req.get('host')}`;
+  res.type('text/plain').send(`User-agent: *\nAllow: /\nSitemap: ${host}/sitemap.xml`);
+});
+
+app.get('/sitemap.xml', async (req, res) => {
+  const host = `${req.protocol}://${req.get('host')}`;
+  const staticUrls = ['/', '/pieces', '/offres', '/rachat-vehicule', '/enlevement-epave', '/vhu', '/faq', '/pare-brise', '/location-pont', '/reparation', '/entretien', '/pneus', '/contact', '/mentions-legales', '/cgv', '/confidentialite'];
+  let dynamicUrls = [] as string[];
+  try {
+    if (process.env.DATABASE_URL) {
+      const auctions = await prisma.auction.findMany({ select: { id: true } });
+      dynamicUrls = auctions.map(a => `/offres/${a.id}`);
+    }
+  } catch {}
+  const urls = [...staticUrls, ...dynamicUrls]
+    .map(u => `<url><loc>${host}${u}</loc></url>`)
+    .join('');
+  const xml = `<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${urls}</urlset>`;
+  res.type('application/xml').send(xml);
+});
+
 ensureDefaultSettings().finally(() => {
   app.listen(PORT, '0.0.0.0', () => {
     console.log(`API listening on 0.0.0.0:${PORT} (${NODE_ENV})`);
