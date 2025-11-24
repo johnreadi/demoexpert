@@ -1,8 +1,7 @@
 function makeNoopStorage(name: string): Storage {
   const warn = (method: string) => {
-    if (import.meta.env.MODE !== 'production') return;
     // eslint-disable-next-line no-console
-    console.warn(`[${name}] utilisation bloquée en production (${method})`);
+    console.warn(`[${name}] utilisation bloquée (${method})`);
   };
   return {
     get length() { return 0; },
@@ -15,12 +14,17 @@ function makeNoopStorage(name: string): Storage {
 }
 
 export function installStorageGuard() {
-  if (import.meta.env.MODE === 'production' && typeof window !== 'undefined') {
-    try {
-      Object.defineProperty(window, 'localStorage', { value: makeNoopStorage('localStorage') });
-      Object.defineProperty(window, 'sessionStorage', { value: makeNoopStorage('sessionStorage') });
-    } catch {
-      // ignore
+  if (typeof window !== 'undefined') {
+    const useLocal = import.meta.env.VITE_USE_LOCAL_STORAGE === 'true';
+    const isLocalHost = /^localhost$|^127\.0\.0\.1$/.test(window.location.hostname);
+    const shouldBlock = !useLocal || import.meta.env.MODE === 'production' || !isLocalHost || (window as any).__FORCE_BLOCK_STORAGE === true;
+    if (shouldBlock) {
+      try {
+        Object.defineProperty(window, 'localStorage', { value: makeNoopStorage('localStorage') });
+        Object.defineProperty(window, 'sessionStorage', { value: makeNoopStorage('sessionStorage') });
+      } catch {
+        // ignore
+      }
     }
   }
 }

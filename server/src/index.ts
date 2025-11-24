@@ -61,6 +61,18 @@ app.get('/api/healthz', (_req, res) => {
   res.status(200).json({ status: 'ok', env: NODE_ENV });
 });
 
+app.get('/api/db/health', async (_req, res) => {
+  try {
+    if (!process.env.DATABASE_URL) {
+      return res.status(503).json({ ok: false, error: 'DATABASE_URL_missing' });
+    }
+    await prisma.$queryRaw`SELECT 1`; 
+    res.json({ ok: true });
+  } catch (e) {
+    res.status(503).json({ ok: false, error: 'db_unreachable' });
+  }
+});
+
 function normalizeSettings(input: any) {
   const heroBg = input?.hero?.background ?? (input?.hero?.backgroundImage ? { type: 'image', value: input.hero.backgroundImage } : { type: 'color', value: '#003366' });
   const hero = { title: input?.hero?.title ?? '', subtitle: input?.hero?.subtitle ?? '', background: heroBg };
@@ -758,7 +770,9 @@ app.post('/api/contact', async (req, res) => {
     
     // Check if we have a database connection
     if (!process.env.DATABASE_URL) {
-      // Return mock success if no database connection
+      if (process.env.STRICT_DB === 'true') {
+        return res.status(503).json({ error: 'database_unavailable' });
+      }
       return res.status(201).json({ success: true, id: `mock-contact-${Date.now()}` });
     }
     
@@ -783,7 +797,9 @@ app.get('/api/contact', async (_req, res) => {
   try {
     // Check if we have a database connection
     if (!process.env.DATABASE_URL) {
-      // Return mock data if no database connection
+      if (process.env.STRICT_DB === 'true') {
+        return res.status(503).json({ error: 'database_unavailable' });
+      }
       return res.json([
         { 
           id: 'mock-contact-1', 
@@ -1044,7 +1060,9 @@ app.get('/api/admin/messages', async (req, res) => {
   try {
     // Check if we have a database connection
     if (!process.env.DATABASE_URL) {
-      // Return mock data if no database connection
+      if (process.env.STRICT_DB === 'true') {
+        return res.status(503).json({ error: 'database_unavailable' });
+      }
       return res.json([
         { 
           id: 'mock-msg-1', 
@@ -1088,7 +1106,9 @@ app.post('/api/admin/messages', async (req, res) => {
     
     // Check if we have a database connection
     if (!process.env.DATABASE_URL) {
-      // Return mock success if no database connection
+      if (process.env.STRICT_DB === 'true') {
+        return res.status(503).json({ error: 'database_unavailable' });
+      }
       return res.status(201).json({ 
         id: `mock-msg-${Date.now()}`, 
         from, 
@@ -1130,7 +1150,9 @@ app.put('/api/admin/messages/:id', async (req, res) => {
     
     // Check if we have a database connection
     if (!process.env.DATABASE_URL) {
-      // Return mock success if no database connection
+      if (process.env.STRICT_DB === 'true') {
+        return res.status(503).json({ error: 'database_unavailable' });
+      }
       return res.json({ 
         id: req.params.id,
         isRead: isRead !== undefined ? isRead : false,
@@ -1160,7 +1182,9 @@ app.delete('/api/admin/messages/:id', async (req, res) => {
   try {
     // Check if we have a database connection
     if (!process.env.DATABASE_URL) {
-      // Return mock success if no database connection
+      if (process.env.STRICT_DB === 'true') {
+        return res.status(503).json({ error: 'database_unavailable' });
+      }
       return res.json({ success: true });
     }
     

@@ -97,6 +97,21 @@
         if (robots) robots.setAttribute('content', shouldNoindex ? 'noindex,nofollow' : 'index,follow');
       })();
     </script>
+
+    <script>
+      (function() {
+        var GTM = (window.__GTM_ID);
+        if (typeof GTM === 'string' && GTM) {
+          var s = document.createElement('script'); s.async = true; s.src = 'https://www.googletagmanager.com/gtm.js?id=' + GTM; document.head.appendChild(s);
+        }
+        var GA = (window.__GA4_MEASUREMENT_ID);
+        if (typeof GA === 'string' && GA) {
+          var gtagScript = document.createElement('script'); gtagScript.async = true; gtagScript.src = 'https://www.googletagmanager.com/gtag/js?id=' + GA; document.head.appendChild(gtagScript);
+          window.dataLayer = window.dataLayer || []; function gtag(){ dataLayer.push(arguments); }
+          gtag('js', new Date()); gtag('config', GA);
+        }
+      })();
+    </script>
 </head>
 <body>
     <div id="root"></div>
