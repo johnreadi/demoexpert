@@ -71,12 +71,9 @@ export async function http<T = any>(path: string, options: RequestInit = {}): Pr
       setTimeout(() => {
         // For GET requests, return stored data
         if (!options.method || options.method === 'GET') {
-          const data = localStorageMock[path] || localStorage.getItem(`api_mock_${path}`);
-          if (data) {
-            resolve(typeof data === 'string' ? JSON.parse(data) : data);
-          } else {
-            resolve([] as any); // Default empty array for collections
-          }
+          const raw = localStorageMock[path] || localStorage.getItem(`api_mock_${path}`);
+          const data = raw ? (typeof raw === 'string' ? JSON.parse(raw) : raw) : [];
+          resolve(sanitizeApi(data, path) as any);
         } 
         // For POST/PUT requests, store the data
         else if (options.method === 'POST' || options.method === 'PUT') {
