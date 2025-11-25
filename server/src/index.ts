@@ -681,18 +681,20 @@ app.post('/auctions', requireAdmin, async (req, res) => {
 app.post('/api/auctions', requireAdmin, async (req, res) => {
   try {
     const d = req.body || {};
+    const v = d.vehicle || {};
+    const images = Array.isArray(v.images) ? v.images : (Array.isArray(d.images) ? d.images : []);
     const created = await prisma.auction.create({ data: {
-      vehicleName: d.vehicleName,
-      brand: d.brand,
-      model: d.model,
-      year: Number(d.year),
-      mileage: Number(d.mileage),
-      description: d.description,
-      images: Array.isArray(d.images) ? d.images : [],
-      startingPrice: String(d.startingPrice),
-      currentBid: String(d.startingPrice),
-      bidCount: 0,
-      endDate: new Date(d.endDate),
+      vehicleName: v.name ?? d.vehicleName ?? d.name ?? '',
+      brand: v.brand ?? d.brand ?? '',
+      model: v.model ?? d.model ?? '',
+      year: Number(v.year ?? d.year ?? 0),
+      mileage: Number(v.mileage ?? d.mileage ?? 0),
+      description: v.description ?? d.description ?? '',
+      images,
+      startingPrice: String(d.startingPrice ?? 0),
+      currentBid: String(d.currentBid ?? d.startingPrice ?? 0),
+      bidCount: Number(d.bidCount ?? 0),
+      endDate: d.endDate ? new Date(d.endDate) : new Date(Date.now() + 1000 * 60 * 60 * 24 * 3),
     }});
     res.status(201).json(created);
   } catch {
@@ -725,19 +727,20 @@ app.put('/auctions/:id', requireAdmin, async (req, res) => {
 app.put('/api/auctions/:id', requireAdmin, async (req, res) => {
   try {
     const d = req.body || {};
-    const updated = await prisma.auction.update({ where: { id: req.params.id }, data: {
-      ...(d.vehicleName !== undefined ? { vehicleName: d.vehicleName } : {}),
-      ...(d.brand !== undefined ? { brand: d.brand } : {}),
-      ...(d.model !== undefined ? { model: d.model } : {}),
-      ...(d.year !== undefined ? { year: Number(d.year) } : {}),
-      ...(d.mileage !== undefined ? { mileage: Number(d.mileage) } : {}),
-      ...(d.description !== undefined ? { description: d.description } : {}),
-      ...(d.images !== undefined ? { images: Array.isArray(d.images) ? d.images : [] } : {}),
-      ...(d.startingPrice !== undefined ? { startingPrice: String(d.startingPrice) } : {}),
-      ...(d.currentBid !== undefined ? { currentBid: String(d.currentBid) } : {}),
-      ...(d.bidCount !== undefined ? { bidCount: Number(d.bidCount) } : {}),
-      ...(d.endDate !== undefined ? { endDate: new Date(d.endDate) } : {}),
-    }});
+    const v = d.vehicle || {};
+    const updateData: any = {};
+    if (d.vehicleName !== undefined || v.name !== undefined) updateData.vehicleName = v.name ?? d.vehicleName;
+    if (d.brand !== undefined || v.brand !== undefined) updateData.brand = v.brand ?? d.brand;
+    if (d.model !== undefined || v.model !== undefined) updateData.model = v.model ?? d.model;
+    if (d.year !== undefined || v.year !== undefined) updateData.year = Number(v.year ?? d.year);
+    if (d.mileage !== undefined || v.mileage !== undefined) updateData.mileage = Number(v.mileage ?? d.mileage);
+    if (d.description !== undefined || v.description !== undefined) updateData.description = v.description ?? d.description;
+    if (d.images !== undefined || v.images !== undefined) updateData.images = Array.isArray(v.images) ? v.images : (Array.isArray(d.images) ? d.images : []);
+    if (d.startingPrice !== undefined) updateData.startingPrice = String(d.startingPrice);
+    if (d.currentBid !== undefined) updateData.currentBid = String(d.currentBid);
+    if (d.bidCount !== undefined) updateData.bidCount = Number(d.bidCount);
+    if (d.endDate !== undefined) updateData.endDate = new Date(d.endDate);
+    const updated = await prisma.auction.update({ where: { id: req.params.id }, data: updateData });
     res.json(updated);
   } catch {
     res.status(400).json({ error: 'failed_to_update_auction' });

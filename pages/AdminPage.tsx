@@ -235,7 +235,13 @@ export default function AdminPage(): React.ReactNode {
   // --- Auction CRUD ---
   const handleOpenAuctionModal = (auction: Auction | null) => {
       setEditingAuction(auction);
-      setAuctionFormData(auction ? { ...auction, endDate: new Date(auction.endDate) } : initialNewAuctionState);
+      const fallbackVehicle = { name: '', brand: '', model: '', year: new Date().getFullYear(), mileage: 0, description: '', images: [], videos: [] } as any;
+      const withDefaults = auction ? {
+        ...auction,
+        vehicle: { ...(auction as any).vehicle ?? fallbackVehicle, images: Array.isArray((auction as any).vehicle?.images) ? (auction as any).vehicle.images : [] },
+        endDate: new Date(auction.endDate)
+      } : initialNewAuctionState;
+      setAuctionFormData(withDefaults);
       setIsAuctionModalOpen(true);
   };
   const handleCloseAuctionModal = () => setIsAuctionModalOpen(false);
