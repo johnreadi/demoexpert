@@ -214,6 +214,22 @@ app.get('/api/auth/me', (req, res) => {
 app.post('/api/auth/login', async (req, res) => {
   const { email, password } = req.body || {};
   if (!email || !password) return res.status(400).json({ error: 'missing_credentials' });
+
+  const fallbackEmail = process.env.FALLBACK_ADMIN_EMAIL;
+  const fallbackPass = process.env.FALLBACK_ADMIN_PASSWORD;
+  const tryFallback = () => {
+    if (fallbackEmail && fallbackPass && String(email).toLowerCase() === String(fallbackEmail).toLowerCase() && String(password) === String(fallbackPass)) {
+      const safeUser: UserSession = { id: 'fallback-admin', name: 'Admin', email: String(fallbackEmail), role: 'Admin', status: 'approved' } as any;
+      (req.session as any).user = safeUser;
+      return res.json(safeUser);
+    }
+    return res.status(500).json({ error: 'login_failed' });
+  };
+
+  if (!process.env.DATABASE_URL) {
+    return tryFallback();
+  }
+
   try {
     const user = await prisma.user.findUnique({ where: { email: String(email).toLowerCase() } });
     if (!user) return res.status(401).json({ error: 'invalid_credentials' });
@@ -224,13 +240,29 @@ app.post('/api/auth/login', async (req, res) => {
     (req.session as any).user = safeUser;
     return res.json(safeUser);
   } catch (e) {
-    return res.status(500).json({ error: 'login_failed' });
+    return tryFallback();
   }
 });
 
 app.post('/auth/login', async (req, res) => {
   const { email, password } = req.body || {};
   if (!email || !password) return res.status(400).json({ error: 'missing_credentials' });
+
+  const fallbackEmail = process.env.FALLBACK_ADMIN_EMAIL;
+  const fallbackPass = process.env.FALLBACK_ADMIN_PASSWORD;
+  const tryFallback = () => {
+    if (fallbackEmail && fallbackPass && String(email).toLowerCase() === String(fallbackEmail).toLowerCase() && String(password) === String(fallbackPass)) {
+      const safeUser: UserSession = { id: 'fallback-admin', name: 'Admin', email: String(fallbackEmail), role: 'Admin', status: 'approved' } as any;
+      (req.session as any).user = safeUser;
+      return res.json(safeUser);
+    }
+    return res.status(500).json({ error: 'login_failed' });
+  };
+
+  if (!process.env.DATABASE_URL) {
+    return tryFallback();
+  }
+
   try {
     const user = await prisma.user.findUnique({ where: { email: String(email).toLowerCase() } });
     if (!user) return res.status(401).json({ error: 'invalid_credentials' });
@@ -241,7 +273,7 @@ app.post('/auth/login', async (req, res) => {
     (req.session as any).user = safeUser;
     return res.json(safeUser);
   } catch (e) {
-    return res.status(500).json({ error: 'login_failed' });
+    return tryFallback();
   }
 });
 
