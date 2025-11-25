@@ -15,7 +15,7 @@ const SESSION_SECRET = process.env.SESSION_SECRET || 'dev_session_secret_change_
 const CORS_ORIGIN = process.env.CORS_ORIGIN || 'http://localhost:3000';
 const TRUST_PROXY = process.env.TRUST_PROXY ? Number(process.env.TRUST_PROXY) : 0;
 const COOKIE_SECURE = process.env.COOKIE_SECURE === 'true';
-const COOKIE_SAME_SITE = (process.env.COOKIE_SAME_SITE as 'lax'|'strict'|'none') || 'lax';
+const COOKIE_SAME_SITE = (process.env.COOKIE_SAME_SITE as 'lax'|'strict'|'none') || 'none';
 
 app.set('trust proxy', TRUST_PROXY);
 
