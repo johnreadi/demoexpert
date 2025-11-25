@@ -24,6 +24,45 @@ const localStorageMock: Record<string, any> = {
   }
 };
 
+function sanitizeApi(data: any, path: string): any {
+  const san = (node: any): any => {
+    if (node === null || node === undefined) return node;
+    if (Array.isArray(node)) return node.map(san);
+    if (typeof node === 'object') {
+      const out: any = {};
+      for (const k of Object.keys(node)) {
+        let v = san(node[k]);
+        if (k === 'images') {
+          if (Array.isArray(v)) out[k] = v.filter((x: any) => typeof x === 'string');
+          else if (typeof v === 'string') out[k] = [v];
+          else out[k] = [];
+          continue;
+        }
+        out[k] = v;
+      }
+      if (!out.vehicle && (out.images || out.vehicleName || out.name || out.brand || out.model)) {
+        const imgs = Array.isArray(out.images) ? out.images : [];
+        out.vehicle = {
+          name: out.vehicleName || out.name || '',
+          brand: out.brand || '',
+          model: out.model || '',
+          year: Number(out.year || 0),
+          mileage: Number(out.mileage || 0),
+          description: out.description || '',
+          images: imgs,
+        };
+      } else if (out.vehicle) {
+        const v = out.vehicle;
+        const imgs = Array.isArray(v.images) ? v.images : (Array.isArray(out.images) ? out.images : []);
+        out.vehicle = { ...v, images: imgs };
+      }
+      return out;
+    }
+    return node;
+  };
+  return san(data);
+}
+
 export async function http<T = any>(path: string, options: RequestInit = {}): Promise<T> {
   // Handle localStorage mock for development
   if (USE_LOCAL_STORAGE) {
@@ -88,7 +127,8 @@ export async function http<T = any>(path: string, options: RequestInit = {}): Pr
       
       try {
         const data = await res.json();
-        resolve(data);
+        const sanitized = sanitizeApi(data, path);
+        resolve(sanitized);
       } catch {
         resolve(undefined as any);
       }
