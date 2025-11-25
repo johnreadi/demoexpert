@@ -91,46 +91,46 @@ export const getProducts = async (filters: { category?: string | PartCategory; b
   if (filters?.brand) params.set('brand', String(filters.brand));
   if (filters?.model) params.set('model', String(filters.model));
   if (filters?.limit) params.set('limit', String(filters.limit));
-  return http<Product[]>(`/api/products${params.toString() ? `?${params.toString()}` : ''}`);
+  return http<Product[]>(`products${params.toString() ? `?${params.toString()}` : ''}`);
 };
 export const getProductById = async (id: string): Promise<Product | undefined> =>
-  USE_LOCAL_API ? simulateApiCall(db.getProductById(id)) : http<Product>(`/api/products/${id}`);
+  USE_LOCAL_API ? simulateApiCall(db.getProductById(id)) : http<Product>(`products/${id}`);
 export const addProduct = async (productData: Omit<Product, 'id'>): Promise<Product> =>
-  USE_LOCAL_API ? simulateApiCall(db.addProduct(productData)) : http<Product>(`/api/products`, { method: 'POST', body: JSON.stringify(productData) });
+  USE_LOCAL_API ? simulateApiCall(db.addProduct(productData)) : http<Product>(`products`, { method: 'POST', body: JSON.stringify(productData) });
 export const updateProduct = async (productId: string, productData: Partial<Omit<Product, 'id'>>): Promise<Product> =>
-  USE_LOCAL_API ? simulateApiCall(db.updateProduct(productId, productData)) : http<Product>(`/api/products/${productId}`, { method: 'PUT', body: JSON.stringify(productData) });
+  USE_LOCAL_API ? simulateApiCall(db.updateProduct(productId, productData)) : http<Product>(`products/${productId}`, { method: 'PUT', body: JSON.stringify(productData) });
 export const deleteProduct = async (productId: string): Promise<{ success: boolean }> =>
-  USE_LOCAL_API ? simulateApiCall(db.deleteProduct(productId)) : http<{ success: boolean }>(`/api/products/${productId}`, { method: 'DELETE' });
+  USE_LOCAL_API ? simulateApiCall(db.deleteProduct(productId)) : http<{ success: boolean }>(`products/${productId}`, { method: 'DELETE' });
 
 
 // --- Auctions API (real backend) ---
 export const getAuctions = async (): Promise<Auction[]> => {
   if (USE_LOCAL_API) return simulateApiCall(db.getAuctions());
-  const data = await http<any[]>(`/api/auctions`);
+  const data = await http<any[]>(`auctions`);
   return Array.isArray(data) ? data.map(normalizeAuction) : [];
 };
 export const getAuctionById = async (id: string): Promise<Auction | undefined> => {
   if (USE_LOCAL_API) return simulateApiCall(db.getAuctionById(id));
-  const a = await http<any>(`/api/auctions/${id}`);
+  const a = await http<any>(`auctions/${id}`);
   return a ? normalizeAuction(a) : undefined;
 };
 export const addBid = async (auctionId: string, bidAmount: number, userId: string, bidderName: string): Promise<Auction> => {
   if (USE_LOCAL_API) return simulateApiCall(db.addBid(auctionId, bidAmount, userId, bidderName));
-  const a = await http<any>(`/api/auctions/${auctionId}/bids`, { method: 'POST', body: JSON.stringify({ amount: bidAmount }) });
+  const a = await http<any>(`auctions/${auctionId}/bids`, { method: 'POST', body: JSON.stringify({ amount: bidAmount }) });
   return normalizeAuction(a);
 };
 export const addAuction = async (auctionData: Omit<Auction, 'id' | 'currentBid' | 'bidCount' | 'bids'>): Promise<Auction> => {
   if (USE_LOCAL_API) return simulateApiCall(db.addAuction(auctionData));
-  const a = await http<any>(`/api/auctions`, { method: 'POST', body: JSON.stringify(auctionData) });
+  const a = await http<any>(`auctions`, { method: 'POST', body: JSON.stringify(auctionData) });
   return normalizeAuction(a);
 };
 export const updateAuction = async (auctionId: string, auctionData: Partial<Omit<Auction, 'id'>>): Promise<Auction> => {
   if (USE_LOCAL_API) return simulateApiCall(db.updateAuction(auctionId, auctionData));
-  const a = await http<any>(`/api/auctions/${auctionId}`, { method: 'PUT', body: JSON.stringify(auctionData) });
+  const a = await http<any>(`auctions/${auctionId}`, { method: 'PUT', body: JSON.stringify(auctionData) });
   return normalizeAuction(a);
 };
 export const deleteAuction = async (auctionId: string): Promise<{ success: boolean }> =>
-  USE_LOCAL_API ? simulateApiCall(db.deleteAuction(auctionId)) : http<{ success: boolean }>(`/api/auctions/${auctionId}`, { method: 'DELETE' });
+  USE_LOCAL_API ? simulateApiCall(db.deleteAuction(auctionId)) : http<{ success: boolean }>(`auctions/${auctionId}`, { method: 'DELETE' });
 
 // --- Blog API ---
 export const getBlogPosts = (): Promise<BlogPost[]> => simulateApiCall(db.getBlogPosts());
