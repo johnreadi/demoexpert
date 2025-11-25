@@ -63,6 +63,13 @@ function sanitizeApi(data: any, path: string): any {
   return san(data);
 }
 
+function resolveUrl(path: string): string {
+  const base = API_BASE_URL.replace(/\/+$/, '');
+  const p = String(path || '').replace(/^\/+/, '');
+  const normalized = p.startsWith('api/') ? p.substring(4) : p;
+  return `${base}/${normalized}`;
+}
+
 export async function http<T = any>(path: string, options: RequestInit = {}): Promise<T> {
   // Handle localStorage mock for development
   if (USE_LOCAL_STORAGE) {
@@ -105,7 +112,7 @@ export async function http<T = any>(path: string, options: RequestInit = {}): Pr
     }, 10000); // 10 second timeout
     
     try {
-      const res = await fetch(`${API_BASE_URL}${path}`, {
+      const res = await fetch(resolveUrl(path), {
         credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
