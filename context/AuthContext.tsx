@@ -20,7 +20,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     (async () => {
       try {
-        const me = await http<User>('/api/auth/me');
+        const me = await http<User>('auth/me');
         setUser(me || null);
       } catch (error) {
         console.warn("Failed to fetch user session:", error);
@@ -33,7 +33,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const login = async (email: string, password: string) => {
-    const loggedInUser = await http<User>('/api/auth/login', {
+    const loggedInUser = await http<User>('auth/login', {
       method: 'POST',
       body: JSON.stringify({ email, password })
     });
@@ -42,7 +42,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const logout = () => {
     (async () => {
-      try { await http('/api/auth/logout', { method: 'POST' }); } catch (error) {
+      try { await http('auth/logout', { method: 'POST' }); } catch (error) {
         console.warn("Failed to logout:", error);
       }
       setUser(null);
