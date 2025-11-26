@@ -23,13 +23,17 @@ services:
         node dist/index.js
       "
     networks:
-      - dokploy-network
+      - dokploy_dokploy-network  # 👈 CORRIGÉ
     labels:
       - traefik.enable=true
+      - traefik.docker.network=dokploy_dokploy-network  # 👈 AJOUTÉ
       - traefik.http.routers.demoexpert-api.rule=Host(`app.demoexpert.fr`) && PathPrefix(`/api`)
       - traefik.http.routers.demoexpert-api.entrypoints=websecure
       - traefik.http.services.demoexpert-api.loadbalancer.server.port=8080
       - traefik.http.routers.demoexpert-api.tls.certresolver=letsencrypt
+      # 👇 Health check Traefik (optionnel mais recommandé)
+      - traefik.http.services.demoexpert-api.loadbalancer.healthcheck.path=/api/settings
+      - traefik.http.services.demoexpert-api.loadbalancer.healthcheck.interval=10s
 
   web:
     build:
@@ -53,14 +57,18 @@ services:
       retries: 3
       start_period: 40s
     networks:
-      - dokploy-network
+      - dokploy_dokploy-network  # 👈 CORRIGÉ
     labels:
       - traefik.enable=true
+      - traefik.docker.network=dokploy_dokploy-network  # 👈 AJOUTÉ
       - traefik.http.routers.demoexpert-web.rule=Host(`app.demoexpert.fr`)
       - traefik.http.routers.demoexpert-web.entrypoints=websecure
       - traefik.http.services.demoexpert-web.loadbalancer.server.port=80
       - traefik.http.routers.demoexpert-web.tls.certresolver=letsencrypt
+      # 👇 Health check Traefik
+      - traefik.http.services.demoexpert-web.loadbalancer.healthcheck.path=/
+      - traefik.http.services.demoexpert-web.loadbalancer.healthcheck.interval=10s
 
 networks:
-  dokploy-network:
+  dokploy_dokploy-network:  # 👈 CORRIGÉ
     external: true
