@@ -215,19 +215,8 @@ app.post('/api/auth/login', async (req, res) => {
   const { email, password } = req.body || {};
   if (!email || !password) return res.status(400).json({ error: 'missing_credentials' });
 
-  const fallbackEmail = process.env.FALLBACK_ADMIN_EMAIL;
-  const fallbackPass = process.env.FALLBACK_ADMIN_PASSWORD;
-  const tryFallback = () => {
-    if (fallbackEmail && fallbackPass && String(email).toLowerCase() === String(fallbackEmail).toLowerCase() && String(password) === String(fallbackPass)) {
-      const safeUser: UserSession = { id: 'fallback-admin', name: 'Admin', email: String(fallbackEmail), role: 'Admin', status: 'approved' } as any;
-      (req.session as any).user = safeUser;
-      return res.json(safeUser);
-    }
-    return res.status(500).json({ error: 'login_failed' });
-  };
-
   if (!process.env.DATABASE_URL) {
-    return tryFallback();
+    return res.status(503).json({ error: 'database_not_configured' });
   }
 
   try {
@@ -239,8 +228,8 @@ app.post('/api/auth/login', async (req, res) => {
     const safeUser: UserSession = { id: user.id, name: user.name, email: user.email, role: user.role as any, status: user.status as any };
     (req.session as any).user = safeUser;
     return res.json(safeUser);
-  } catch (e) {
-    return tryFallback();
+  } catch {
+    return res.status(500).json({ error: 'login_failed' });
   }
 });
 
@@ -248,19 +237,8 @@ app.post('/auth/login', async (req, res) => {
   const { email, password } = req.body || {};
   if (!email || !password) return res.status(400).json({ error: 'missing_credentials' });
 
-  const fallbackEmail = process.env.FALLBACK_ADMIN_EMAIL;
-  const fallbackPass = process.env.FALLBACK_ADMIN_PASSWORD;
-  const tryFallback = () => {
-    if (fallbackEmail && fallbackPass && String(email).toLowerCase() === String(fallbackEmail).toLowerCase() && String(password) === String(fallbackPass)) {
-      const safeUser: UserSession = { id: 'fallback-admin', name: 'Admin', email: String(fallbackEmail), role: 'Admin', status: 'approved' } as any;
-      (req.session as any).user = safeUser;
-      return res.json(safeUser);
-    }
-    return res.status(500).json({ error: 'login_failed' });
-  };
-
   if (!process.env.DATABASE_URL) {
-    return tryFallback();
+    return res.status(503).json({ error: 'database_not_configured' });
   }
 
   try {
@@ -272,8 +250,8 @@ app.post('/auth/login', async (req, res) => {
     const safeUser: UserSession = { id: user.id, name: user.name, email: user.email, role: user.role as any, status: user.status as any };
     (req.session as any).user = safeUser;
     return res.json(safeUser);
-  } catch (e) {
-    return tryFallback();
+  } catch {
+    return res.status(500).json({ error: 'login_failed' });
   }
 });
 
@@ -352,44 +330,7 @@ app.get('/api/products', async (req, res) => {
     const take = limit ? Number(limit) : undefined;
 
     if (!process.env.DATABASE_URL) {
-      const mockProducts = [
-        {
-          id: 'mock-prod-1',
-          name: 'Alternateur Renault Clio',
-          oemRef: 'REF8200660035',
-          brand: 'Renault',
-          model: 'Clio',
-          year: 2018,
-          category: 'Alternateur',
-          price: '95.00',
-          condition: 'Occasion',
-          warranty: '3 mois',
-          compatibility: 'Clio IV',
-          images: ['https://picsum.photos/seed/prod1/400/300'],
-          description: "Alternateur testé et garanti."
-        },
-        {
-          id: 'mock-prod-2',
-          name: 'Démarreur Peugeot 208',
-          oemRef: 'REF9801234567',
-          brand: 'Peugeot',
-          model: '208',
-          year: 2019,
-          category: 'Démarreur',
-          price: '120.00',
-          condition: 'Bon état',
-          warranty: '3 mois',
-          compatibility: '208 phase 2',
-          images: ['https://picsum.photos/seed/prod2/400/300'],
-          description: 'Démarreur en très bon état.'
-        }
-      ];
-      const filtered = mockProducts.filter(p =>
-        (category ? p.category === String(category) : true) &&
-        (brand ? p.brand.toLowerCase().includes(String(brand).toLowerCase()) : true) &&
-        (model ? p.model.toLowerCase().includes(String(model).toLowerCase()) : true)
-      );
-      return res.json(take ? filtered.slice(0, take) : filtered);
+      return res.status(503).json({ error: 'database_not_configured' });
     }
 
     const products = await prisma.product.findMany({
@@ -410,22 +351,7 @@ app.get('/api/products', async (req, res) => {
 app.get('/api/products/:id', async (req, res) => {
   try {
     if (!process.env.DATABASE_URL) {
-      const mock = {
-        id: req.params.id,
-        name: 'Alternateur Renault Clio',
-        oemRef: 'REF8200660035',
-        brand: 'Renault',
-        model: 'Clio',
-        year: 2018,
-        category: 'Alternateur',
-        price: '95.00',
-        condition: 'Occasion',
-        warranty: '3 mois',
-        compatibility: 'Clio IV',
-        images: ['https://picsum.photos/seed/prod1/400/300'],
-        description: 'Alternateur testé et garanti.'
-      };
-      return res.json(mock);
+      return res.status(503).json({ error: 'database_not_configured' });
     }
     const product = await prisma.product.findUnique({ where: { id: req.params.id } });
     if (!product) return res.status(404).json({ error: 'not_found' });
@@ -553,60 +479,8 @@ app.delete('/products/:id', async (req, res) => {
 
 app.get('/api/auctions', async (_req, res) => {
   try {
-    // If we don't have a database connection, return mock data
     if (!process.env.DATABASE_URL) {
-      // Return mock auction data
-      const mockAuctions = [
-        { 
-          id: 'mock-auc-1', 
-          vehicle: { 
-            name: 'Peugeot 208 GT Line', 
-            brand: 'Peugeot', 
-            model: '208', 
-            year: 2019, 
-            mileage: 55000, 
-            description: 'Superbe Peugeot 208 GT Line...', 
-            images: ['https://picsum.photos/seed/auc1-1/800/600'] 
-          }, 
-          startingPrice: 8000, 
-          currentBid: 8300, 
-          bidCount: 6, 
-          bids: [ 
-            { 
-              userId: 'mock-user-1', 
-              bidderName: 'Marie Curie', 
-              amount: 8300, 
-              timestamp: new Date(Date.now() - 3600000 * 1) 
-            } 
-          ], 
-          endDate: new Date(Date.now() + 1000 * 60 * 60 * 49) 
-        },
-        { 
-          id: 'mock-auc-2', 
-          vehicle: { 
-            name: 'Volkswagen Golf VII', 
-            brand: 'Volkswagen', 
-            model: 'Golf', 
-            year: 2017, 
-            mileage: 89000, 
-            description: 'Volkswagen Golf 7 en excellent état...', 
-            images: ['https://picsum.photos/seed/auc2-1/800/600'] 
-          }, 
-          startingPrice: 10000, 
-          currentBid: 10500, 
-          bidCount: 8, 
-          bids: [ 
-            { 
-              userId: 'mock-user-2', 
-              bidderName: 'Jean Dupont', 
-              amount: 10500, 
-              timestamp: new Date(Date.now() - 3600000 * 1) 
-            } 
-          ], 
-          endDate: new Date(Date.now() + 1000 * 60 * 60 * 24 * 5) 
-        }
-      ];
-      return res.json(mockAuctions);
+      return res.status(503).json({ error: 'database_not_configured' });
     }
     
     const auctions = await prisma.auction.findMany({ orderBy: { createdAt: 'desc' } });
@@ -637,34 +511,8 @@ app.get('/api/auctions', async (_req, res) => {
 
 app.get('/api/auctions/:id', async (req, res) => {
   try {
-    // If we don't have a database connection, return mock data
     if (!process.env.DATABASE_URL) {
-      // Return mock auction data based on ID
-      const mockAuction = {
-        id: req.params.id,
-        vehicle: { 
-          name: 'Peugeot 208 GT Line', 
-          brand: 'Peugeot', 
-          model: '208', 
-          year: 2019, 
-          mileage: 55000, 
-          description: 'Superbe Peugeot 208 GT Line...', 
-          images: ['https://picsum.photos/seed/auc1-1/800/600'] 
-        }, 
-        startingPrice: 8000, 
-        currentBid: 8300, 
-        bidCount: 6, 
-        bids: [ 
-          { 
-            userId: 'mock-user-1', 
-            bidderName: 'Marie Curie', 
-            amount: 8300, 
-            timestamp: new Date(Date.now() - 3600000 * 1) 
-          } 
-        ], 
-        endDate: new Date(Date.now() + 1000 * 60 * 60 * 49) 
-      };
-      return res.json(mockAuction);
+      return res.status(503).json({ error: 'database_not_configured' });
     }
     
     const a = await prisma.auction.findUnique({ where: { id: req.params.id }, include: { bids: { orderBy: { timestamp: 'desc' } } } });
@@ -988,12 +836,12 @@ app.get('/api/settings', async (_req, res) => {
   try {
     const settings = await prisma.settings.findUnique({ where: { key: 'site_settings' } });
     if (!settings) {
-      return res.json(normalizeSettings(DEFAULT_SETTINGS));
+      return res.status(503).json({ error: 'settings_not_found' });
     }
     res.json(normalizeSettings(settings.value));
   } catch (error) {
     console.error("Failed to fetch settings from database:", error);
-    return res.json(normalizeSettings(DEFAULT_SETTINGS));
+    return res.status(503).json({ error: 'db_unreachable' });
   }
 });
 
