@@ -64,7 +64,8 @@ function sanitizeApi(data: any, path: string): any {
 }
 
 function resolveUrl(path: string): string {
-  const base = API_BASE_URL.replace(/\/+$/, '');
+  const b = String(API_BASE_URL || '').replace(/\/+$/, '');
+  const base = b.replace(/(\/api)+$/, '/api');
   const p = String(path || '').replace(/^\/+/, '');
   const normalized = p.startsWith('api/') ? p.substring(4) : p;
   return `${base}/${normalized}`;
