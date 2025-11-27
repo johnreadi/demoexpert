@@ -23,8 +23,8 @@ services:
         node dist/index.js
       "
     networks:
-      - dokploy_dokploy-network   # ← Pour Traefik
-      - demoexpert_default        # ← Pour accéder à la DB
+      - dokploy_dokploy-network   # ← Pour Traefik (externe)
+      - default                   # ← Pour la base de données (interne au projet)
     labels:
       - traefik.enable=true
       - traefik.docker.network=dokploy_dokploy-network
@@ -57,7 +57,7 @@ services:
       retries: 3
       start_period: 40s
     networks:
-      - dokploy_dokploy-network   # ← Pour Traefik
+      - dokploy_dokploy-network   # ← Pour Traefik (externe)
     labels:
       - traefik.enable=true
       - traefik.docker.network=dokploy_dokploy-network
@@ -69,6 +69,8 @@ services:
       - traefik.http.services.demoexpert-web.loadbalancer.healthcheck.interval=10s
 
 networks:
+  dokploy_dokploy-network:
+    external: true    # ← Déjà créé par Dokploy
   default:
     name: garage-sh90wo_default
-    external: false
+    external: false   # ← Réseau interne pour la DB (géré par Dokploy)
