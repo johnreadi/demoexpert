@@ -69,7 +69,6 @@ services:
       - traefik.http.services.demoexpert-web.loadbalancer.healthcheck.interval=10s
 
 networks:
-  dokploy_dokploy-network:
-    external: true
-  demoexpert_default:
-    external: true
+  default:
+    name: garage-sh90wo_default
+    external: false
