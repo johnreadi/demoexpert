@@ -69,4 +69,4 @@ networks:
     name: dokploy_dokploy-network
   overlay_net:
     external: true
-    name: dokploy-network
+    name: app-shared-net
