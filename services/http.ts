@@ -1,6 +1,6 @@
 export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
-const USE_LOCAL_API = import.meta.env.MODE !== 'production' && import.meta.env.VITE_USE_LOCAL_API === 'true';
-const USE_LOCAL_STORAGE = import.meta.env.MODE !== 'production' && import.meta.env.VITE_USE_LOCAL_STORAGE === 'true';
+const USE_LOCAL_API = import.meta.env.MODE === 'development' && import.meta.env.VITE_USE_LOCAL_API === 'true';
+const USE_LOCAL_STORAGE = import.meta.env.MODE === 'development' && import.meta.env.VITE_USE_LOCAL_STORAGE === 'true';
 
 // Local storage mock for API calls
 const localStorageMock: Record<string, any> = {
