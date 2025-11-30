@@ -18,7 +18,7 @@ services:
     command: |
       sh -c "
         npm run db:generate &&
-        npx prisma db push --accept-data-loss &&
+        npx prisma migrate deploy &&
         npm run db:seed &&
         node dist/index.js
       "
