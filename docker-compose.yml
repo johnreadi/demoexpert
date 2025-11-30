@@ -23,7 +23,8 @@ services:
         node dist/index.js
       "
     networks:
-      - dokploy-network
+      - traefik_net
+      - overlay_net
     labels:
       - traefik.enable=true
       - traefik.http.routers.demoexpert-api.rule=Host(`app.demoexpert.fr`) && PathPrefix(`/api`)
@@ -53,7 +54,7 @@ services:
       retries: 3
       start_period: 40s
     networks:
-      - dokploy-network
+      - traefik_net
     labels:
       - traefik.enable=true
       - traefik.http.routers.demoexpert-web.rule=Host(`app.demoexpert.fr`)
@@ -62,5 +63,9 @@ services:
       - traefik.http.routers.demoexpert-web.tls.certresolver=letsencrypt
 
 networks:
-  dokploy-network:
+  traefik_net:
     external: true
+    name: dokploy_dokploy-network
+  overlay_net:
+    external: true
+    name: dokploy-network
