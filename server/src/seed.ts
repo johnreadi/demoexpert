@@ -4,9 +4,10 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 async function main() {
+  const defaultAdminEmail = process.env.DEFAULT_ADMIN_EMAIL || 'admin@demoexpert.fr';
+  const defaultAdminPassword = process.env.DEFAULT_ADMIN_PASSWORD || 'demo76000';
   const users = [
-    { name: 'Admin Expert', email: 'admin@expert.fr', role: 'Admin' as const, status: 'approved' as const, password: 'demo76000' },
-    { name: 'Admin Demoexpert', email: 'admin@demoexpert.fr', role: 'Admin' as const, status: 'approved' as const, password: 'demo76000' },
+    { name: 'Admin Demoexpert', email: defaultAdminEmail, role: 'Admin' as const, status: 'approved' as const, password: defaultAdminPassword },
     { name: 'Jean Dupont', email: 'jean.dupont@expert.fr', role: 'Staff' as const, status: 'approved' as const, password: 'password123' },
     { name: 'Marie Curie', email: 'marie.curie@expert.fr', role: 'Staff' as const, status: 'pending' as const, password: 'password123' },
   ];
