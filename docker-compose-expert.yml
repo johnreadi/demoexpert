@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  expert-app:
+    image: expert-frontend-5ftp7oiaest:latest
+    container_name: expert_app
+    restart: unless-stopped
+    networks:
+      - dokploy-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.expert.rule=Host(`app.demoexpert.fr`)"
+      - "traefik.http.routers.expert.entrypoints=websecure"
+      - "traefik.http.routers.expert.tls=true"
+      - "traefik.http.routers.expert.tls.certresolver=letsencrypt"
+      - "traefik.http.services.expert.loadbalancer.server.port=3000"
+      - "traefik.docker.network=dokploy-network"
+    environment:
+      - NODE_ENV=production
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+networks:
+  dokploy-network:
+    external: true
