@@ -303,7 +303,12 @@ app.post('/api/ai/chat', async (req, res) => {
       ? history.map((m: any) => `${m.sender === 'user' ? 'Utilisateur' : 'Bot'}: ${m.text}`).join('\n')
       : '';
 
-    const prompt = `${intro}\n\nHistorique:\n${historyText}\n\nDernière question utilisateur: ${String(message ?? '').trim()}`;
+    const prompt = `${intro}
+
+Historique:
+${historyText}
+
+Dernière question utilisateur: ${String(message ?? '').trim()}`;
 
     const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`, {
       method: 'POST',
@@ -836,12 +841,14 @@ app.get('/api/settings', async (_req, res) => {
   try {
     const settings = await prisma.settings.findUnique({ where: { key: 'site_settings' } });
     if (!settings) {
-      return res.status(503).json({ error: 'settings_not_found' });
+      console.warn('Settings not found in database, returning defaults');
+      return res.json(normalizeSettings(DEFAULT_SETTINGS));
     }
     res.json(normalizeSettings(settings.value));
   } catch (error) {
     console.error("Failed to fetch settings from database:", error);
-    return res.status(503).json({ error: 'db_unreachable' });
+    console.warn('Returning default settings due to database error');
+    return res.json(normalizeSettings(DEFAULT_SETTINGS));
   }
 });
 
