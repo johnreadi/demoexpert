@@ -24,14 +24,17 @@ services:
         node dist/index.js
       "
     networks:
-      - traefik_net
-      - overlay_net
+      - dokploy_dokploy-network
+      - default
     labels:
       - traefik.enable=true
+      - traefik.docker.network=dokploy_dokploy-network
       - traefik.http.routers.demoexpert-api.rule=Host(`app.demoexpert.fr`) && PathPrefix(`/api`)
       - traefik.http.routers.demoexpert-api.entrypoints=websecure
       - traefik.http.services.demoexpert-api.loadbalancer.server.port=8080
       - traefik.http.routers.demoexpert-api.tls.certresolver=letsencrypt
+      - traefik.http.services.demoexpert-api.loadbalancer.healthcheck.path=/api/healthz
+      - traefik.http.services.demoexpert-api.loadbalancer.healthcheck.interval=10s
 
   web:
     build:
@@ -55,18 +58,20 @@ services:
       retries: 3
       start_period: 40s
     networks:
-      - traefik_net
+      - dokploy_dokploy-network
     labels:
       - traefik.enable=true
+      - traefik.docker.network=dokploy_dokploy-network
       - traefik.http.routers.demoexpert-web.rule=Host(`app.demoexpert.fr`)
       - traefik.http.routers.demoexpert-web.entrypoints=websecure
       - traefik.http.services.demoexpert-web.loadbalancer.server.port=80
       - traefik.http.routers.demoexpert-web.tls.certresolver=letsencrypt
+      - traefik.http.services.demoexpert-web.loadbalancer.healthcheck.path=/
+      - traefik.http.services.demoexpert-web.loadbalancer.healthcheck.interval=10s
 
 networks:
-  traefik_net:
+  dokploy_dokploy-network:
     external: true
-    name: dokploy_dokploy-network
-  overlay_net:
-    external: true
-    name: app-shared-net
+  default:
+    name: expert-fdexpert-cj50eg_default
+    external: false
