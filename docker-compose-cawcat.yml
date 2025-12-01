@@ -1,22 +1,27 @@
 version: '3.8'
 
 services:
-  cawcat-app:
-    image: clifford-faclifford-yzīnvqi-backend:latest
-    container_name: cawcat_app
+  expert-app:
+    image: expert-frontend-5ftp7oiaest:latest
+    container_name: expert_app
     restart: unless-stopped
     networks:
       - dokploy-network
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.cawcat.rule=Host(`app.cavocat.fr`)"
-      - "traefik.http.routers.cawcat.entrypoints=websecure"
-      - "traefik.http.routers.cawcat.tls=true"
-      - "traefik.http.routers.cawcat.tls.certresolver=letsencrypt"
-      - "traefik.http.services.cawcat.loadbalancer.server.port=3000"
+      - "traefik.http.routers.expert.rule=Host(`app.demoexpert.fr`)"
+      - "traefik.http.routers.expert.entrypoints=websecure"
+      - "traefik.http.routers.expert.tls=true"
+      - "traefik.http.routers.expert.tls.certresolver=letsencrypt"
+      - "traefik.http.services.expert.loadbalancer.server.port=3000"
       - "traefik.docker.network=dokploy-network"
     environment:
       - NODE_ENV=production
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
 
 networks:
   dokploy-network:
