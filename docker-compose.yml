@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 services:
   api:
     build:
@@ -33,32 +32,36 @@ services:
       - traefik.http.routers.demoexpert-api.entrypoints=websecure
       - traefik.http.services.demoexpert-api.loadbalancer.server.port=8080
       - traefik.http.routers.demoexpert-api.tls.certresolver=letsencrypt
-=======
-version: '3.8'
->>>>>>> 54337d572bdc5a1ee2408b3fd73abe2e90ad38fa
 
-services:
-  expert-app:
-    image: expert-frontend-5ftp7oiaest:latest
-    container_name: expert_app
-    restart: unless-stopped
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.web
+      args:
+        VITE_API_BASE_URL: /api
+        VITE_APP_BASE_URL: https://app.demoexpert.fr
+    restart: always
+    environment:
+      NODE_ENV: production
+    depends_on:
+      api:
+        condition: service_started
+    expose:
+      - "80"
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:80/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
     networks:
       - traefik_net
     labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.expert.rule=Host(`app.demoexpert.fr`)"
-      - "traefik.http.routers.expert.entrypoints=websecure"
-      - "traefik.http.routers.expert.tls=true"
-      - "traefik.http.routers.expert.tls.certresolver=letsencrypt"
-      - "traefik.http.services.expert.loadbalancer.server.port=3000"
-      - "traefik.docker.network=dokploy-network"
-    environment:
-      - NODE_ENV=production
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000"]
-      interval: 30s
-      timeout: 5s
-      retries: 3
+      - traefik.enable=true
+      - traefik.http.routers.demoexpert-web.rule=Host(`app.demoexpert.fr`)
+      - traefik.http.routers.demoexpert-web.entrypoints=websecure
+      - traefik.http.services.demoexpert-web.loadbalancer.server.port=80
+      - traefik.http.routers.demoexpert-web.tls.certresolver=letsencrypt
 
 networks:
   traefik_net:
