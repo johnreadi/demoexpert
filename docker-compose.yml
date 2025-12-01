@@ -73,5 +73,5 @@ networks:
   dokploy_dokploy-network:
     external: true
   default:
-    name: expert-fdexpert-cj50eg_default
-    external: false
+    external: true
+    name: dokploy_dokploy-network
