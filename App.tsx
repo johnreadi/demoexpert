@@ -21,6 +21,7 @@ import { ProtectedRoute } from './components/ProtectedRoute';
 import WindshieldPage from './pages/WindshieldPage';
 import RegisterPage from './pages/RegisterPage';
 import { SettingsProvider } from './context/SettingsContext';
+import { ToastProvider } from './context/ToastContext';
 import LiftRentalPage from './pages/LiftRentalPage';
 import BackToTopButton from './components/BackToTopButton';
 import RepairsPage from './pages/RepairsPage';
@@ -77,7 +78,8 @@ function App() {
     <ErrorBoundary>
       <AuthProvider>
         <SettingsProvider>
-          <Router>
+          <ToastProvider>
+            <Router>
             <div className="flex flex-col min-h-screen">
               <Header />
               <main className="flex-grow">
@@ -130,7 +132,8 @@ function App() {
               <BackToTopButton />
             </div>
             <ScrollToTop />
-          </Router>
+            </Router>
+          </ToastProvider>
         </SettingsProvider>
       </AuthProvider>
     </ErrorBoundary>
