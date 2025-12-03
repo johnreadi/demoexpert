@@ -1,5 +1,26 @@
+version: '3.8'
+
 services:
-  api:
+  # PostgreSQL Database
+  db:
+    image: postgres:15-alpine
+    restart: always
+    environment:
+      POSTGRES_DB: demoexpert
+      POSTGRES_USER: demoexpert
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-changeme_in_production}
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    networks:
+      - dokploy-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U demoexpert"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Backend API
+  backend:
     build:
       context: ./server
       dockerfile: Dockerfile
@@ -7,71 +28,54 @@ services:
     environment:
       NODE_ENV: production
       PORT: 8080
-      SESSION_SECRET: ${SESSION_SECRET}
-      TRUST_PROXY: "1"
+      DATABASE_URL: postgresql://demoexpert:${DB_PASSWORD:-changeme_in_production}@db:5432/demoexpert
+      SESSION_SECRET: ${SESSION_SECRET:-change_me_in_production}
+      CORS_ORIGIN: ${CORS_ORIGIN:-https://app.demoexpert.fr}
+      TRUST_PROXY: 1
       COOKIE_SECURE: "true"
-      COOKIE_SAME_SITE: lax
-      CORS_ORIGIN: https://app.demoexpert.fr
-      DATABASE_URL: ${DATABASE_URL}
-    expose:
-      - "8080"
-    command: |
-      sh -c "
-        for i in $(seq 1 60); do nc -z expert-dbexpert-nh7w6a 5432 && echo 'database reachable' && break || echo 'waiting for database...' && sleep 3; done;
-        npm run db:generate &&
-        npx prisma migrate deploy || true &&
-        npm run db:seed || true &&
-        node dist/index.js
-      "
+      COOKIE_SAME_SITE: none
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+    depends_on:
+      db:
+        condition: service_healthy
     networks:
-      - dokploy_dokploy-network
-      - default
+      - dokploy-network
+    command: sh -c "npx prisma migrate deploy && npx prisma generate && npm start"
     labels:
-      - traefik.enable=true
-      - traefik.docker.network=dokploy_dokploy-network
-      - traefik.http.routers.demoexpert-api.rule=Host(`app.demoexpert.fr`) && PathPrefix(`/api`)
-      - traefik.http.routers.demoexpert-api.entrypoints=websecure
-      - traefik.http.services.demoexpert-api.loadbalancer.server.port=8080
-      - traefik.http.routers.demoexpert-api.tls.certresolver=letsencrypt
-      - traefik.http.services.demoexpert-api.loadbalancer.healthcheck.path=/api/healthz
-      - traefik.http.services.demoexpert-api.loadbalancer.healthcheck.interval=10s
+      - "traefik.enable=true"
+      - "traefik.http.routers.demoexpert-api.rule=Host(`app.demoexpert.fr`) && PathPrefix(`/api`)"
+      - "traefik.http.routers.demoexpert-api.entrypoints=websecure"
+      - "traefik.http.routers.demoexpert-api.tls.certresolver=letsencrypt"
+      - "traefik.http.services.demoexpert-api.loadbalancer.server.port=8080"
+      - "traefik.http.services.demoexpert-api.loadbalancer.healthcheck.path=/api/healthz"
+      - "traefik.http.services.demoexpert-api.loadbalancer.healthcheck.interval=10s"
+      - "traefik.docker.network=dokploy-network"
 
-  web:
+  # Frontend (Nginx + React)
+  frontend:
     build:
       context: .
-      dockerfile: Dockerfile.web
+      dockerfile: Dockerfile
       args:
         VITE_API_BASE_URL: /api
-        VITE_APP_BASE_URL: https://app.demoexpert.fr
+        VITE_USE_LOCAL_API: "false"
+        VITE_USE_LOCAL_STORAGE: "false"
     restart: always
-    environment:
-      NODE_ENV: production
-    depends_on:
-      api:
-        condition: service_started
-    expose:
-      - "80"
-    healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:80/"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
     networks:
-      - dokploy_dokploy-network
+      - dokploy-network
     labels:
-      - traefik.enable=true
-      - traefik.docker.network=dokploy_dokploy-network
-      - traefik.http.routers.demoexpert-web.rule=Host(`app.demoexpert.fr`)
-      - traefik.http.routers.demoexpert-web.entrypoints=websecure
-      - traefik.http.services.demoexpert-web.loadbalancer.server.port=80
-      - traefik.http.routers.demoexpert-web.tls.certresolver=letsencrypt
-      - traefik.http.services.demoexpert-web.loadbalancer.healthcheck.path=/
-      - traefik.http.services.demoexpert-web.loadbalancer.healthcheck.interval=10s
+      - "traefik.enable=true"
+      - "traefik.http.routers.demoexpert-web.rule=Host(`app.demoexpert.fr`)"
+      - "traefik.http.routers.demoexpert-web.entrypoints=websecure"
+      - "traefik.http.routers.demoexpert-web.tls.certresolver=letsencrypt"
+      - "traefik.http.services.demoexpert-web.loadbalancer.server.port=80"
+      - "traefik.http.services.demoexpert-web.loadbalancer.healthcheck.path=/"
+      - "traefik.http.services.demoexpert-web.loadbalancer.healthcheck.interval=10s"
+      - "traefik.docker.network=dokploy-network"
 
 networks:
-  dokploy_dokploy-network:
+  dokploy-network:
     external: true
-  default:
-    external: true
-    name: dokploy_dokploy-network
+
+volumes:
+  db_data:
