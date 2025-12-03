@@ -210,7 +210,7 @@ docker-compose -f docker-compose.prod.yml restart backend
 ## 8️⃣ **Mise à jour (Pull & Rebuild)**
 
 ```bash
-git pull origin main
+git pull origin Main
 docker-compose -f docker-compose.prod.yml down
 docker-compose -f docker-compose.prod.yml up -d --build
 ```
