@@ -165,7 +165,7 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         setIsLoading(false);
         setHasError(true);
       }
-    }, 5000); // 5 second timeout
+    }, 2000); // 2 second timeout (réduit de 5s pour développement)
     
     fetchSettings();
     
