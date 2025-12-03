@@ -17,7 +17,7 @@ const simulateApiError = (message: string, delay = 200): Promise<any> => {
     });
 };
 
-const USE_LOCAL_API = import.meta.env.MODE !== 'production' && import.meta.env.VITE_USE_LOCAL_API === 'true';
+const USE_LOCAL_API = import.meta.env.VITE_USE_LOCAL_API === 'true';
 const normalizeAuction = (a: any): Auction => {
   // Handle case where auction data comes directly from database (flat structure)
   const rawVehicle = a?.vehicle ?? {
