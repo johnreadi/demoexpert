@@ -20,7 +20,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     openssl ca-certificates netcat-openbsd \
   && rm -rf /var/lib/apt/lists/*
 COPY package.json package-lock.json* yarn.lock* pnpm-lock.yaml* ./
-RUN npm install --omit=dev --no-fund --no-audit
+RUN npm install --omit=dev --no-fund --no-audit \
+  && npx prisma generate
 COPY --from=build /app/dist ./dist
 COPY --from=build /app/prisma ./prisma
 COPY --from=build /app/node_modules/.prisma ./node_modules/.prisma
