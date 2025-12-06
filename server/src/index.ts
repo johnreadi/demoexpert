@@ -741,6 +741,172 @@ app.post('/api/contact', async (req, res) => {
   }
 });
 
+// --- Generic form endpoints sending messages to AdminMessage ---
+
+app.post('/api/scrap-removal', async (req, res) => {
+  try {
+    const { name, email, phone, address, vehicle, immatriculation, date, commentaire } = req.body || {};
+
+    if (!name || !email || !vehicle) {
+      return res.status(400).json({ error: 'missing_required_fields' });
+    }
+
+    const msg = await prisma.adminMessage.create({
+      data: {
+        from: "Enlèvement d'épave",
+        senderName: name,
+        senderEmail: email,
+        subject: `Enlèvement ${vehicle || ''}`,
+        content: [
+          phone && `Téléphone: ${phone}`,
+          address && `Adresse: ${address}`,
+          immatriculation && `Immatriculation: ${immatriculation}`,
+          date && `Date souhaitée: ${date}`,
+          commentaire && `Commentaire: ${commentaire}`,
+        ].filter(Boolean).join('\n'),
+      }
+    });
+
+    return res.status(201).json({ success: true, id: msg.id });
+  } catch (error) {
+    console.error('Failed to submit scrap removal request:', error);
+    return res.status(500).json({ error: 'failed_to_submit_scrap_removal' });
+  }
+});
+
+app.post('/api/windshield', async (req, res) => {
+  try {
+    const { name, email, phone, vehicle, year, immatriculation, damageType, message } = req.body || {};
+
+    if (!name || !email || !vehicle) {
+      return res.status(400).json({ error: 'missing_required_fields' });
+    }
+
+    const msg = await prisma.adminMessage.create({
+      data: {
+        from: 'Devis Pare-brise',
+        senderName: name,
+        senderEmail: email,
+        subject: `Devis pour ${vehicle || ''}`,
+        content: [
+          phone && `Téléphone: ${phone}`,
+          year && `Année: ${year}`,
+          immatriculation && `Immatriculation: ${immatriculation}`,
+          damageType && `Type de dommage: ${damageType}`,
+          message && `Message: ${message}`,
+        ].filter(Boolean).join('\n'),
+      }
+    });
+
+    return res.status(201).json({ success: true, id: msg.id });
+  } catch (error) {
+    console.error('Failed to submit windshield request:', error);
+    return res.status(500).json({ error: 'failed_to_submit_windshield' });
+  }
+});
+
+app.post('/api/lift-rental', async (req, res) => {
+  try {
+    const { name, email, phone, date, time, duration, price } = req.body || {};
+
+    if (!name || !email || !date || !time || !duration) {
+      return res.status(400).json({ error: 'missing_required_fields' });
+    }
+
+    const msg = await prisma.adminMessage.create({
+      data: {
+        from: 'Location de Pont',
+        senderName: name,
+        senderEmail: email,
+        subject: `Réservation pour le ${date} à ${time}`,
+        content: [
+          phone && `Téléphone: ${phone}`,
+          `Durée: ${duration}h`,
+          price && `Prix estimé: ${price} €`,
+        ].filter(Boolean).join('\n'),
+      }
+    });
+
+    return res.status(201).json({ success: true, id: msg.id });
+  } catch (error) {
+    console.error('Failed to submit lift rental request:', error);
+    return res.status(500).json({ error: 'failed_to_submit_lift_rental' });
+  }
+});
+
+app.post('/api/buyback', async (req, res) => {
+  try {
+    const { name, email, phone, brand, model, year, mileage, message } = req.body || {};
+
+    if (!name || !email || !brand || !model) {
+      return res.status(400).json({ error: 'missing_required_fields' });
+    }
+
+    const msg = await prisma.adminMessage.create({
+      data: {
+        from: 'Rachat de véhicule',
+        senderName: name,
+        senderEmail: email,
+        subject: `Rachat: ${brand} ${model}`,
+        content: [
+          phone && `Téléphone: ${phone}`,
+          year && `Année: ${year}`,
+          mileage && `Kilométrage: ${mileage}`,
+          message && `Message: ${message}`,
+        ].filter(Boolean).join('\n'),
+      }
+    });
+
+    // On renvoie un texte d'estimation générique comme dans le mock
+    return res.status(201).json({ success: true, estimation: "Notre équipe analyse votre demande et vous contactera avec une estimation détaillée très prochainement.", id: msg.id });
+  } catch (error) {
+    console.error('Failed to submit buyback request:', error);
+    return res.status(500).json({ error: 'failed_to_submit_buyback' });
+  }
+});
+
+app.post('/api/quote', async (req, res) => {
+  try {
+    const { product, name, email, message } = req.body || {};
+
+    if (!name || !email || !product) {
+      return res.status(400).json({ error: 'missing_required_fields' });
+    }
+
+    const subjectProduct = product?.name || product?.oemRef || 'Devis pièce';
+
+    const msg = await prisma.adminMessage.create({
+      data: {
+        from: 'Devis Pièce',
+        senderName: name,
+        senderEmail: email,
+        subject: `Devis pour ${subjectProduct}`,
+        content: [
+          product?.oemRef && `Réf OEM: ${product.oemRef}`,
+          message && `Message: ${message}`,
+        ].filter(Boolean).join('\n'),
+      }
+    });
+
+    return res.status(201).json({ success: true, id: msg.id });
+  } catch (error) {
+    console.error('Failed to submit quote request:', error);
+    return res.status(500).json({ error: 'failed_to_submit_quote' });
+  }
+});
+
+// --- Admin messaging ---
+
+app.get('/api/admin/messages', async (_req, res) => {
+  try {
+    const messages = await prisma.adminMessage.findMany({ orderBy: { receivedAt: 'desc' } });
+    return res.json(messages);
+  } catch (error) {
+    console.error('Failed to fetch admin messages:', error);
+    return res.status(500).json({ error: 'failed_to_fetch_admin_messages' });
+  }
+});
+
 app.get('/api/contact', async (_req, res) => {
   try {
     // Check if we have a database connection
