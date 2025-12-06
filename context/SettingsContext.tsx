@@ -28,7 +28,12 @@ const normalizeSettings = (input: any): SiteSettings => {
   };
   const pc = input?.pageContent ?? {};
   const normalizePage = (p: any) => ({ heroTitle: p?.heroTitle ?? '', heroSubtitle: p?.heroSubtitle ?? '', heroImage: p?.heroImage ?? '', contentTitle: p?.contentTitle ?? '', contentDescription: p?.contentDescription ?? '', contentImage: p?.contentImage ?? '', features: Array.isArray(p?.features) ? p.features : [] });
-  const pageContent = { repairs: normalizePage(pc?.repairs ?? {}), maintenance: normalizePage(pc?.maintenance ?? {}), tires: normalizePage(pc?.tires ?? {}) };
+  const pageContent = {
+    repairs: normalizePage(pc?.repairs ?? {}),
+    maintenance: normalizePage(pc?.maintenance ?? {}),
+    tires: normalizePage(pc?.tires ?? {}),
+    vhu: normalizePage(pc?.vhu ?? {})
+  };
   const adv = input?.advancedSettings ?? {};
   const advancedSettings = {
     smtp: { host: adv?.smtp?.host ?? '', port: adv?.smtp?.port ?? 0, user: adv?.smtp?.user ?? '', pass: adv?.smtp?.pass ?? '' },
@@ -54,13 +59,15 @@ const normalizeSettings = (input: any): SiteSettings => {
 
   const testimonials = Array.isArray(input?.testimonials) && input.testimonials.length > 0 ? input.testimonials : DEFAULT_SETTINGS.testimonials;
 
+  const faq = Array.isArray(input?.faq) ? input.faq : DEFAULT_SETTINGS.faq;
+
   const f = input?.footer ?? {};
   const footer = {
     description: f?.description ?? DEFAULT_SETTINGS.footer.description,
     servicesLinks: Array.isArray(f?.servicesLinks) && f.servicesLinks.length > 0 ? f.servicesLinks : DEFAULT_SETTINGS.footer.servicesLinks,
     infoLinks: Array.isArray(f?.infoLinks) && f.infoLinks.length > 0 ? f.infoLinks : DEFAULT_SETTINGS.footer.infoLinks,
   };
-  return { ...input, businessInfo, socialLinks, hero, services, testimonials, pageContent, advancedSettings, footer } as SiteSettings;
+  return { ...input, businessInfo, socialLinks, hero, services, testimonials, faq, pageContent, advancedSettings, footer } as SiteSettings;
 };
 
 // Default settings to use when API is not available
@@ -93,6 +100,13 @@ const DEFAULT_SETTINGS: SiteSettings = {
     { id: "test-2", text: "Enlèvement de mon épave en 48h, tout s'est très bien passé. Équipe très professionnelle.", author: "Sylvie M., Le Havre" },
     { id: "test-3", text: "J'ai trouvé un alternateur pour ma 308 que je ne trouvais nulle part ailleurs. Merci Démolition Expert !", author: "Garage Martin" }
   ],
+  faq: [
+    {
+      id: "faq-1",
+      question: "Comment fonctionne le rachat de véhicule ?",
+      answer: "Vous nous contactez via le formulaire dédié ou par téléphone. Nous évaluons votre véhicule et vous faisons une proposition."
+    },
+  ],
   footer: {
     description: "Votre spécialiste de la pièce automobile d'occasion et du recyclage en Normandie.",
     servicesLinks: [
@@ -118,7 +132,8 @@ const DEFAULT_SETTINGS: SiteSettings = {
   pageContent: {
     repairs: { heroTitle: "Réparation & Maintenance", heroSubtitle: "Diagnostic précis et réparations fiables.", heroImage: "https://picsum.photos/seed/mechanic-repair/1920/1080", contentTitle: "Un service expert", contentDescription: "Notre équipe est équipée pour diagnostiquer et résoudre tous types de problèmes.", contentImage: "https://picsum.photos/seed/diagnostic-tool/800/600", features: [ "<strong>Diagnostic électronique complet</strong>", "<strong>Réparation moteur</strong>", "<strong>Système de freinage</strong>" ] },
     maintenance: { heroTitle: "Vidange & Entretien", heroSubtitle: "Assurez la longévité de votre moteur.", heroImage: "https://picsum.photos/seed/oil-change/1920/1080", contentTitle: "L'entretien, clé de la fiabilité", contentDescription: "Nous proposons des forfaits d'entretien complets adaptés.", contentImage: "https://picsum.photos/seed/car-filters/800/600", features: [ "<strong>Vidange huile moteur</strong>", "<strong>Remplacement des filtres</strong>", "<strong>Contrôle des points de sécurité</strong>" ] },
-    tires: { heroTitle: "Service Pneus", heroSubtitle: "Vente, montage et équilibrage.", heroImage: "https://picsum.photos/seed/tire-fitting/1920/1080", contentTitle: "Votre sécurité, notre priorité", contentDescription: "Nous proposons une large gamme de pneus neufs et d'occasion.", contentImage: "https://picsum.photos/seed/wheel-balancing/800/600", features: [ "<strong>Vente de pneus neufs et d'occasion</strong>", "<strong>Montage et équilibrage</strong>", "<strong>Réparation de crevaison</strong>" ] }
+    tires: { heroTitle: "Service Pneus", heroSubtitle: "Vente, montage et équilibrage.", heroImage: "https://picsum.photos/seed/tire-fitting/1920/1080", contentTitle: "Votre sécurité, notre priorité", contentDescription: "Nous proposons une large gamme de pneus neufs et d'occasion.", contentImage: "https://picsum.photos/seed/wheel-balancing/800/600", features: [ "<strong>Vente de pneus neufs et d'occasion</strong>", "<strong>Montage et équilibrage</strong>", "<strong>Réparation de crevaison</strong>" ] },
+    vhu: { heroTitle: "Centre VHU agréé", heroSubtitle: "Traitement réglementé des véhicules hors d’usage.", heroImage: "https://picsum.photos/seed/vhu-hero/1920/1080", contentTitle: "Procédure et conformité", contentDescription: "Enlèvement, dépollution, destruction avec certificat officiel.", contentImage: "https://picsum.photos/seed/vhu-procedure/800/600", features: [ "<strong>Centre VHU agréé</strong>", "<strong>Traçabilité complète</strong>", "<strong>Dépollution conforme</strong>" ] }
   },
   advancedSettings: {
     smtp: { host: "smtp.example.com", port: 587, user: "user@example.com", pass: "" },

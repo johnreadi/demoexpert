@@ -146,6 +146,12 @@ export interface LegalContent {
     content: string;
 }
 
+export interface FAQItem {
+  id: string;
+  question: string;
+  answer: string; // HTML ou texte enrichi
+}
+
 export interface FooterLink {
   id: string;
   text: string;
@@ -215,6 +221,7 @@ export interface SiteSettings {
       cgv: LegalContent;
       confidentialite: LegalContent;
   };
+  faq: FAQItem[];
   liftRental: {
       pricingTiers: { duration: number; price: number }[];
       unavailableDates: string[]; // dates in YYYY-MM-DD format
@@ -223,6 +230,7 @@ export interface SiteSettings {
       repairs: ServicePageSettings;
       maintenance: ServicePageSettings;
       tires: ServicePageSettings;
+      vhu: ServicePageSettings;
   };
   advancedSettings: AdvancedSettings;
 }

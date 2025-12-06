@@ -28,6 +28,7 @@ import RepairsPage from './pages/RepairsPage';
 import MaintenancePage from './pages/MaintenancePage';
 import TiresPage from './pages/TiresPage';
 import AccountPage from './pages/AccountPage';
+import FAQPage from './pages/FAQPage';
 
 import TestMinimalApiImport from './TestMinimalApiImport';
 import TestApiFunctions from './TestApiFunctions';
@@ -104,6 +105,7 @@ function App() {
                   <Route path="/entretien" element={<MaintenancePage />} />
                   <Route path="/pneus" element={<TiresPage />} />
                   <Route path="/contact" element={<ContactPage />} />
+                  <Route path="/faq" element={<FAQPage />} />
                   <Route path="/mentions-legales" element={<LegalPage type="mentions" />} />
                   <Route path="/cgv" element={<LegalPage type="cgv" />} />
                   <Route path="/confidentialite" element={<LegalPage type="confidentialite" />} />

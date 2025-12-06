@@ -10,7 +10,7 @@ import ErrorMessage from '../components/ErrorMessage';
 import Modal from '../components/Modal';
 
 type AdminTab = 'dashboard' | 'products' | 'auctions' | 'users' | 'liftManagement' | 'messaging' | 'addressBook' | 'settings' | 'audit';
-type ServicePageTab = 'repairs' | 'maintenance' | 'tires';
+type ServicePageTab = 'repairs' | 'maintenance' | 'tires' | 'vhu';
 
 const StatCard: React.FC<{ title: string; value: string | number; icon: string; }> = ({ title, value, icon }) => (
     <div className="bg-white p-6 rounded-lg shadow-md flex items-center animate-fade-in-up">
@@ -73,7 +73,8 @@ export default function AdminPage(): React.ReactNode {
   const [newService, setNewService] = useState({ icon: '', title: '', description: '', link: '' });
   const [isAdvancedSettingsOpen, setIsAdvancedSettingsOpen] = useState(false);
   const [activeServicePageTab, setActiveServicePageTab] = useState<ServicePageTab>('repairs');
-  const [newFeatureText, setNewFeatureText] = useState({ repairs: '', maintenance: '', tires: '' });
+  const [newFeatureText, setNewFeatureText] = useState({ repairs: '', maintenance: '', tires: '', vhu: '' });
+  const [newFaqItem, setNewFaqItem] = useState({ question: '', answer: '' });
   
   // Messaging state
   const [messageViewFilter, setMessageViewFilter] = useState<'inbox' | 'archived'>('inbox');
@@ -674,6 +675,29 @@ export default function AdminPage(): React.ReactNode {
         if (!settingsFormData) return;
         const updatedFeatures = settingsFormData.pageContent[pageKey].features.filter((_, i) => i !== index);
         handleSettingsChange(`pageContent.${pageKey}.features`, updatedFeatures);
+    };
+
+    // --- FAQ Management ---
+    const handleFaqChange = (id: string, field: 'question' | 'answer', value: string) => {
+        if (!settingsFormData) return;
+        const updated = (settingsFormData.faq || []).map(item =>
+            item.id === id ? { ...item, [field]: value } : item
+        );
+        handleSettingsChange('faq', updated);
+    };
+
+    const handleDeleteFaqItem = (id: string) => {
+        if (!settingsFormData || !window.confirm('Supprimer cette question ?')) return;
+        const updated = (settingsFormData.faq || []).filter(item => item.id !== id);
+        handleSettingsChange('faq', updated);
+    };
+
+    const handleAddFaqItem = () => {
+        if (!settingsFormData || !newFaqItem.question || !newFaqItem.answer) return;
+        const newItem = { id: `faq-${Date.now()}`, ...newFaqItem };
+        const updated = [...(settingsFormData.faq || []), newItem];
+        handleSettingsChange('faq', updated);
+        setNewFaqItem({ question: '', answer: '' });
     };
 
     const handleSettingsSubmit = async (e: React.FormEvent) => {
