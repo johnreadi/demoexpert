@@ -591,16 +591,61 @@ export default function AdminPage(): React.ReactNode {
             return newSettings;
         });
     };
+
+    const compressImageFile = (file: File, maxWidth = 1600, maxHeight = 900, quality = 0.7): Promise<string> => {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => {
+                const img = new Image();
+                img.onload = () => {
+                    let { width, height } = img;
+
+                    const widthRatio = maxWidth / width;
+                    const heightRatio = maxHeight / height;
+                    const ratio = Math.min(1, widthRatio, heightRatio);
+
+                    const targetWidth = Math.round(width * ratio);
+                    const targetHeight = Math.round(height * ratio);
+
+                    const canvas = document.createElement('canvas');
+                    canvas.width = targetWidth;
+                    canvas.height = targetHeight;
+
+                    const ctx = canvas.getContext('2d');
+                    if (!ctx) {
+                        reject(new Error('Canvas non supporté'));
+                        return;
+                    }
+
+                    ctx.drawImage(img, 0, 0, targetWidth, targetHeight);
+
+                    try {
+                        const dataUrl = canvas.toDataURL('image/jpeg', quality);
+                        resolve(dataUrl);
+                    } catch (err) {
+                        reject(err);
+                    }
+                };
+                img.onerror = (err) => reject(err);
+                img.src = reader.result as string;
+            };
+            reader.onerror = (err) => reject(err);
+            reader.readAsDataURL(file);
+        });
+    };
     
-    const handleSettingsFileUpload = (e: React.ChangeEvent<HTMLInputElement>, path: string) => {
+    const handleSettingsFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, path: string) => {
         if (e.target.files && e.target.files[0]) {
             const file = e.target.files[0];
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                const base64String = reader.result as string;
-                handleSettingsChange(path, base64String);
-            };
-            reader.readAsDataURL(file);
+
+            try {
+                const compressedDataUrl = await compressImageFile(file);
+                handleSettingsChange(path, compressedDataUrl);
+            } catch (error) {
+                console.error('Failed to compress image file for settings', error);
+            } finally {
+                e.target.value = '';
+            }
         }
     };
     
