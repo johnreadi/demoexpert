@@ -907,6 +907,59 @@ app.get('/api/admin/messages', async (_req, res) => {
   }
 });
 
+// --- Site settings ---
+
+app.get('/api/settings', async (_req, res) => {
+  try {
+    if (!process.env.DATABASE_URL) {
+      if (process.env.STRICT_DB === 'true') {
+        return res.status(503).json({ error: 'database_unavailable' });
+      }
+      // Sans base, on renvoie un objet vide (le frontend appliquera DEFAULT_SETTINGS)
+      return res.json({});
+    }
+
+    const existing = await prisma.settings.findUnique({
+      where: { key: 'site_settings' },
+    });
+
+    if (!existing) {
+      // Laisser le frontend initialiser avec DEFAULT_SETTINGS puis faire un PUT
+      return res.json({});
+    }
+
+    return res.json(existing.value as any);
+  } catch (error) {
+    console.error('Failed to fetch site settings:', error);
+    return res.status(500).json({ error: 'failed_to_fetch_site_settings' });
+  }
+});
+
+app.put('/api/settings', async (req, res) => {
+  try {
+    if (!process.env.DATABASE_URL) {
+      if (process.env.STRICT_DB === 'true') {
+        return res.status(503).json({ error: 'database_unavailable' });
+      }
+      // Mode dégradé sans base
+      return res.status(200).json(req.body || {});
+    }
+
+    const newSettings = req.body || {};
+
+    const saved = await prisma.settings.upsert({
+      where: { key: 'site_settings' },
+      update: { value: newSettings },
+      create: { key: 'site_settings', value: newSettings },
+    });
+
+    return res.status(200).json(saved.value as any);
+  } catch (error) {
+    console.error('Failed to update site settings:', error);
+    return res.status(500).json({ error: 'failed_to_update_site_settings' });
+  }
+});
+
 app.get('/api/contact', async (_req, res) => {
   try {
     // Check if we have a database connection
