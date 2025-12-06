@@ -169,18 +169,37 @@ export const archiveMessage = (messageId: string, isArchived: boolean): Promise<
   USE_LOCAL_API ? simulateApiCall(db.archiveMessage(messageId, isArchived)) : http<AdminMessage>(`/api/admin/messages/${messageId}`, { method: 'PUT', body: JSON.stringify({ isArchived }) });
 
 // --- Admin-specific API ---
-export const getAdminUsers = (): Promise<User[]> => simulateApiCall(db.getAdminUsers());
+export const getAdminUsers = (): Promise<User[]> => 
+  USE_LOCAL_API ? simulateApiCall(db.getAdminUsers()) : http<User[]>(`/api/admin/users`);
+
 export const getContacts = (): Promise<Contact[]> => 
   USE_LOCAL_API ? simulateApiCall(db.getContacts()) : http<Contact[]>(`/api/contact`);
+
 export const addContact = (contactData: Omit<Contact, 'id'>): Promise<Contact> => 
   USE_LOCAL_API ? simulateApiCall(db.addContact(contactData)) : http<Contact>(`/api/contact`, { method: 'POST', body: JSON.stringify(contactData) });
-export const getLiftRentalBookings = (): Promise<LiftRentalBooking[]> => simulateApiCall(db.getLiftRentalBookings());
-export const getAuditLogs = (): Promise<AuditLogEntry[]> => simulateApiCall(db.getAuditLogs());
-export const updateLiftRentalBookingStatus = (bookingId: string, status: LiftRentalBooking['status']): Promise<LiftRentalBooking> => simulateApiCall(db.updateLiftRentalBookingStatus(bookingId, status));
-export const addUser = (userData: any): Promise<User> => simulateApiCall(db.addUser(userData));
-export const updateUser = (userId: string, userData: Partial<Omit<User, 'id'>>): Promise<User> => simulateApiCall(db.updateUser(userId, userData));
-export const approveUser = (userId: string): Promise<User> => simulateApiCall(db.approveUser(userId));
-export const deleteUser = (userId: string): Promise<{ success: boolean }> => simulateApiCall(db.deleteUser(userId));
+
+export const getLiftRentalBookings = (): Promise<LiftRentalBooking[]> => 
+  USE_LOCAL_API ? simulateApiCall(db.getLiftRentalBookings()) : http<LiftRentalBooking[]>(`/api/lift-bookings`);
+
+export const getAuditLogs = (): Promise<AuditLogEntry[]> => 
+  USE_LOCAL_API ? simulateApiCall(db.getAuditLogs()) : http<AuditLogEntry[]>(`/api/audit-logs`);
+
+export const updateLiftRentalBookingStatus = (bookingId: string, status: LiftRentalBooking['status']): Promise<LiftRentalBooking> => 
+  USE_LOCAL_API 
+    ? simulateApiCall(db.updateLiftRentalBookingStatus(bookingId, status)) 
+    : http<LiftRentalBooking>(`/api/lift-bookings/${bookingId}/status`, { method: 'PUT', body: JSON.stringify({ status }) });
+
+export const addUser = (userData: any): Promise<User> => 
+  USE_LOCAL_API ? simulateApiCall(db.addUser(userData)) : http<User>(`/api/admin/users`, { method: 'POST', body: JSON.stringify(userData) });
+
+export const updateUser = (userId: string, userData: Partial<Omit<User, 'id'>>): Promise<User> => 
+  USE_LOCAL_API ? simulateApiCall(db.updateUser(userId, userData)) : http<User>(`/api/admin/users/${userId}`, { method: 'PUT', body: JSON.stringify(userData) });
+
+export const approveUser = (userId: string): Promise<User> => 
+  USE_LOCAL_API ? simulateApiCall(db.approveUser(userId)) : http<User>(`/api/admin/users/${userId}/approve`, { method: 'POST', body: JSON.stringify({}) });
+
+export const deleteUser = (userId: string): Promise<{ success: boolean }> => 
+  USE_LOCAL_API ? simulateApiCall(db.deleteUser(userId)) : http<{ success: boolean }>(`/api/admin/users/${userId}`, { method: 'DELETE' });
 
 
 // --- User Account API ---

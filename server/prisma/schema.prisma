@@ -118,3 +118,26 @@ model AdminMessage {
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
 }
+
+model LiftRentalBooking {
+  id        String   @id @default(cuid())
+  date      String   // YYYY-MM-DD
+  time      String   // ex: "14:00"
+  duration  Int
+  name      String
+  email     String
+  phone     String
+  price     Decimal  @db.Decimal(12,2)
+  status    String   @default("pending") // pending | confirmed | cancelled
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model AuditLogEntry {
+  id        String   @id @default(cuid())
+  userId    String?
+  action    String
+  details   Json?
+  ip        String?
+  createdAt DateTime @default(now())
+}

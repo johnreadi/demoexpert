@@ -1,4 +1,4 @@
-import React, { ReactNode } from 'react';
+import React, { ReactNode, useEffect } from 'react';
 import { HashRouter as Router, Routes, Route } from 'react-router-dom';
 import Header from './components/Header';
 import Footer from './components/Footer';
@@ -20,7 +20,7 @@ import { AuthProvider } from './context/AuthContext';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import WindshieldPage from './pages/WindshieldPage';
 import RegisterPage from './pages/RegisterPage';
-import { SettingsProvider } from './context/SettingsContext';
+import { SettingsProvider, useSettings } from './context/SettingsContext';
 import { ToastProvider } from './context/ToastContext';
 import LiftRentalPage from './pages/LiftRentalPage';
 import BackToTopButton from './components/BackToTopButton';
@@ -72,7 +72,36 @@ class ErrorBoundary extends React.Component<{ children: ReactNode }, { hasError:
   }
 }
 
+// SEO manager: applique title / meta description / keywords à partir des settings
+const SeoManager: React.FC = () => {
+  const { settings } = useSettings();
 
+  useEffect(() => {
+    if (!settings) return;
+
+    const seo = settings.advancedSettings?.seo;
+    const baseTitle = seo?.metaTitle || settings.businessInfo?.name || 'Démolition Expert';
+    document.title = baseTitle;
+
+    const ensureMeta = (name: string) => {
+      let tag = document.querySelector(`meta[name="${name}"]`) as HTMLMetaElement | null;
+      if (!tag) {
+        tag = document.createElement('meta');
+        tag.name = name;
+        document.head.appendChild(tag);
+      }
+      return tag;
+    };
+
+    const descTag = ensureMeta('description');
+    descTag.content = seo?.metaDescription || '';
+
+    const keywordsTag = ensureMeta('keywords');
+    keywordsTag.content = seo?.keywords || '';
+  }, [settings]);
+
+  return null;
+};
 
 function App() {
   return (
@@ -81,7 +110,11 @@ function App() {
         <SettingsProvider>
           <ToastProvider>
             <Router>
-            <div className="flex flex-col min-h-screen">
+            <SeoManager />
+            <div
+              className="flex flex-col min-h-screen"
+              onContextMenu={(e) => e.preventDefault()}
+            >
               <Header />
               <main className="flex-grow">
                 <Routes>

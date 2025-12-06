@@ -211,16 +211,19 @@ export default function AdminPage(): React.ReactNode {
           setProductImageInput('');
       }
   };
-   const handleLocalImageUpload = (e: React.ChangeEvent<HTMLInputElement>, formSetter: any) => {
+
+  const handleLocalImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, formSetter: any) => {
     if (e.target.files && e.target.files[0]) {
         const file = e.target.files[0];
-        const reader = new FileReader();
-        reader.onloadend = () => {
-            const base64String = reader.result as string;
-            formSetter((prev: any) => ({ ...prev, images: [...prev.images, base64String] }));
-        };
-        reader.readAsDataURL(file);
-        e.target.value = '';
+        try {
+            const compressedDataUrl = await compressImageFile(file);
+            formSetter((prev: any) => ({ ...prev, images: [...prev.images, compressedDataUrl] }));
+        } catch (error) {
+            console.error('Failed to compress product image', error);
+            showToast("Erreur lors de la compression de l'image.", 'error');
+        } finally {
+            e.target.value = '';
+        }
     }
   };
   const handleRemoveProductImage = (imgUrl: string) => {
@@ -290,16 +293,19 @@ export default function AdminPage(): React.ReactNode {
           setAuctionImageInput('');
       }
   };
-  const handleLocalAuctionImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+
+  const handleLocalAuctionImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
         const file = e.target.files[0];
-        const reader = new FileReader();
-        reader.onloadend = () => {
-            const base64String = reader.result as string;
-            setAuctionFormData(prev => ({ ...prev, vehicle: { ...prev.vehicle, images: [...(prev.vehicle?.images || []), base64String] } }));
-        };
-        reader.readAsDataURL(file);
-        e.target.value = '';
+        try {
+            const compressedDataUrl = await compressImageFile(file);
+            setAuctionFormData(prev => ({ ...prev, vehicle: { ...prev.vehicle, images: [...(prev.vehicle?.images || []), compressedDataUrl] } }));
+        } catch (error) {
+            console.error('Failed to compress auction image', error);
+            showToast("Erreur lors de la compression de l'image.", 'error');
+        } finally {
+            e.target.value = '';
+        }
     }
   };
   const handleRemoveAuctionImage = (imgUrl: string) => {
