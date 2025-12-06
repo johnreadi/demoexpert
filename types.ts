@@ -164,6 +164,8 @@ export interface AdvancedSettings {
         port: number;
         user: string;
         pass: string;
+        fromName?: string;
+        fromEmail?: string;
     };
     ai: {
         chatModel: string;

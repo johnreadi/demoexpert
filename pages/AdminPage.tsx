@@ -1541,6 +1541,68 @@ export default function AdminPage(): React.ReactNode {
                         {renderServicePageEditor(activeServicePageTab, settingsFormData.pageContent[activeServicePageTab])}
                     </div>
 
+                    <div className="bg-white p-6 rounded-lg shadow-md">
+                        <h3 className="text-xl font-bold font-heading text-expert-blue mb-4 border-b pb-2">Messages sortants (SMTP)</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-sm font-medium mb-1">Serveur SMTP (hôte)</label>
+                            <input
+                              className="w-full p-2 border rounded"
+                              placeholder="smtp.votre-fai.fr"
+                              value={settingsFormData.advancedSettings.smtp.host}
+                              onChange={e => handleSettingsChange('advancedSettings.smtp.host', e.target.value)}
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium mb-1">Port</label>
+                            <input
+                              type="number"
+                              className="w-full p-2 border rounded"
+                              placeholder="587"
+                              value={settingsFormData.advancedSettings.smtp.port}
+                              onChange={e => handleSettingsChange('advancedSettings.smtp.port', Number(e.target.value) || 0)}
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium mb-1">Utilisateur (login)</label>
+                            <input
+                              className="w-full p-2 border rounded"
+                              placeholder="user@example.com"
+                              value={settingsFormData.advancedSettings.smtp.user}
+                              onChange={e => handleSettingsChange('advancedSettings.smtp.user', e.target.value)}
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium mb-1">Mot de passe</label>
+                            <input
+                              type="password"
+                              className="w-full p-2 border rounded"
+                              placeholder="••••••••"
+                              value={settingsFormData.advancedSettings.smtp.pass}
+                              onChange={e => handleSettingsChange('advancedSettings.smtp.pass', e.target.value)}
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium mb-1">Nom de l'expéditeur</label>
+                            <input
+                              className="w-full p-2 border rounded"
+                              placeholder="Démolition Expert"
+                              value={settingsFormData.advancedSettings.smtp.fromName || ''}
+                              onChange={e => handleSettingsChange('advancedSettings.smtp.fromName', e.target.value)}
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium mb-1">Email d'expédition</label>
+                            <input
+                              className="w-full p-2 border rounded"
+                              placeholder="no-reply@casseautopro.fr"
+                              value={settingsFormData.advancedSettings.smtp.fromEmail || ''}
+                              onChange={e => handleSettingsChange('advancedSettings.smtp.fromEmail', e.target.value)}
+                            />
+                          </div>
+                        </div>
+                    </div>
+
                     <button type="submit" className="bg-expert-green text-white font-bold py-3 px-6 rounded-lg hover:bg-green-600 transition-colors text-lg sticky bottom-6 shadow-lg">
                         <i className="fas fa-save mr-2"></i> Enregistrer tous les changements
                     </button>

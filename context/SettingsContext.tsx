@@ -36,7 +36,14 @@ const normalizeSettings = (input: any): SiteSettings => {
   };
   const adv = input?.advancedSettings ?? {};
   const advancedSettings = {
-    smtp: { host: adv?.smtp?.host ?? '', port: adv?.smtp?.port ?? 0, user: adv?.smtp?.user ?? '', pass: adv?.smtp?.pass ?? '' },
+    smtp: {
+      host: adv?.smtp?.host ?? '',
+      port: adv?.smtp?.port ?? 0,
+      user: adv?.smtp?.user ?? '',
+      pass: adv?.smtp?.pass ?? '',
+      fromName: adv?.smtp?.fromName ?? DEFAULT_SETTINGS.advancedSettings.smtp.fromName,
+      fromEmail: adv?.smtp?.fromEmail ?? DEFAULT_SETTINGS.advancedSettings.smtp.fromEmail,
+    },
     ai: { chatModel: adv?.ai?.chatModel ?? '', estimationModel: adv?.ai?.estimationModel ?? '' },
     seo: { metaTitle: adv?.seo?.metaTitle ?? '', metaDescription: adv?.seo?.metaDescription ?? '', keywords: adv?.seo?.keywords ?? '' },
     security: { allowPublicRegistration: adv?.security?.allowPublicRegistration ?? true }
@@ -136,7 +143,7 @@ const DEFAULT_SETTINGS: SiteSettings = {
     vhu: { heroTitle: "Centre VHU agréé", heroSubtitle: "Traitement réglementé des véhicules hors d’usage.", heroImage: "https://picsum.photos/seed/vhu-hero/1920/1080", contentTitle: "Procédure et conformité", contentDescription: "Enlèvement, dépollution, destruction avec certificat officiel.", contentImage: "https://picsum.photos/seed/vhu-procedure/800/600", features: [ "<strong>Centre VHU agréé</strong>", "<strong>Traçabilité complète</strong>", "<strong>Dépollution conforme</strong>" ] }
   },
   advancedSettings: {
-    smtp: { host: "smtp.example.com", port: 587, user: "user@example.com", pass: "" },
+    smtp: { host: "smtp.example.com", port: 587, user: "user@example.com", pass: "", fromName: "Demolition Expert", fromEmail: "no-reply@casseautopro.fr" },
     ai: { chatModel: "gemini-2.5-flash", estimationModel: "gemini-2.5-flash" },
     seo: { metaTitle: "Démolition Expert", metaDescription: "Pièces auto d'occasion garanties.", keywords: "casse auto, pièces occasion" },
     security: { allowPublicRegistration: true }
