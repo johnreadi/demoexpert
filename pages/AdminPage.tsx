@@ -120,6 +120,27 @@ export default function AdminPage(): React.ReactNode {
     }
   }, [initialSettings]);
 
+  // --- Helpers for footer CMS links ---
+  const scrollToSection = (sectionId: string) => {
+    const el = document.getElementById(sectionId);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
+
+  const handleFooterInfoEdit = (url: string) => {
+    // Ensure settings tab is active, then scroll to appropriate section
+    setActiveTab('settings');
+    if (url === '/faq') {
+      scrollToSection('settings-faq-section');
+    } else if (url === '/cgv' || url === '/mentions-legales' || url === '/confidentialite') {
+      scrollToSection('settings-legal-section');
+    } else if (url === '/vhu') {
+      scrollToSection('settings-service-pages-section');
+      setActiveServicePageTab('vhu');
+    }
+  };
+
   useEffect(() => {
     const loadData = async () => {
       setIsLoadingData(true);
@@ -1224,7 +1245,7 @@ export default function AdminPage(): React.ReactNode {
                 <h2 className="text-3xl font-bold font-heading text-expert-blue mb-8">Paramétrages du site</h2>
                 <form onSubmit={handleSettingsSubmit} className="space-y-8">
                     {/* Business Info */}
-                    <div className="bg-white p-6 rounded-lg shadow-md">
+                    <div id="settings-legal-section" className="bg-white p-6 rounded-lg shadow-md">
                         <h3 className="text-xl font-bold font-heading text-expert-blue mb-4 border-b pb-2">Informations de l'entreprise</h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <input value={settingsFormData.businessInfo.name} onChange={e => handleSettingsChange('businessInfo.name', e.target.value)} className="w-full p-2 border rounded" placeholder="Nom de l'entreprise"/>
@@ -1335,9 +1356,27 @@ export default function AdminPage(): React.ReactNode {
                             <h4 className="font-semibold mb-2">Liens Informations</h4>
                             <div className="space-y-2">
                               {settingsFormData.footer.infoLinks.map(link => (
-                                <div key={link.id} className="grid grid-cols-3 gap-2">
-                                  <input value={link.text} onChange={e => handleFooterLinkChange('infoLinks', link.id, 'text', e.target.value)} className="p-2 border rounded" placeholder="Texte" />
+                                <div key={link.id} className="grid grid-cols-5 gap-2 items-center">
+                                  <input value={link.text} onChange={e => handleFooterLinkChange('infoLinks', link.id, 'text', e.target.value)} className="p-2 border rounded col-span-2" placeholder="Texte" />
                                   <input value={link.url} onChange={e => handleFooterLinkChange('infoLinks', link.id, 'url', e.target.value)} className="p-2 border rounded" placeholder="URL" />
+                                  <div className="flex gap-1 justify-end">
+                                    <button
+                                      type="button"
+                                      onClick={() => window.open(link.url, '_blank')}
+                                      className="text-expert-blue text-xs px-2 py-1 border border-expert-blue rounded flex items-center gap-1"
+                                    >
+                                      <i className="fas fa-eye" /> Voir
+                                    </button>
+                                    {link.url !== '/contact' && (
+                                      <button
+                                        type="button"
+                                        onClick={() => handleFooterInfoEdit(link.url)}
+                                        className="text-expert-green text-xs px-2 py-1 border border-expert-green rounded flex items-center gap-1"
+                                      >
+                                        <i className="fas fa-edit" /> Éditer
+                                      </button>
+                                    )}
+                                  </div>
                                   <button type="button" onClick={() => handleDeleteFooterLink('infoLinks', link.id)} className="text-red-500"><i className="fas fa-trash"></i></button>
                                 </div>
                               ))}
@@ -1374,16 +1413,128 @@ export default function AdminPage(): React.ReactNode {
                     </div>
 
                     <div className="bg-white p-6 rounded-lg shadow-md">
+                        <h3 className="text-xl font-bold font-heading text-expert-blue mb-4 border-b pb-2">Pages légales</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                          <div>
+                            <h4 className="font-semibold mb-2">Mentions légales</h4>
+                            <input
+                              className="w-full p-2 border rounded mb-2"
+                              placeholder="Titre"
+                              value={settingsFormData.legal.mentions.title}
+                              onChange={e => handleSettingsChange('legal.mentions.title', e.target.value)}
+                            />
+                            <textarea
+                              className="w-full p-2 border rounded text-sm h-40"
+                              placeholder="Contenu HTML"
+                              value={settingsFormData.legal.mentions.content}
+                              onChange={e => handleSettingsChange('legal.mentions.content', e.target.value)}
+                            />
+                          </div>
+                          <div>
+                            <h4 className="font-semibold mb-2">CGV</h4>
+                            <input
+                              className="w-full p-2 border rounded mb-2"
+                              placeholder="Titre"
+                              value={settingsFormData.legal.cgv.title}
+                              onChange={e => handleSettingsChange('legal.cgv.title', e.target.value)}
+                            />
+                            <textarea
+                              className="w-full p-2 border rounded text-sm h-40"
+                              placeholder="Contenu HTML"
+                              value={settingsFormData.legal.cgv.content}
+                              onChange={e => handleSettingsChange('legal.cgv.content', e.target.value)}
+                            />
+                          </div>
+                          <div>
+                            <h4 className="font-semibold mb-2">Confidentialité</h4>
+                            <input
+                              className="w-full p-2 border rounded mb-2"
+                              placeholder="Titre"
+                              value={settingsFormData.legal.confidentialite.title}
+                              onChange={e => handleSettingsChange('legal.confidentialite.title', e.target.value)}
+                            />
+                            <textarea
+                              className="w-full p-2 border rounded text-sm h-40"
+                              placeholder="Contenu HTML"
+                              value={settingsFormData.legal.confidentialite.content}
+                              onChange={e => handleSettingsChange('legal.confidentialite.content', e.target.value)}
+                            />
+                          </div>
+                        </div>
+                    </div>
+
+                    <div className="bg-white p-6 rounded-lg shadow-md">
+                        <h3 className="text-xl font-bold font-heading text-expert-blue mb-4 border-b pb-2">Foire aux Questions (FAQ)</h3>
+                        <div className="space-y-4">
+                          {(settingsFormData.faq || []).map(item => (
+                            <div key={item.id} className="bg-gray-50 p-4 rounded border">
+                              <input
+                                className="w-full p-2 border rounded mb-2 font-semibold"
+                                placeholder="Question"
+                                value={item.question}
+                                onChange={e => handleFaqChange(item.id, 'question', e.target.value)}
+                              />
+                              <textarea
+                                className="w-full p-2 border rounded text-sm mb-2"
+                                rows={4}
+                                placeholder="Réponse (HTML autorisé)"
+                                value={item.answer}
+                                onChange={e => handleFaqChange(item.id, 'answer', e.target.value)}
+                              />
+                              <div className="flex justify-end">
+                                <button
+                                  type="button"
+                                  onClick={() => handleDeleteFaqItem(item.id)}
+                                  className="text-red-500 text-sm flex items-center gap-1"
+                                >
+                                  <i className="fas fa-trash" /> Supprimer
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                          <div className="bg-gray-100 p-4 rounded border border-dashed">
+                            <h4 className="font-semibold mb-2">Ajouter une question</h4>
+                            <input
+                              className="w-full p-2 border rounded mb-2"
+                              placeholder="Question"
+                              value={newFaqItem.question}
+                              onChange={e => setNewFaqItem(prev => ({ ...prev, question: e.target.value }))}
+                            />
+                            <textarea
+                              className="w-full p-2 border rounded text-sm mb-2"
+                              rows={4}
+                              placeholder="Réponse (HTML autorisé)"
+                              value={newFaqItem.answer}
+                              onChange={e => setNewFaqItem(prev => ({ ...prev, answer: e.target.value }))}
+                            />
+                            <button
+                              type="button"
+                              onClick={handleAddFaqItem}
+                              className="bg-expert-blue text-white font-bold py-2 px-4 rounded"
+                            >
+                              Ajouter à la FAQ
+                            </button>
+                          </div>
+                        </div>
+                    </div>
+
+                    <div className="bg-white p-6 rounded-lg shadow-md">
                         <h3 className="text-xl font-bold font-heading text-expert-blue mb-4 border-b pb-2">Contenu des Pages de Service</h3>
-                        <div className="flex border-b mb-4">
-                            {(['repairs', 'maintenance', 'tires'] as ServicePageTab[]).map(tab => (
+                        <div className="flex border-b mb-4 flex-wrap">
+                            {(['repairs', 'maintenance', 'tires', 'vhu'] as ServicePageTab[]).map(tab => (
                                 <button
                                     key={tab}
                                     type="button"
                                     onClick={() => setActiveServicePageTab(tab)}
                                     className={`px-4 py-2 font-semibold ${activeServicePageTab === tab ? 'border-b-2 border-expert-blue text-expert-blue' : 'text-gray-500'}`}
                                 >
-                                    {tab === 'repairs' ? 'Réparation' : tab === 'maintenance' ? 'Entretien' : 'Pneus'}
+                                    {tab === 'repairs'
+                                      ? 'Réparation'
+                                      : tab === 'maintenance'
+                                      ? 'Entretien'
+                                      : tab === 'tires'
+                                      ? 'Pneus'
+                                      : 'VHU agréé'}
                                 </button>
                             ))}
                         </div>
