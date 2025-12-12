@@ -39,6 +39,12 @@ app.use('/api/settings', (req, _res, next) => {
   try { console.log(`[settings] ${new Date().toISOString()} ${req.method} X-Instance=${process.env.HOSTNAME || require('os').hostname()}`); } catch {}
   next();
 });
+app.use('/api', (_req, res, next) => {
+  res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0');
+  res.set('Pragma', 'no-cache');
+  res.set('Vary', 'Origin');
+  next();
+});
 app.use(cors({
   origin: CORS_ORIGIN,
   credentials: true,
