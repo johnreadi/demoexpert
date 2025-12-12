@@ -35,6 +35,10 @@ app.use(morgan('combined'));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
 app.use(cookieParser());
+app.use('/api/settings', (req, _res, next) => {
+  try { console.log(`[settings] ${new Date().toISOString()} ${req.method} X-Instance=${process.env.HOSTNAME || require('os').hostname()}`); } catch {}
+  next();
+});
 app.use(cors({
   origin: CORS_ORIGIN,
   credentials: true,
