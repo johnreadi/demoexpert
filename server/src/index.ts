@@ -1013,20 +1013,17 @@ app.post('/api/auctions/import', requireAdmin, async (req, res) => {
 app.get('/api/settings', async (_req, res) => {
   try {
     res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0');
+    res.set('Pragma', 'no-cache');
+    res.set('Vary', 'Origin');
+    try { res.set('X-Instance', process.env.HOSTNAME || require('os').hostname()); } catch {}
     const settings = await prisma.settings.findUnique({ where: { key: 'site_settings' } });
     if (!settings) {
-      if (process.env.STRICT_DB === 'true') {
-        return res.status(503).json({ error: 'settings_missing' });
-      }
-      return res.json({});
+      return res.status(503).json({ error: 'settings_missing' });
     }
     return res.json(normalizeSettings(settings.value));
   } catch (error) {
     console.error("Failed to fetch settings from database:", error);
-    if (process.env.STRICT_DB === 'true') {
-      return res.status(503).json({ error: 'database_unavailable' });
-    }
-    return res.json({});
+    return res.status(503).json({ error: 'database_unavailable' });
   }
 });
 
