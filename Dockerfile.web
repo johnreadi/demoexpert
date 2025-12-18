@@ -12,8 +12,8 @@ ENV NODE_ENV=production
 # 1. Copier les fichiers de package d'abord (cache layer)
 COPY package.json package-lock.json ./
 
-# 2. Installer les dépendances
-RUN npm ci --no-fund --no-audit
+# 2. Installer TOUTES les dépendances (dev incluses pour le build)
+RUN npm ci --no-fund --no-audit --include=dev
 
 # 3. Copier TOUS les autres fichiers
 COPY . .
