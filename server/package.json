@@ -1,41 +1,83 @@
 {
-  "name": "demoexpert-api",
+  "name": "demoexpert",
   "private": true,
-  "type": "commonjs",
-  "version": "0.1.0",
+  "version": "1.0.0",
+  "type": "module",
   "scripts": {
-    "dev": "ts-node src/index.ts",
-    "build": "tsc -p tsconfig.json",
-    "start": "node dist/index.js",
-    "prisma": "prisma",
-    "db:migrate": "prisma migrate deploy",
-    "db:generate": "prisma generate",
-    "db:seed": "ts-node prisma/seed.ts"
-  },
-  "prisma": {
-    "seed": "ts-node prisma/seed.ts"
+    "dev": "vite",
+    "build": "vite build && node inject-timestamp.js",
+    "preview": "vite preview",
+    "lint": "eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0",
+    "preview:prod": "vite preview --port 4173",
+    "docker:build": "docker build -f Dockerfile.web -t demoexpert-frontend .",
+    "docker:run": "docker run -p 8080:80 demoexpert-frontend",
+    "docker:deploy": "npm run docker:build && npm run docker:run",
+    "clean": "rm -rf dist node_modules/.vite",
+    "clean:all": "rm -rf dist node_modules package-lock.json",
+    "reinstall": "npm run clean:all && npm install",
+    "git:add": "git add -A",
+    "git:commit": "git commit -m \"auto: push\"",
+    "git:push:Main": "git push origin Main",
+    "git:auto": "npm run git:add && npm run git:commit && npm run git:push:Main",
+    "git:push:auto": "node -e \"const { execSync } = require('child_process'); let branch = 'Main'; try { branch = execSync('git rev-parse --abbrev-ref HEAD').toString().trim() || branch; } catch(e) {} execSync('git add -A'); try { execSync('git commit -m \\\"auto: push\\\"'); } catch(e) {} execSync('git push origin ' + branch, { stdio: 'inherit' });\"",
+    "postinstall": "echo '✅ Dépendances installées. Utilisez npm run dev pour démarrer.'"
   },
   "dependencies": {
-    "cookie-parser": "^1.4.6",
-    "cors": "^2.8.5",
-    "express": "^4.21.1",
-    "express-session": "^1.17.3",
-    "helmet": "^7.1.0",
-    "morgan": "^1.10.0",
-    "@prisma/client": "^5.20.0",
-    "bcryptjs": "^2.4.3",
-    "prisma": "^5.20.0"
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1",
+    "react-router-dom": "^7.9.1",
+    "lucide-react": "^0.468.0"
   },
   "devDependencies": {
-    "ts-node": "^10.9.2",
-    "@types/cookie-parser": "^1.4.7",
-    "@types/cors": "^2.8.17",
-    "@types/express": "^4.17.21",
-    "@types/express-session": "^1.17.8",
-    "@types/morgan": "^1.9.9",
-    "@types/bcryptjs": "^2.4.6",
     "@types/node": "^22.14.0",
-    "ts-node-dev": "^2.0.0",
-    "typescript": "~5.8.2"
-  }
+    "@types/react": "^19.1.1",
+    "@types/react-dom": "^19.1.1",
+    "@vitejs/plugin-react": "^5.0.3",
+    "autoprefixer": "^10.4.20",
+    "eslint": "^9.17.0",
+    "eslint-plugin-react-hooks": "^5.1.0-rc.0",
+    "eslint-plugin-react-refresh": "^0.4.16",
+    "postcss": "^8.5.3",
+    "tailwindcss": "^3.4.17",
+    "typescript": "~5.8.2",
+    "vite": "^7.1.7"
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "npm": ">=10.0.0"
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "keywords": [
+    "react",
+    "vite",
+    "typescript",
+    "frontend",
+    "automobile",
+    "demoexpert"
+  ],
+  "author": "DemoExpert",
+  "license": "UNLICENSED",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/johnreadi/demoexpert.git"
+  },
+  "bugs": {
+    "url": "https://github.com/johnreadi/demoexpert/issues"
+  },
+  "homepage": "https://app.demoexpert.fr",
+  "cacheDirectories": [
+    "node_modules",
+    ".vite"
+  ]
 }
