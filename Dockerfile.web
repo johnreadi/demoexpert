@@ -1,31 +1,49 @@
-# Build sans Tailwind (si vraiment ça ne marche pas)
+# ================= ÉTAPE DE BUILD =================
 FROM node:20-alpine AS builder
 WORKDIR /app
 
-# Copier package.json
+# 1. Copier les fichiers de package
 COPY package.json package-lock.json ./
 
-# Installer SANS tailwind
-RUN npm install --no-fund --no-audit --omit=dev
+# 2. Installer TOUTES les dépendances (y compris dev pour le build)
+RUN npm install --no-fund --no-audit
 
-# Copier le code
+# 3. Copier le code source
 COPY . .
 
-# Supprimer les références à Tailwind pour éviter l'erreur
-RUN rm -f postcss.config.js tailwind.config.js 2>/dev/null || true
-
-# Variables
+# 4. Variables d'environnement pour le build
 ARG VITE_API_BASE_URL=/api
 ARG VITE_APP_BASE_URL=https://app.demoexpert.fr
 ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
 ENV VITE_APP_BASE_URL=$VITE_APP_BASE_URL
 
-# Build
+# 5. Supprimer les fichiers de configuration Tailwind si problématiques
+RUN rm -f postcss.config.js tailwind.config.js 2>/dev/null || true
+
+# 6. Builder l'application
 RUN npm run build
 
-# Nginx
+# 7. Post-build: injection simple du timestamp
+RUN echo "🔧 Post-build processing..." && \
+    TIMESTAMP=$(date +%s) && \
+    # Créer un fichier simple de version
+    echo "$TIMESTAMP" > dist/build.timestamp && \
+    echo "healthy" > dist/health.txt && \
+    echo "✅ Build completed at: $TIMESTAMP"
+
+# ================= ÉTAPE NGINX =================
 FROM nginx:1.27-alpine
+
+# Copier le build React
 COPY --from=builder /app/dist /usr/share/nginx/html
+
+# Copier la configuration nginx
 COPY nginx.conf /etc/nginx/conf.d/default.conf
+
 EXPOSE 80
+
+# Health check simple
+HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
+  CMD wget -qO- http://localhost:80/health.txt || exit 1
+
 CMD ["nginx", "-g", "daemon off;"]
