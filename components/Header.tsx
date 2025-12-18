@@ -27,7 +27,7 @@ export default function Header(): React.ReactNode {
   // Show loading state while settings are being fetched (but not indefinitely)
   if (isLoading) {
     return (
-      <header className="shadow-md sticky top-0 z-50" style={{ backgroundColor: '#003366' }}>
+      <header className="shadow-md sticky top-0 z-50" style={{ backgroundColor: '#ab0313' }}>
         <div className="w-full mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-wrap items-center justify-between p-4">
             <div className="h-10 w-32 bg-gray-200 rounded animate-pulse"></div>
@@ -51,7 +51,7 @@ export default function Header(): React.ReactNode {
       email: "contact@demoexpert.fr", 
       openingHours: "Lun-Ven: 9h-18h, Sam: 9h-12h" 
     },
-    themeColors: { headerBg: "#003366", footerBg: "#003366" }
+    themeColors: { headerBg: "#ab0313", footerBg: "#000000" }
   } as any;
 
   const navLinks = [
