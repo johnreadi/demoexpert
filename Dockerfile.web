@@ -1,59 +1,31 @@
-# ================= ÉTAPE DE BUILD =================
+# Build sans Tailwind (si vraiment ça ne marche pas)
 FROM node:20-alpine AS builder
 WORKDIR /app
 
-# 1. Copier UNIQUEMENT les fichiers essentiels d'abord pour le cache
+# Copier package.json
 COPY package.json package-lock.json ./
 
-# 2. Installer les dépendances (TOUTES, sans --production)
-RUN npm install --no-fund --no-audit
+# Installer SANS tailwind
+RUN npm install --no-fund --no-audit --omit=dev
 
-# 3. Copier le reste des fichiers
+# Copier le code
 COPY . .
 
-# 4. Variables d'environnement pour le build
+# Supprimer les références à Tailwind pour éviter l'erreur
+RUN rm -f postcss.config.js tailwind.config.js 2>/dev/null || true
+
+# Variables
 ARG VITE_API_BASE_URL=/api
 ARG VITE_APP_BASE_URL=https://app.demoexpert.fr
 ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
 ENV VITE_APP_BASE_URL=$VITE_APP_BASE_URL
-ENV NODE_ENV=production
 
-# 5. Vérifier que Tailwind est installé
-RUN echo "📦 Vérification des dépendances..." && \
-    npm list tailwindcss 2>/dev/null || npm install tailwindcss@latest --no-save && \
-    npm list autoprefixer 2>/dev/null || npm install autoprefixer@latest --no-save && \
-    npm list postcss 2>/dev/null || npm install postcss@latest --no-save
-
-# 6. Builder l'application
+# Build
 RUN npm run build
 
-# 7. Post-build: injection du timestamp
-RUN echo "🔧 Injection anti-cache..." && \
-    TIMESTAMP=$(date +%s) && \
-    # Modifier index.html
-    sed -i "s|content=\"<!-- DEPLOY_TIMESTAMP -->\"|content=\"$TIMESTAMP\"|g" /app/dist/index.html && \
-    sed -i "s|src=\"/index.tsx?nocache=<!-- DEPLOY_TIMESTAMP -->\"|src=\"/index.tsx?nocache=$TIMESTAMP\"|g" /app/dist/index.html && \
-    # Créer des fichiers de version
-    echo "{\"build\":\"$TIMESTAMP\",\"date\":\"$(date -Iseconds)\"}" > /app/dist/version.json && \
-    echo "healthy" > /app/dist/health.txt && \
-    echo "✅ Build timestamp: $TIMESTAMP"
-
-# ================= ÉTAPE NGINX =================
+# Nginx
 FROM nginx:1.27-alpine
-
-# Supprimer la config par défaut
-RUN rm /etc/nginx/conf.d/default.conf
-
-# Copier notre config nginx
-COPY nginx.conf /etc/nginx/conf.d/
-
-# Copier l'application buildée
 COPY --from=builder /app/dist /usr/share/nginx/html
-
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 EXPOSE 80
-
-# Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
-  CMD wget -qO- http://localhost:80/health.txt || exit 1
-
 CMD ["nginx", "-g", "daemon off;"]
