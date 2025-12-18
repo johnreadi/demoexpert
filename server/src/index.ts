@@ -332,7 +332,8 @@ Dernière question utilisateur: ${String(message ?? '').trim()}`;
       return res.json({ text: fallback(), error: 'ai_call_failed', details });
     }
 
-    const data = await r.json();
+    const raw = await r.json();
+    const data: any = raw;
     const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || fallback();
     return res.json({ text });
   } catch (e: any) {
