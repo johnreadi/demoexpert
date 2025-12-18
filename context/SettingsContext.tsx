@@ -151,7 +151,7 @@ const DEFAULT_SETTINGS: SiteSettings = {
 };
 
 export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [settings, setSettings] = useState<SiteSettings | null>(DEFAULT_SETTINGS);
+  const [settings, setSettings] = useState<SiteSettings | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
 
