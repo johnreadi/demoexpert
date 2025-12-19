@@ -17,6 +17,7 @@ FROM nginx:1.27-alpine
 WORKDIR /usr/share/nginx/html
 COPY --from=build /app/dist ./
 COPY ./nginx.conf /etc/nginx/conf.d/default.conf
+RUN apk add --no-cache wget
 EXPOSE 80
-HEALTHCHECK --interval=10s --timeout=2s --retries=3 CMD wget -qO- http://127.0.0.1:80/ || exit 1
+HEALTHCHECK --interval=10s --timeout=2s --retries=3 CMD wget -qO- http://127.0.0.1:80/health.txt || exit 1
 CMD ["nginx", "-g", "daemon off;"]
