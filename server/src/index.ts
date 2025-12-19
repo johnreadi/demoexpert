@@ -14,8 +14,21 @@ const NODE_ENV = process.env.NODE_ENV || 'development';
 const SESSION_SECRET = process.env.SESSION_SECRET || 'dev_session_secret_change_me';
 const CORS_ORIGIN = process.env.CORS_ORIGIN || 'http://localhost:3000';
 const TRUST_PROXY = process.env.TRUST_PROXY ? Number(process.env.TRUST_PROXY) : 0;
-const COOKIE_SECURE = process.env.COOKIE_SECURE === 'true';
-const COOKIE_SAME_SITE = (process.env.COOKIE_SAME_SITE as 'lax'|'strict'|'none') || 'none';
+const IS_PROD = NODE_ENV === 'production';
+const COOKIE_SECURE_RAW = (process.env.COOKIE_SECURE || '').toLowerCase();
+const COOKIE_SECURE: boolean | 'auto' = COOKIE_SECURE_RAW === 'auto'
+  ? 'auto'
+  : COOKIE_SECURE_RAW === 'true'
+    ? true
+    : IS_PROD
+      ? 'auto'
+      : false;
+
+const COOKIE_SAME_SITE_RAW = (process.env.COOKIE_SAME_SITE || '').toLowerCase();
+const COOKIE_SAME_SITE: 'lax' | 'strict' | 'none' =
+  COOKIE_SAME_SITE_RAW === 'lax' || COOKIE_SAME_SITE_RAW === 'strict' || COOKIE_SAME_SITE_RAW === 'none'
+    ? (COOKIE_SAME_SITE_RAW as any)
+    : (IS_PROD ? 'lax' : 'none');
 
 app.set('trust proxy', TRUST_PROXY);
 
@@ -54,6 +67,7 @@ app.use(session({
   secret: SESSION_SECRET,
   resave: false,
   saveUninitialized: false,
+  proxy: true,
   cookie: {
     httpOnly: true,
     secure: COOKIE_SECURE,
