@@ -118,6 +118,41 @@ export default function AdminPage(): React.ReactNode {
 
   // Address book state
   const [newContactFormData, setNewContactFormData] = useState(initialNewContactState);
+  const [selectedContactIds, setSelectedContactIds] = useState<Set<string>>(new Set());
+
+  const toggleSelectContact = (id: string) => {
+    setSelectedContactIds(prev => {
+        const next = new Set(prev);
+        if (next.has(id)) next.delete(id);
+        else next.add(id);
+        return next;
+    });
+  };
+
+  const handleSelectAllContacts = (e: React.ChangeEvent<HTMLInputElement>) => {
+      if (e.target.checked) {
+          setSelectedContactIds(new Set(contacts.map(c => c.id)));
+      } else {
+          setSelectedContactIds(new Set());
+      }
+  };
+
+  const handleDeleteSelectedContacts = async () => {
+      if (selectedContactIds.size === 0) return;
+      if (!window.confirm(`Supprimer ${selectedContactIds.size} contact(s) ?`)) return;
+      
+      const ids = Array.from(selectedContactIds);
+      try {
+          const { deleted } = await api.deleteContactsBulk(ids, []);
+          if (deleted > 0) {
+              setContacts(prev => prev.filter(c => !selectedContactIds.has(c.id)));
+              showToast(`${deleted} contact(s) supprimé(s).`, 'success');
+              setSelectedContactIds(new Set());
+          }
+      } catch (error) {
+          showToast('Erreur lors de la suppression.', 'error');
+      }
+  };
   
   // Lift management state
   const [calendarDate, setCalendarDate] = useState(new Date());
@@ -455,8 +490,12 @@ export default function AdminPage(): React.ReactNode {
       showToast('Réponse envoyée avec succès !', 'success');
       setReplyContent('');
       setReplyAttachment(null);
-    } catch (error) {
-      showToast("Erreur lors de l'envoi de la réponse.", 'error');
+    } catch (error: any) {
+      if (error?.message === 'smtp_not_configured' || (error as any)?.response?.data?.error === 'smtp_not_configured') {
+          showToast("Erreur: SMTP non configuré. Allez dans Paramétrages > SMTP.", 'error');
+      } else {
+          showToast("Erreur lors de l'envoi de la réponse.", 'error');
+      }
     } finally {
       setIsReplying(false);
     }
@@ -497,14 +536,21 @@ export default function AdminPage(): React.ReactNode {
   };
 
   const handleDeleteSelectedContactsFromMessages = async () => {
-      if (selectedMessageIds.size === 0) {
-          showToast('Sélectionnez au moins un message.', 'error');
-          return;
+      let emailsToDelete = new Set<string>();
+      
+      // If checkboxes are checked, use them
+      if (selectedMessageIds.size > 0) {
+        messages.filter(m => selectedMessageIds.has(m.id)).forEach(m => {
+            if (m.senderEmail) emailsToDelete.add(m.senderEmail);
+        });
+      } 
+      // Otherwise, if a message is currently viewed, use that one
+      else if (selectedMessage && selectedMessage.senderEmail) {
+          emailsToDelete.add(selectedMessage.senderEmail);
       }
-      const emails = messages
-        .filter(m => selectedMessageIds.has(m.id))
-        .map(m => m.senderEmail)
-        .filter((e) => !!e);
+
+      const emails = Array.from(emailsToDelete);
+
       if (emails.length === 0) {
           showToast('Aucun contact correspondant à supprimer.', 'info');
           return;
@@ -513,16 +559,33 @@ export default function AdminPage(): React.ReactNode {
       try {
           const { deleted } = await api.deleteContactsBulk([], emails);
           if (deleted > 0) {
-              setContacts(prev => prev.filter(c => !emails.includes(c.email)));
+              // Case-insensitive filtering
+              const emailsLower = emails.map(e => e.toLowerCase());
+              setContacts(prev => prev.filter(c => !emailsLower.includes(c.email.toLowerCase())));
               showToast(`Contacts supprimés (${deleted}).`, 'success');
           } else {
-              showToast('Aucun contact correspondant à supprimer.', 'info');
+              showToast('Aucun contact correspondant à supprimer (déjà supprimé ?).', 'info');
           }
       } catch (error) {
           showToast('Erreur lors de la suppression des contacts.', 'error');
       } finally {
           setSelectedMessageIds(new Set());
       }
+  };
+
+  const handleDeleteContact = async (id: string, email: string) => {
+    if (!window.confirm(`Supprimer le contact ${email} ?`)) return;
+    try {
+        const { deleted } = await api.deleteContactsBulk([id], [email]);
+        if (deleted > 0) {
+            setContacts(prev => prev.filter(c => c.id !== id));
+            showToast('Contact supprimé.', 'success');
+        } else {
+             showToast('Impossible de supprimer le contact.', 'error');
+        }
+    } catch (error) {
+        showToast('Erreur lors de la suppression.', 'error');
+    }
   };
 
   // --- Compose Modal ---
@@ -1314,6 +1377,20 @@ export default function AdminPage(): React.ReactNode {
              {activeTab === 'addressBook' && (
                 <div id="address-book-panel">
                     <h2 className="text-3xl font-bold font-heading text-expert-blue mb-8">Carnet d'adresses</h2>
+                    
+                    {selectedContactIds.size > 0 && (
+                        <div className="mb-4 bg-red-50 p-4 rounded-lg flex justify-between items-center border border-red-100 animate-fade-in-down">
+                            <span className="text-red-800 font-bold">{selectedContactIds.size} contact(s) sélectionné(s)</span>
+                            <button 
+                                onClick={handleDeleteSelectedContacts}
+                                className="bg-red-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-red-700 transition-colors shadow-sm"
+                            >
+                                <i className="fas fa-trash-alt mr-2"></i>
+                                Supprimer la sélection
+                            </button>
+                        </div>
+                    )}
+
                      <div className="bg-white p-6 rounded-lg shadow-md mb-8">
                         <h3 className="text-xl font-bold font-heading text-expert-blue mb-4">Ajouter un nouveau contact</h3>
                         <form onSubmit={handleAddContactSubmit} className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
@@ -1327,15 +1404,39 @@ export default function AdminPage(): React.ReactNode {
                     </div>
                      <div className="bg-white rounded-lg shadow-md overflow-x-auto">
                         <table className="w-full min-w-[700px]">
-                            <thead><tr className="border-b bg-gray-50"><th className="text-left p-3 font-bold">Nom</th><th className="text-left p-3 font-bold">Email</th><th className="text-left p-3 font-bold">Source</th><th className="text-left p-3 font-bold">Actions</th></tr></thead>
+                            <thead>
+                                <tr className="border-b bg-gray-50">
+                                    <th className="p-3 w-10">
+                                        <input 
+                                            type="checkbox" 
+                                            onChange={handleSelectAllContacts}
+                                            checked={contacts.length > 0 && selectedContactIds.size === contacts.length}
+                                            className="w-4 h-4 text-expert-blue rounded focus:ring-expert-blue"
+                                        />
+                                    </th>
+                                    <th className="text-left p-3 font-bold">Nom</th>
+                                    <th className="text-left p-3 font-bold">Email</th>
+                                    <th className="text-left p-3 font-bold">Source</th>
+                                    <th className="text-left p-3 font-bold">Actions</th>
+                                </tr>
+                            </thead>
                             <tbody>
                                 {contacts.map(c => (
-                                    <tr key={c.id} className="border-b hover:bg-gray-50">
+                                    <tr key={c.id} className={`border-b hover:bg-gray-50 ${selectedContactIds.has(c.id) ? 'bg-blue-50' : ''}`}>
+                                        <td className="p-3">
+                                            <input 
+                                                type="checkbox" 
+                                                checked={selectedContactIds.has(c.id)}
+                                                onChange={() => toggleSelectContact(c.id)}
+                                                className="w-4 h-4 text-expert-blue rounded focus:ring-expert-blue"
+                                            />
+                                        </td>
                                         <td className="p-3">{c.name}</td>
                                         <td className="p-3">{c.email}</td>
                                         <td className="p-3">{c.source}</td>
                                         <td className="p-3">
                                             <button onClick={() => handleOpenComposeModal(c.email)} className="text-expert-blue hover:text-expert-green"><i className="fas fa-paper-plane mr-2"></i>Écrire</button>
+                                            <button onClick={() => handleDeleteContact(c.id, c.email)} className="text-red-600 hover:text-red-800 ml-4" title="Supprimer du carnet"><i className="fas fa-trash"></i></button>
                                         </td>
                                     </tr>
                                 ))}
