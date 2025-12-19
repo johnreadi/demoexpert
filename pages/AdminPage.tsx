@@ -522,6 +522,39 @@ export default function AdminPage(): React.ReactNode {
     }
   };
 
+  const handleDeleteMessage = async (messageId: string) => {
+    if (!window.confirm('Êtes-vous sûr de vouloir supprimer ce message définitivement ?')) return;
+    try {
+        await api.deleteAdminMessage(messageId);
+        setMessages(prev => prev.filter(m => m.id !== messageId));
+        if (selectedMessage && selectedMessage.id === messageId) {
+            setSelectedMessage(null);
+        }
+        showToast('Message supprimé.', 'success');
+    } catch (error) {
+        showToast("Erreur lors de la suppression du message.", 'error');
+    }
+  };
+
+  const handleDeleteSelectedMessages = async () => {
+      if (selectedMessageIds.size === 0) return;
+      if (!window.confirm(`Supprimer ${selectedMessageIds.size} message(s) définitivement ?`)) return;
+      
+      const ids = Array.from(selectedMessageIds);
+      try {
+          await Promise.all(ids.map(id => api.deleteAdminMessage(id)));
+          
+          setMessages(prev => prev.filter(m => !selectedMessageIds.has(m.id)));
+          setSelectedMessageIds(new Set());
+          if (selectedMessage && selectedMessageIds.has(selectedMessage.id)) {
+              setSelectedMessage(null);
+          }
+          showToast(`${ids.length} message(s) supprimé(s).`, 'success');
+      } catch (error) {
+          showToast("Erreur lors de la suppression des messages.", 'error');
+      }
+  };
+
   const handleToggleReadStatus = (messageId: string) => {
     setMessages(prevMessages => {
         return prevMessages.map(m => {
@@ -1287,9 +1320,14 @@ export default function AdminPage(): React.ReactNode {
                         {/* Message List */}
                         <div className="w-1/3 border-r flex flex-col">
                             <div className="p-4 border-b flex justify-between items-center">
-                                <div className="flex gap-2">
+                                <div className="flex gap-2 items-center">
                                     <button onClick={() => setMessageViewFilter('inbox')} className={`px-3 py-1 text-sm rounded-full ${messageViewFilter === 'inbox' ? 'bg-expert-blue text-white' : 'bg-gray-200'}`}>Boîte de réception ({inboxMessages.length})</button>
                                     <button onClick={() => setMessageViewFilter('archived')} className={`px-3 py-1 text-sm rounded-full ${messageViewFilter === 'archived' ? 'bg-expert-blue text-white' : 'bg-gray-200'}`}>Archivés ({archivedMessages.length})</button>
+                                    {selectedMessageIds.size > 0 && (
+                                        <button onClick={handleDeleteSelectedMessages} className="text-red-600 hover:text-red-800 ml-2 px-2" title="Supprimer la sélection">
+                                            <i className="fas fa-trash"></i> ({selectedMessageIds.size})
+                                        </button>
+                                    )}
                                 </div>
                                  <button onClick={() => handleOpenComposeModal()} className="text-expert-blue hover:text-expert-green" title="Nouveau message">
                                     <i className="fas fa-edit text-xl"></i>
@@ -1326,11 +1364,18 @@ export default function AdminPage(): React.ReactNode {
                                          <h3 className="text-xl font-bold font-heading">{selectedMessage.subject}</h3>
                                          <div className="flex items-center">
                                             <button
-                                                onClick={handleDeleteSelectedContactsFromMessages}
+                                                onClick={() => handleDeleteMessage(selectedMessage.id)}
                                                 className="text-red-600 hover:text-red-800 p-2"
-                                                title="Supprimer les contacts sélectionnés"
+                                                title="Supprimer le message"
                                             >
                                                 <i className="fas fa-trash"></i>
+                                            </button>
+                                            <button
+                                                onClick={handleDeleteSelectedContactsFromMessages}
+                                                className="text-orange-500 hover:text-orange-700 p-2"
+                                                title="Supprimer le contact (expéditeur)"
+                                            >
+                                                <i className="fas fa-user-minus"></i>
                                             </button>
                                             <button 
                                                 onClick={() => handleToggleReadStatus(selectedMessage.id)}

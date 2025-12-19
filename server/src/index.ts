@@ -244,7 +244,8 @@ async function getSmtpTransport() {
       auth: smtp.user ? { user: smtp.user, pass: smtp.pass || '' } : undefined
     });
     return transporter;
-  } catch {
+  } catch (e) {
+    console.error('getSmtpTransport error:', e);
     throw new Error('smtp_not_configured');
   }
 }
