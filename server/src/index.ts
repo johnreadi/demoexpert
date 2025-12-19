@@ -1357,9 +1357,12 @@ app.post('/api/admin/messages', async (req, res) => {
           : { id: `mock-sent-${Date.now()}` };
 
         return res.status(201).json({ success: true, id: (saved as any).id });
-      } catch (err) {
+      } catch (err: any) {
         console.error('SMTP send failed:', err);
-        return res.status(503).json({ error: 'smtp_not_configured' });
+        if (err.message === 'smtp_not_configured') {
+             return res.status(503).json({ error: 'smtp_not_configured' });
+        }
+        return res.status(503).json({ error: 'smtp_send_failed', details: err.message || String(err) });
       }
     }
 

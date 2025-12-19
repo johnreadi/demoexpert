@@ -491,8 +491,11 @@ export default function AdminPage(): React.ReactNode {
       setReplyContent('');
       setReplyAttachment(null);
     } catch (error: any) {
-      if (error?.message === 'smtp_not_configured' || (error as any)?.response?.data?.error === 'smtp_not_configured') {
+      const errBody = error?.body || error?.response?.data;
+      if (error?.message === 'smtp_not_configured' || errBody?.error === 'smtp_not_configured') {
           showToast("Erreur: SMTP non configuré. Allez dans Paramétrages > SMTP.", 'error');
+      } else if (errBody?.error === 'smtp_send_failed') {
+          showToast(`Erreur d'envoi SMTP: ${errBody.details}`, 'error');
       } else {
           showToast("Erreur lors de l'envoi de la réponse.", 'error');
       }
