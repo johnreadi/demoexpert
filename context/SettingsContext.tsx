@@ -159,6 +159,20 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     let isMounted = true;
     let timeoutId: NodeJS.Timeout;
 
+    const seedFromLocal = () => {
+      try {
+        const stored = localStorage.getItem('api_mock_/api/settings');
+        if (stored && isMounted) {
+          const parsed = JSON.parse(stored);
+          setSettings(normalizeSettings(parsed));
+          setIsLoading(false);
+        }
+      } catch {}
+    };
+
+    // Seed rapide pour éviter le flicker en dev
+    seedFromLocal();
+
     const fetchSettings = async () => {
       try {
         const siteSettings = await api.getSiteSettings();
@@ -167,7 +181,7 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         }
       } catch (error) {
         console.error("Failed to fetch site settings:", error);
-        if (isMounted) {
+        if (isMounted && !settings) {
           setSettings(DEFAULT_SETTINGS);
           setHasError(true);
         }
@@ -178,19 +192,16 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       }
     };
     
-    // Add a timeout to ensure the app doesn't hang indefinitely
+    // Allonger le délai: ne pas écraser en 2s
     timeoutId = setTimeout(() => {
       if (isMounted && isLoading) {
-        console.warn("Settings fetch timeout - using default settings");
-        setSettings(DEFAULT_SETTINGS);
-        setIsLoading(false);
-        setHasError(true);
+        console.warn("Settings fetch prend du temps, on attend jusqu'au timeout HTTP");
+        // Ne pas écraser les settings ici; laisser le fetch ou le timeout HTTP décider
       }
-    }, 2000); // 2 second timeout (réduit de 5s pour développement)
+    }, 9000); // proche du timeout HTTP (10s)
     
     fetchSettings();
     
-    // Clean up function
     return () => {
       isMounted = false;
       clearTimeout(timeoutId);

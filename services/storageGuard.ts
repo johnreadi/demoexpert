@@ -17,7 +17,8 @@ export function installStorageGuard() {
   if (typeof window !== 'undefined') {
     const useLocal = import.meta.env.VITE_USE_LOCAL_STORAGE === 'true';
     const isLocalHost = /^localhost$|^127\.0\.0\.1$/.test(window.location.hostname);
-    const shouldBlock = !useLocal || import.meta.env.MODE === 'production' || !isLocalHost || (window as any).__FORCE_BLOCK_STORAGE === true;
+    // Bloquer uniquement en production pour éviter les régressions en dev
+    const shouldBlock = import.meta.env.MODE === 'production' && (!useLocal || (window as any).__FORCE_BLOCK_STORAGE === true);
     if (shouldBlock) {
       try {
         Object.defineProperty(window, 'localStorage', { value: makeNoopStorage('localStorage') });

@@ -130,9 +130,6 @@
 
     <!-- SCRIPT ANTI-CACHE ET ANTI-SERVICE-WORKER -->
     <script>
-      // ============================================
-      // FORCE DISABLE ALL CACHING MECHANISMS
-      // ============================================
       (function() {
         console.log('🛡️  Initialisation protection anti-cache...');
         
@@ -144,151 +141,56 @@
         // 1. VÉRIFICATION DE VERSION
         const DEPLOY_TIMESTAMP = '<!-- DEPLOY_TIMESTAMP -->';
         const STORED_TIMESTAMP = localStorage.getItem('deploy_timestamp');
-        
-        console.log('📅 Version actuelle:', DEPLOY_TIMESTAMP);
-        console.log('📅 Version stockée:', STORED_TIMESTAMP);
-        
-        // 2. DÉSACTIVATION COMPLÈTE DES SERVICE WORKERS
+        const IS_PLACEHOLDER = DEPLOY_TIMESTAMP === '<!-- DEPLOY_TIMESTAMP -->';
+    
+        // Désinscription SW + purge caches (sans reload forcé)
         if ('serviceWorker' in navigator) {
-          console.log('🔧 Nettoyage des Service Workers...');
-          
-          // Unregister tous les service workers existants
           navigator.serviceWorker.getRegistrations().then(function(registrations) {
-            console.log('📋 Service Workers trouvés:', registrations.length);
-            
-            registrations.forEach(function(registration) {
-              console.log('🗑️  Suppression:', registration.scope);
-              registration.unregister().then(function(success) {
-                console.log(success ? '✅ Supprimé' : '❌ Échec');
-              });
-            });
-            
-            // Supprimer tous les caches
+            registrations.forEach(function(registration) { registration.unregister(); });
             if ('caches' in window) {
               caches.keys().then(function(cacheNames) {
-                console.log('🧹 Caches à supprimer:', cacheNames.length);
-                cacheNames.forEach(function(cacheName) {
-                  caches.delete(cacheName).then(function(deleted) {
-                    console.log(deleted ? '✅ Cache supprimé:' + cacheName : '❌ Cache non supprimé:' + cacheName);
-                  });
-                });
+                cacheNames.forEach(function(cacheName) { caches.delete(cacheName); });
               });
             }
           });
-          
-          // Bloquer toute nouvelle inscription
           const originalRegister = navigator.serviceWorker.register;
           navigator.serviceWorker.register = function() {
-            console.warn('🚫 Tentative de registration Service Worker BLOQUÉE');
-            return Promise.reject(new Error('Service Workers désactivés pour éviter les problèmes de cache'));
+            return Promise.reject(new Error('Service Workers désactivés'));
           };
-          
-          // Redéfinir aussi getRegistrations pour être sûr
-          navigator.serviceWorker.getRegistrations = function() {
-            console.warn('🚫 getRegistrations retourne tableau vide');
-            return Promise.resolve([]);
-          };
+          navigator.serviceWorker.getRegistrations = function() { return Promise.resolve([]); };
         }
-        
-        // 3. NETTOYAGE DU STORAGE SI NOUVELLE VERSION
-        if (STORED_TIMESTAMP && STORED_TIMESTAMP !== DEPLOY_TIMESTAMP) {
-          console.log('🆕 Nouvelle version détectée! Nettoyage complet...');
-          
-          // Clear localStorage (sauf certains éléments)
+    
+        // Nettoyage uniquement si vraie nouvelle version (sans reload automatique)
+        if (!IS_PLACEHOLDER && STORED_TIMESTAMP && STORED_TIMESTAMP !== DEPLOY_TIMESTAMP) {
           const preserveKeys = ['user_token', 'user_preferences', 'language'];
-          const allKeys = Object.keys(localStorage);
-          allKeys.forEach(function(key) {
-            if (!preserveKeys.includes(key)) {
-              localStorage.removeItem(key);
-            }
+          Object.keys(localStorage).forEach(function(key) {
+            if (!preserveKeys.includes(key)) localStorage.removeItem(key);
           });
-          
-          // Clear sessionStorage
           sessionStorage.clear();
-          
-          // Clear IndexedDB
           if (window.indexedDB && window.indexedDB.databases) {
             window.indexedDB.databases().then(function(databases) {
-              databases.forEach(function(db) {
-                indexedDB.deleteDatabase(db.name);
-              });
+              databases.forEach(function(db) { indexedDB.deleteDatabase(db.name); });
             });
           }
-          
-          // Force reload après nettoyage
-          setTimeout(function() {
-            console.log('🔄 Rechargement forcé après nettoyage...');
-            window.location.reload(true);
-          }, 500);
+          console.log('✅ Cache nettoyé (sans rechargement forcé)');
         }
-        
-        // 4. STOCKER LA NOUVELLE VERSION
+    
         localStorage.setItem('deploy_timestamp', DEPLOY_TIMESTAMP);
         localStorage.setItem('last_visit', new Date().toISOString());
-        
-        // 5. AJOUTER TIMESTAMP À TOUTES LES REQUÊTES FUTURES
-        const originalFetch = window.fetch;
-        window.fetch = function(resource, init) {
-          // Ajouter timestamp aux requêtes pour les mêmes fichiers
-          if (typeof resource === 'string' && 
-              (resource.endsWith('.js') || resource.endsWith('.css') || resource.endsWith('.tsx'))) {
-            const separator = resource.includes('?') ? '&' : '?';
-            resource = resource + separator + 'nocache=' + DEPLOY_TIMESTAMP;
-          }
-          return originalFetch.call(this, resource, init);
-        };
-        
-        // 6. SURVEILLANCE DES CHANGEMENTS DE PAGE
+    
+        // Surveille les changements de route (aucun reload)
         let lastUrl = location.href;
         new MutationObserver(function() {
           const url = location.href;
           if (url !== lastUrl) {
             lastUrl = url;
-            console.log('📍 Changement de route détecté');
-            
-            // Forcer un check de version sur les changements de route
-            if (localStorage.getItem('deploy_timestamp') !== DEPLOY_TIMESTAMP) {
-              console.log('🔄 Version différente détectée sur navigation');
-              localStorage.setItem('deploy_timestamp', DEPLOY_TIMESTAMP);
-              window.location.reload(true);
-            }
+            console.log('📍 Changement de route détecté (pas de reload forcé).');
           }
         }).observe(document, {subtree: true, childList: true});
         
         console.log('✅ Système anti-cache activé avec succès!');
         
       })();
-      
-      // ============================================
-      // FORCE RELOAD IF BROWSER BACK/FORWARD CACHE
-      // ============================================
-      window.addEventListener('pageshow', function(event) {
-        if (event.persisted) {
-          console.log('🔄 Page restaurée depuis cache navigateur, rechargement...');
-          window.location.reload();
-        }
-      });
-      
-      // ============================================
-      // PREVENT ANY FORM OF CACHING
-      // ============================================
-      document.addEventListener('DOMContentLoaded', function() {
-        // Ajouter timestamp aux scripts dynamiques
-        document.querySelectorAll('script[src]').forEach(function(script) {
-          const src = script.getAttribute('src');
-          if (src && !src.includes('?') && (src.endsWith('.js') || src.endsWith('.tsx'))) {
-            script.setAttribute('src', src + '?nocache=' + Date.now());
-          }
-        });
-        
-        // Ajouter timestamp aux liens CSS
-        document.querySelectorAll('link[rel="stylesheet"]').forEach(function(link) {
-          const href = link.getAttribute('href');
-          if (href && !href.includes('?') && href.endsWith('.css')) {
-            link.setAttribute('href', href + '?nocache=' + Date.now());
-          }
-        });
-      });
     </script>
 
     <!-- SCRIPT PRINCIPAL DE L'APPLICATION -->
