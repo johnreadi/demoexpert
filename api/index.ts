@@ -229,3 +229,9 @@ export const loginUser = (email: string, password: string): Promise<User> => {
         return simulateApiError(e.message);
     }
 };
+
+export const deleteAdminMessage = (messageId: string): Promise<{ success: boolean }> =>
+  USE_LOCAL_API ? simulateApiCall({ success: true }) : http<{ success: boolean }>(`/api/admin/messages/${messageId}`, { method: 'DELETE' });
+
+export const deleteContactsBulk = (ids: string[] = [], emails: string[] = []): Promise<{ deleted: number }> =>
+  USE_LOCAL_API ? simulateApiCall({ deleted: ids.length || emails.length }) : http<{ deleted: number }>(`/api/contacts/delete`, { method: 'POST', body: JSON.stringify({ ids, emails }) });

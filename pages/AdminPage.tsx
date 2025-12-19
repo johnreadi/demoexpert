@@ -81,6 +81,15 @@ export default function AdminPage(): React.ReactNode {
   const [replyContent, setReplyContent] = useState('');
   const [replyAttachment, setReplyAttachment] = useState<File | null>(null);
   const [isReplying, setIsReplying] = useState(false);
+  const [selectedMessageIds, setSelectedMessageIds] = useState<Set<string>>(new Set());
+  const toggleSelectMessage = (id: string) => {
+    setSelectedMessageIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
   
   // Modals state
   const [isProductModalOpen, setIsProductModalOpen] = useState(false);
@@ -485,6 +494,35 @@ export default function AdminPage(): React.ReactNode {
             return m;
         });
     });
+  };
+
+  const handleDeleteSelectedContactsFromMessages = async () => {
+      if (selectedMessageIds.size === 0) {
+          showToast('Sélectionnez au moins un message.', 'error');
+          return;
+      }
+      const emails = messages
+        .filter(m => selectedMessageIds.has(m.id))
+        .map(m => m.senderEmail)
+        .filter((e) => !!e);
+      if (emails.length === 0) {
+          showToast('Aucun contact correspondant à supprimer.', 'info');
+          return;
+      }
+      if (!window.confirm(`Supprimer ${emails.length} contact(s) du carnet ?`)) return;
+      try {
+          const { deleted } = await api.deleteContactsBulk([], emails);
+          if (deleted > 0) {
+              setContacts(prev => prev.filter(c => !emails.includes(c.email)));
+              showToast(`Contacts supprimés (${deleted}).`, 'success');
+          } else {
+              showToast('Aucun contact correspondant à supprimer.', 'info');
+          }
+      } catch (error) {
+          showToast('Erreur lors de la suppression des contacts.', 'error');
+      } finally {
+          setSelectedMessageIds(new Set());
+      }
   };
 
   // --- Compose Modal ---
@@ -1195,17 +1233,25 @@ export default function AdminPage(): React.ReactNode {
                                 </button>
                             </div>
                             <div className="overflow-y-auto">
-                                {messagesToList.map(m => (
-                                    <div key={m.id} onClick={() => handleSelectMessage(m)} className={`p-4 border-b cursor-pointer ${selectedMessage?.id === m.id ? 'bg-expert-light-gray' : 'hover:bg-gray-50'}`}>
-                                        <div className="flex justify-between items-start">
-                                            <p className={`font-bold ${!m.isRead && 'text-expert-blue'}`}>{m.senderName}</p>
-                                            <p className="text-xs text-gray-500">{new Date(m.receivedAt).toLocaleDateString('fr-FR')}</p>
-                                        </div>
-                                        <p className="text-sm truncate">{m.subject}</p>
-                                        <p className="text-xs text-gray-600 truncate">{m.content}</p>
-                                    </div>
-                                ))}
-                            </div>
+    {messagesToList.map(m => (
+        <div key={m.id} className={`p-4 border-b cursor-pointer ${selectedMessage?.id === m.id ? 'bg-expert-light-gray' : 'hover:bg-gray-50'}`}>
+            <div className="flex justify-between items-start">
+                <div className="flex items-center gap-2">
+                    <input
+                        type="checkbox"
+                        checked={selectedMessageIds.has(m.id)}
+                        onChange={() => toggleSelectMessage(m.id)}
+                        onClick={e => e.stopPropagation()}
+                    />
+                    <p onClick={() => handleSelectMessage(m)} className={`font-bold ${!m.isRead && 'text-expert-blue'}`}>{m.senderName}</p>
+                </div>
+                <p className="text-xs text-gray-500">{new Date(m.receivedAt).toLocaleDateString('fr-FR')}</p>
+            </div>
+            <p className="text-sm truncate">{m.subject}</p>
+            <p className="text-xs text-gray-600 truncate">{m.content}</p>
+        </div>
+    ))}
+</div>
                         </div>
 
                         {/* Message View */}
@@ -1216,6 +1262,13 @@ export default function AdminPage(): React.ReactNode {
                                     <div className="flex justify-between items-center">
                                          <h3 className="text-xl font-bold font-heading">{selectedMessage.subject}</h3>
                                          <div className="flex items-center">
+                                            <button
+                                                onClick={handleDeleteSelectedContactsFromMessages}
+                                                className="text-red-600 hover:text-red-800 p-2"
+                                                title="Supprimer les contacts sélectionnés"
+                                            >
+                                                <i className="fas fa-trash"></i>
+                                            </button>
                                             <button 
                                                 onClick={() => handleToggleReadStatus(selectedMessage.id)}
                                                 className="text-gray-500 hover:text-expert-blue p-2"

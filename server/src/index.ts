@@ -5,6 +5,7 @@ import helmet from 'helmet';
 import morgan from 'morgan';
 import cookieParser from 'cookie-parser';
 import bcrypt from 'bcryptjs';
+import nodemailer from 'nodemailer';
 const { prisma } = require('./prisma.js');
 
 const app = express();
@@ -227,6 +228,24 @@ async function ensureDefaultSettings() {
   } catch (e) {
     console.error('Failed to ensure default settings (database may not be available):', e);
     console.log('Continuing without database connection...');
+  }
+}
+
+async function getSmtpTransport() {
+  try {
+    const s = await prisma.settings.findUnique({ where: { key: 'site_settings' } });
+    const normalized = normalizeSettings(s?.value ?? DEFAULT_SETTINGS);
+    const smtp = normalized?.advancedSettings?.smtp ?? { host: '', port: 0, user: '', pass: '' };
+    if (!smtp.host || !smtp.port) throw new Error('smtp_not_configured');
+    const transporter = nodemailer.createTransport({
+      host: smtp.host,
+      port: smtp.port || 587,
+      secure: smtp.port === 465,
+      auth: smtp.user ? { user: smtp.user, pass: smtp.pass || '' } : undefined
+    });
+    return transporter;
+  } catch {
+    throw new Error('smtp_not_configured');
   }
 }
 
@@ -969,6 +988,51 @@ app.get('/api/contact', async (_req, res) => {
   }
 });
 
+app.delete('/api/contact/:id', async (req, res) => {
+  try {
+    if (!process.env.DATABASE_URL) {
+      if (process.env.STRICT_DB === 'true') {
+        return res.status(503).json({ error: 'database_unavailable' });
+      }
+      return res.json({ success: true });
+    }
+    await prisma.contact.delete({ where: { id: req.params.id } });
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Failed to delete contact:', error);
+    res.status(500).json({ error: 'failed_to_delete_contact' });
+  }
+});
+
+app.post('/api/contacts/delete', async (req, res) => {
+  try {
+    const ids: string[] = Array.isArray(req.body?.ids) ? req.body.ids : [];
+    const emails: string[] = Array.isArray(req.body?.emails) ? req.body.emails : [];
+    if (!ids.length && !emails.length) {
+      return res.status(400).json({ error: 'no_ids_or_emails' });
+    }
+    if (!process.env.DATABASE_URL) {
+      if (process.env.STRICT_DB === 'true') {
+        return res.status(503).json({ error: 'database_unavailable' });
+      }
+      return res.json({ deleted: ids.length || emails.length });
+    }
+    let resultCount = 0;
+    if (ids.length > 0) {
+      const result = await prisma.contact.deleteMany({ where: { id: { in: ids } } });
+      resultCount += result.count;
+    }
+    if (emails.length > 0) {
+      const result = await prisma.contact.deleteMany({ where: { email: { in: emails } } });
+      resultCount += result.count;
+    }
+    res.json({ deleted: resultCount });
+  } catch (error) {
+    console.error('Failed to bulk delete contacts:', error);
+    res.status(500).json({ error: 'failed_to_bulk_delete_contacts' });
+  }
+});
+
 app.post('/api/auctions/:id/bids', async (req, res) => {
   try {
     const user = (req.session as any)?.user;
@@ -1241,55 +1305,99 @@ app.get('/api/admin/messages', async (req, res) => {
 
 app.post('/api/admin/messages', async (req, res) => {
   try {
-    const { from, senderName, senderEmail, subject, content, userId } = req.body || {};
-    
-    // Validate required fields
-    if (!from || !senderName || !senderEmail || !subject || !content) {
+    const { to, subject, content, attachment, messageId, from, senderName, senderEmail, userId } = req.body || {};
+
+    // If sending an outbound email
+    if (to && subject && content) {
+      try {
+        const transporter = await getSmtpTransport();
+        const currentUser = (req.session as any)?.user;
+        const adminEmail = currentUser?.email;
+
+        let settingsValue: any = DEFAULT_SETTINGS;
+        try {
+          const s = await prisma.settings.findUnique({ where: { key: 'site_settings' } });
+          settingsValue = s?.value ?? DEFAULT_SETTINGS;
+        } catch {}
+        const normalized = normalizeSettings(settingsValue);
+        const businessEmail = normalized?.businessInfo?.email || 'no-reply@casseautopro.fr';
+
+        const mailOptions: any = {
+          from: businessEmail,
+          to,
+          subject,
+          text: content,
+          html: `<p>${content.replace(/\n/g, '<br/>')}</p>`
+        };
+        if (attachment?.name && attachment?.url) {
+          mailOptions.attachments = [{ filename: attachment.name, path: attachment.url }];
+        }
+        if (adminEmail && adminEmail !== to) {
+          mailOptions.bcc = adminEmail;
+        }
+
+        await transporter.sendMail(mailOptions);
+
+        const saved = process.env.DATABASE_URL
+          ? await prisma.adminMessage.create({
+              data: {
+                from: 'Administration',
+                senderName: currentUser?.name || 'Admin',
+                senderEmail: businessEmail,
+                subject,
+                content,
+                userId: currentUser?.id || null,
+                receivedAt: new Date(),
+                isRead: true,
+                isArchived: false,
+                status: 'sent'
+              }
+            })
+          : { id: `mock-sent-${Date.now()}` };
+
+        return res.status(201).json({ success: true, id: (saved as any).id });
+      } catch (err) {
+        console.error('SMTP send failed:', err);
+        return res.status(503).json({ error: 'smtp_not_configured' });
+      }
+    }
+
+    // Otherwise, create an inbound admin message
+    const inbound = { from, senderName, senderEmail, subject, content, userId };
+
+    if (!inbound.from || !inbound.senderName || !inbound.senderEmail || !inbound.subject || !inbound.content) {
       return res.status(400).json({ error: 'missing_required_fields' });
     }
-    
-    // Validate email format
+
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(senderEmail)) {
+    if (!emailRegex.test(inbound.senderEmail)) {
       return res.status(400).json({ error: 'invalid_email_format' });
     }
-    
-    // Check if we have a database connection
+
     if (!process.env.DATABASE_URL) {
       if (process.env.STRICT_DB === 'true') {
         return res.status(503).json({ error: 'database_unavailable' });
       }
-      return res.status(201).json({ 
-        id: `mock-msg-${Date.now()}`, 
-        from, 
-        senderName, 
-        senderEmail, 
-        subject, 
-        content, 
-        userId,
+      return res.status(201).json({
+        id: `mock-msg-${Date.now()}`,
+        ...inbound,
         receivedAt: new Date(),
         isRead: false,
         isArchived: false,
         status: 'pending'
       });
     }
-    
-    // Store in database
+
     const message = await prisma.adminMessage.create({
       data: {
-        from,
-        senderName,
-        senderEmail,
-        subject,
-        content,
-        userId,
+        ...inbound,
         receivedAt: new Date()
       }
     });
-    
+
     res.status(201).json(message);
   } catch (error) {
-    console.error('Failed to create admin message:', error);
+    console.error('Failed to create/send admin message:', error);
     res.status(500).json({ error: 'failed_to_create_admin_message' });
   }
 });
