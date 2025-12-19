@@ -530,12 +530,32 @@ export default function AdminPage(): React.ReactNode {
     try {
         await api.deleteAdminMessage(messageId);
         setMessages(prev => prev.filter(m => m.id !== messageId));
+        setSelectedMessageIds(prev => {
+            const next = new Set(prev);
+            next.delete(messageId);
+            return next;
+        });
         if (selectedMessage && selectedMessage.id === messageId) {
             setSelectedMessage(null);
         }
         showToast('Message supprimé.', 'success');
-    } catch (error) {
-        showToast("Erreur lors de la suppression du message.", 'error');
+    } catch (error: any) {
+        // If message is already gone (404/400), remove it from UI
+        if (error?.status === 404 || error?.status === 400 || error?.body?.error === 'not_found' || error?.message?.includes('not found')) {
+            setMessages(prev => prev.filter(m => m.id !== messageId));
+            setSelectedMessageIds(prev => {
+                const next = new Set(prev);
+                next.delete(messageId);
+                return next;
+            });
+            if (selectedMessage && selectedMessage.id === messageId) {
+                setSelectedMessage(null);
+            }
+            showToast('Message déjà supprimé.', 'info');
+        } else {
+            console.error('Delete message error:', error);
+            showToast("Erreur lors de la suppression du message.", 'error');
+        }
     }
   };
 
@@ -544,16 +564,40 @@ export default function AdminPage(): React.ReactNode {
       if (!window.confirm(`Supprimer ${selectedMessageIds.size} message(s) définitivement ?`)) return;
       
       const ids = Array.from(selectedMessageIds);
-      try {
-          await Promise.all(ids.map(id => api.deleteAdminMessage(id)));
+      
+      const results = await Promise.all(ids.map(async id => {
+          try {
+              await api.deleteAdminMessage(id);
+              return { id, success: true };
+          } catch (error: any) {
+              // Treat 404 as success (already deleted)
+              if (error?.status === 404 || error?.status === 400 || error?.body?.error === 'not_found') {
+                  return { id, success: true };
+              }
+              return { id, success: false };
+          }
+      }));
+
+      const successfulIds = new Set(results.filter(r => r.success).map(r => r.id));
+      const deletedCount = successfulIds.size;
           
-          setMessages(prev => prev.filter(m => !selectedMessageIds.has(m.id)));
-          setSelectedMessageIds(new Set());
-          if (selectedMessage && selectedMessageIds.has(selectedMessage.id)) {
+      if (deletedCount > 0) {
+          setMessages(prev => prev.filter(m => !successfulIds.has(m.id)));
+          setSelectedMessageIds(prev => {
+              const next = new Set(prev);
+              for (const id of successfulIds) next.delete(id);
+              return next;
+          });
+          if (selectedMessage && successfulIds.has(selectedMessage.id)) {
               setSelectedMessage(null);
           }
-          showToast(`${ids.length} message(s) supprimé(s).`, 'success');
-      } catch (error) {
+      }
+
+      if (deletedCount === ids.length) {
+          showToast(`${deletedCount} message(s) supprimé(s).`, 'success');
+      } else if (deletedCount > 0) {
+          showToast(`${deletedCount} message(s) supprimé(s). ${ids.length - deletedCount} erreur(s).`, 'warning');
+      } else {
           showToast("Erreur lors de la suppression des messages.", 'error');
       }
   };
@@ -640,8 +684,15 @@ export default function AdminPage(): React.ReactNode {
           await api.sendNewMessage({ ...composeFormData, attachment: composeAttachment });
           showToast('Message envoyé !', 'success');
           setIsComposeModalOpen(false);
-      } catch (error) {
-          showToast("Erreur lors de l'envoi du message.", 'error');
+      } catch (error: any) {
+          const errBody = error?.body || error?.response?.data;
+          if (error?.message === 'smtp_not_configured' || errBody?.error === 'smtp_not_configured') {
+              showToast("Erreur: SMTP non configuré. Allez dans Paramétrages > SMTP.", 'error');
+          } else if (errBody?.error === 'smtp_send_failed') {
+              showToast(`Erreur d'envoi SMTP: ${errBody.details}`, 'error');
+          } else {
+              showToast("Erreur lors de l'envoi du message.", 'error');
+          }
       } finally {
           setIsSending(false);
       }
