@@ -9,7 +9,7 @@ const { prisma } = require('./prisma.js');
 
 const app = express();
 
-const PORT = Number(process.env.PORT || 8084);
+const PORT = Number(process.env.PORT || 8080);
 const NODE_ENV = process.env.NODE_ENV || 'development';
 const SESSION_SECRET = process.env.SESSION_SECRET || 'dev_session_secret_change_me';
 const CORS_ORIGIN = process.env.CORS_ORIGIN || 'http://localhost:3000';

@@ -2,7 +2,6 @@
   "name": "demoexpert",
   "private": true,
   "version": "1.0.0",
-  "type": "module",
   "scripts": {
     "dev": "npm run build && node dist/index.js",
     "build": "tsc",
