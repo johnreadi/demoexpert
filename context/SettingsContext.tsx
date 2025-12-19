@@ -168,7 +168,6 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       } catch (error) {
         console.error("Failed to fetch site settings:", error);
         if (isMounted) {
-          // Use default settings if API fails
           setSettings(DEFAULT_SETTINGS);
           setHasError(true);
         }
