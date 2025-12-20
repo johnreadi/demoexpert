@@ -4,6 +4,7 @@ import { Product, PartCategory } from '../types';
 import * as api from '../api';
 import LoadingSpinner from '../components/LoadingSpinner';
 import ErrorMessage from '../components/ErrorMessage';
+import { useSettings } from '../context/SettingsContext';
 
 const ProductCard: React.FC<{ product: Product }> = ({ product }) => (
     <div className="bg-white rounded-lg shadow-md overflow-hidden flex flex-col group">
@@ -25,6 +26,8 @@ const ProductCard: React.FC<{ product: Product }> = ({ product }) => (
 );
 
 export default function PartsCatalogPage(): React.ReactNode {
+    const { settings } = useSettings();
+    const pageSettings = settings?.pageContent?.parts;
     const [allProducts, setAllProducts] = useState<Product[]>([]);
     const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -70,13 +73,39 @@ export default function PartsCatalogPage(): React.ReactNode {
     };
 
     return (
-        <div className="w-full mx-auto px-4 py-8 sm:px-6 lg:px-8">
-            <header className="mb-8 animate-fade-in-down">
-                <h1 className="text-4xl font-bold font-heading text-expert-blue">Catalogue de Pièces</h1>
-                <p className="text-lg">Trouvez la pièce parfaite pour votre véhicule parmi notre large sélection.</p>
-            </header>
+        <div>
+            {/* Hero Section */}
+            <div className="relative bg-expert-blue text-white overflow-hidden">
+                <div className="absolute inset-0">
+                    <img src={pageSettings?.heroImage || "https://picsum.photos/seed/parts-hero/1920/1080"} alt="Pièces Détachées" className="w-full h-full object-cover opacity-30" />
+                </div>
+                <div className="relative w-full mx-auto px-4 sm:px-6 lg:px-8 py-20 text-center">
+                    <h1 className="text-4xl md:text-6xl font-bold font-heading mb-4">{pageSettings?.heroTitle || "Catalogue de Pièces"}</h1>
+                    <p className="text-lg md:text-2xl">{pageSettings?.heroSubtitle || "Trouvez la pièce parfaite pour votre véhicule parmi notre large sélection."}</p>
+                </div>
+            </div>
 
-            <div className="flex flex-col md:flex-row gap-8">
+            <div className="w-full mx-auto px-4 py-8 sm:px-6 lg:px-8">
+                
+                {(pageSettings?.contentTitle || pageSettings?.contentDescription) && (
+                     <div className="max-w-4xl mx-auto mb-12 text-center">
+                         {pageSettings?.contentTitle && <h2 className="text-3xl font-bold font-heading text-expert-blue mb-4">{pageSettings.contentTitle}</h2>}
+                         {pageSettings?.contentDescription && <div className="text-lg mb-6" dangerouslySetInnerHTML={{ __html: pageSettings.contentDescription }} />}
+                         
+                         {pageSettings?.features && pageSettings.features.length > 0 && (
+                            <div className="flex flex-wrap justify-center gap-6 mt-6">
+                                {pageSettings.features.map((f, i) => (
+                                    <div key={i} className="flex items-center bg-white px-4 py-2 rounded shadow-sm border border-gray-100">
+                                        <i className="fas fa-check text-expert-green mr-2"></i>
+                                        <div dangerouslySetInnerHTML={{__html: f}} />
+                                    </div>
+                                ))}
+                            </div>
+                         )}
+                     </div>
+                )}
+
+                <div className="flex flex-col md:flex-row gap-8">
                 <aside className="md:w-1/4">
                     <div className="bg-white p-6 rounded-lg shadow-md sticky top-24">
                         <h3 className="text-xl font-bold font-heading text-expert-blue mb-4">Filtres</h3>

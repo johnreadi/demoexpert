@@ -57,11 +57,11 @@ export default function WindshieldPage(): React.ReactNode {
             {/* Hero Section */}
             <div className="relative bg-expert-blue text-white overflow-hidden">
                 <div className="absolute inset-0">
-                    <img src="https://picsum.photos/seed/windshield-bg/1920/1080" alt="Réparation de pare-brise" className="w-full h-full object-cover opacity-30" />
+                    <img src={pageSettings?.heroImage || "https://picsum.photos/seed/windshield-bg/1920/1080"} alt="Réparation de pare-brise" className="w-full h-full object-cover opacity-30" />
                 </div>
                 <div className="relative w-full mx-auto px-4 sm:px-6 lg:px-8 py-20 text-center">
-                    <h1 className="text-4xl md:text-6xl font-bold font-heading mb-4">Remplacement & Réparation de Pare-Brise</h1>
-                    <p className="text-lg md:text-2xl">Visibilité et sécurité maximales avec notre service expert.</p>
+                    <h1 className="text-4xl md:text-6xl font-bold font-heading mb-4">{pageSettings?.heroTitle || "Remplacement & Réparation de Pare-Brise"}</h1>
+                    <p className="text-lg md:text-2xl">{pageSettings?.heroSubtitle || "Visibilité et sécurité maximales avec notre service expert."}</p>
                 </div>
             </div>
 
@@ -69,24 +69,35 @@ export default function WindshieldPage(): React.ReactNode {
                 <div className="grid md:grid-cols-2 gap-12 items-center">
                     {/* Info Section */}
                     <div>
-                        <h2 className="text-3xl font-bold font-heading text-expert-blue mb-6">Un service complet pour votre visibilité</h2>
-                        <p className="text-lg mb-6">Un impact ou une fissure sur votre pare-brise ? N'attendez pas que les dégâts s'aggravent. Chez Démolition Expert, nous évaluons rapidement les dommages et proposons la meilleure solution, qu'il s'agisse d'une réparation ou d'un remplacement complet.</p>
+                        <h2 className="text-3xl font-bold font-heading text-expert-blue mb-6">{pageSettings?.contentTitle || "Un service complet pour votre visibilité"}</h2>
+                        <div className="text-lg mb-6" dangerouslySetInnerHTML={{ __html: pageSettings?.contentDescription || "Un impact ou une fissure sur votre pare-brise ? N'attendez pas que les dégâts s'aggravent. Chez Démolition Expert, nous évaluons rapidement les dommages et proposons la meilleure solution, qu'il s'agisse d'une réparation ou d'un remplacement complet." }} />
                         
                         <div className="space-y-6">
-                            <div className="flex items-start">
-                                <i className="fas fa-hammer text-expert-green text-2xl mr-4 mt-1"></i>
-                                <div>
-                                    <h3 className="text-xl font-bold text-expert-blue">Réparation d'impact</h3>
-                                    <p>Pour les petits impacts (moins d'une pièce de 2€), une injection de résine spéciale peut suffire à solidifier le verre et éviter que la fissure ne s'étende. C'est rapide et économique.</p>
-                                </div>
-                            </div>
-                            <div className="flex items-start">
-                                <i className="fas fa-sync-alt text-expert-green text-2xl mr-4 mt-1"></i>
-                                <div>
-                                    <h3 className="text-xl font-bold text-expert-blue">Remplacement de Pare-Brise</h3>
-                                    <p>Si la fissure est trop importante ou dans le champ de vision, nous remplaçons votre pare-brise avec des pièces de qualité équivalente à l'origine, garantissant une sécurité optimale.</p>
-                                </div>
-                            </div>
+                            {(pageSettings?.features && pageSettings.features.length > 0) ? (
+                                pageSettings.features.map((feature, i) => (
+                                    <div key={i} className="flex items-start">
+                                        <i className="fas fa-check-circle text-expert-green text-2xl mr-4 mt-1"></i>
+                                        <div dangerouslySetInnerHTML={{ __html: feature }} />
+                                    </div>
+                                ))
+                            ) : (
+                                <>
+                                    <div className="flex items-start">
+                                        <i className="fas fa-hammer text-expert-green text-2xl mr-4 mt-1"></i>
+                                        <div>
+                                            <h3 className="text-xl font-bold text-expert-blue">Réparation d'impact</h3>
+                                            <p>Pour les petits impacts (moins d'une pièce de 2€), une injection de résine spéciale peut suffire à solidifier le verre et éviter que la fissure ne s'étende. C'est rapide et économique.</p>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-start">
+                                        <i className="fas fa-sync-alt text-expert-green text-2xl mr-4 mt-1"></i>
+                                        <div>
+                                            <h3 className="text-xl font-bold text-expert-blue">Remplacement de Pare-Brise</h3>
+                                            <p>Si la fissure est trop importante ou dans le champ de vision, nous remplaçons votre pare-brise avec des pièces de qualité équivalente à l'origine, garantissant une sécurité optimale.</p>
+                                        </div>
+                                    </div>
+                                </>
+                            )}
                         </div>
                          <div className="mt-8 bg-expert-light-gray p-6 rounded-lg">
                             <h3 className="text-xl font-bold text-expert-blue mb-2"><i className="fas fa-shield-alt mr-2"></i> Compatible toutes assurances</h3>

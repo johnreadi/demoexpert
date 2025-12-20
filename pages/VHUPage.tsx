@@ -3,43 +3,38 @@ import { Link } from 'react-router-dom';
 import { useSettings } from '../context/SettingsContext';
 
 export default function VHUPage(): React.ReactNode {
-  const { settings, isLoading } = useSettings();
-
-  if (isLoading || !settings) {
-    return <div className="text-center py-20">Chargement...</div>;
-  }
-
-  const vhu = settings.pageContent.vhu;
+  const { settings } = useSettings();
+  const vhu = settings?.pageContent?.vhu;
 
   return (
     <div>
       <div className="relative bg-expert-blue text-white overflow-hidden">
         <div className="absolute inset-0">
-          {vhu.heroImage && (
-            <img src={vhu.heroImage} alt={vhu.heroTitle} className="w-full h-full object-cover opacity-30" />
-          )}
+          <img src={vhu?.heroImage || "https://picsum.photos/seed/vhu-hero/1920/1080"} alt={vhu?.heroTitle || "Centre VHU agréé"} className="w-full h-full object-cover opacity-30" />
         </div>
         <div className="relative w-full mx-auto px-4 sm:px-6 lg:px-8 py-20 text-center">
-          <h1 className="text-4xl md:text-6xl font-bold font-heading mb-4">{vhu.heroTitle}</h1>
-          <p className="text-lg md:text-2xl">{vhu.heroSubtitle}</p>
+          <h1 className="text-4xl md:text-6xl font-bold font-heading mb-4">{vhu?.heroTitle || "Centre VHU agréé"}</h1>
+          <p className="text-lg md:text-2xl">{vhu?.heroSubtitle || "Traitement réglementé des véhicules hors d’usage."}</p>
         </div>
       </div>
 
       <div className="w-full mx-auto px-4 py-16 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto grid md:grid-cols-2 gap-12 items-start">
           <div>
-            <h2 className="text-3xl font-bold font-heading text-expert-blue mb-6">{vhu.contentTitle}</h2>
-            <p className="text-lg mb-6">{vhu.contentDescription}</p>
-            {vhu.features && vhu.features.length > 0 && (
-              <ul className="space-y-3 text-lg">
-                {vhu.features.map((feature, idx) => (
-                  <li key={idx} className="flex items-start">
-                    <i className="fas fa-check-circle text-expert-green mr-3 mt-1"></i>
-                    <span dangerouslySetInnerHTML={{ __html: feature }} />
-                  </li>
-                ))}
-              </ul>
-            )}
+            <h2 className="text-3xl font-bold font-heading text-expert-blue mb-6">{vhu?.contentTitle || "Procédure et conformité"}</h2>
+            <div className="text-lg mb-6" dangerouslySetInnerHTML={{ __html: vhu?.contentDescription || "Enlèvement, dépollution, destruction avec certificat officiel." }} />
+            <ul className="space-y-3 text-lg">
+              {(vhu?.features && vhu.features.length > 0 ? vhu.features : [
+                  "<strong>Centre VHU agréé</strong>",
+                  "<strong>Traçabilité complète</strong>",
+                  "<strong>Dépollution conforme</strong>"
+              ]).map((feature, idx) => (
+                <li key={idx} className="flex items-start">
+                  <i className="fas fa-check-circle text-expert-green mr-3 mt-1"></i>
+                  <span dangerouslySetInnerHTML={{ __html: feature }} />
+                </li>
+              ))}
+            </ul>
           </div>
 
           <div className="bg-white p-8 rounded-lg shadow-xl">

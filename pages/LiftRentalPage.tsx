@@ -5,6 +5,7 @@ import { useSettings } from '../context/SettingsContext';
 
 export default function LiftRentalPage(): React.ReactNode {
     const { settings } = useSettings();
+    const pageSettings = settings?.pageContent?.lift;
     const [submitted, setSubmitted] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     

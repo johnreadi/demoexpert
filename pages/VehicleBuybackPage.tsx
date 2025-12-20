@@ -1,7 +1,6 @@
-
-
 import React, { useState } from 'react';
 import * as api from '../api';
+import { useSettings } from '../context/SettingsContext';
 
 const Step: React.FC<{ currentStep: number; stepNumber: number; title: string; children: React.ReactNode }> = ({ currentStep, stepNumber, title, children }) => {
     if (currentStep !== stepNumber) return null;
@@ -14,6 +13,8 @@ const Step: React.FC<{ currentStep: number; stepNumber: number; title: string; c
 };
 
 export default function VehicleBuybackPage(): React.ReactNode {
+    const { settings } = useSettings();
+    const pageSettings = settings?.pageContent?.buyback;
     const [step, setStep] = useState(1);
     const [formData, setFormData] = useState({
         brand: '', model: '', year: '', km: '',
@@ -110,53 +111,53 @@ export default function VehicleBuybackPage(): React.ReactNode {
                         <div className="bg-expert-green h-2.5 rounded-full" style={{ width: `${(step / totalSteps) * 100}%` }}></div>
                     </div>
 
-                <form onSubmit={handleSubmit}>
-                    <Step currentStep={step} stepNumber={1} title="Étape 1: Infos Véhicule">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <input name="brand" placeholder="Marque (ex: Renault)" onChange={handleChange} required className="p-3 border rounded"/>
-                            <input name="model" placeholder="Modèle (ex: Clio)" onChange={handleChange} required className="p-3 border rounded"/>
-                            <input name="year" type="number" placeholder="Année (ex: 2010)" onChange={handleChange} required className="p-3 border rounded"/>
-                            <input name="km" type="number" placeholder="Kilométrage" onChange={handleChange} required className="p-3 border rounded"/>
-                            <input name="couleur" placeholder="Couleur (ex: Gris)" onChange={handleChange} className="p-3 border rounded"/>
-                            <select name="etatGeneral" value={formData.etatGeneral} onChange={handleChange} className="p-3 border rounded bg-white">
-                                <option value="Occasion">Occasion</option>
-                                <option value="Neuf">Neuf</option>
-                            </select>
-                            <input name="immatriculation" placeholder="Immatriculation (ex: AA-123-BB)" onChange={handleChange} required className="p-3 border rounded md:col-span-2"/>
-                             <textarea name="options" placeholder="Options et équipements (ex: GPS, Toit ouvrant, Attelage...)" onChange={handleChange} rows={3} className="p-3 border rounded w-full md:col-span-2"></textarea>
-                        </div>
-                    </Step>
+                    <form onSubmit={handleSubmit}>
+                        <Step currentStep={step} stepNumber={1} title="Étape 1: Infos Véhicule">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <input name="brand" placeholder="Marque (ex: Renault)" onChange={handleChange} required className="p-3 border rounded"/>
+                                <input name="model" placeholder="Modèle (ex: Clio)" onChange={handleChange} required className="p-3 border rounded"/>
+                                <input name="year" type="number" placeholder="Année (ex: 2010)" onChange={handleChange} required className="p-3 border rounded"/>
+                                <input name="km" type="number" placeholder="Kilométrage" onChange={handleChange} required className="p-3 border rounded"/>
+                                <input name="couleur" placeholder="Couleur (ex: Gris)" onChange={handleChange} className="p-3 border rounded"/>
+                                <select name="etatGeneral" value={formData.etatGeneral} onChange={handleChange} className="p-3 border rounded bg-white">
+                                    <option value="Occasion">Occasion</option>
+                                    <option value="Neuf">Neuf</option>
+                                </select>
+                                <input name="immatriculation" placeholder="Immatriculation (ex: AA-123-BB)" onChange={handleChange} required className="p-3 border rounded md:col-span-2"/>
+                                 <textarea name="options" placeholder="Options et équipements (ex: GPS, Toit ouvrant, Attelage...)" onChange={handleChange} rows={3} className="p-3 border rounded w-full md:col-span-2"></textarea>
+                            </div>
+                        </Step>
 
-                    <Step currentStep={step} stepNumber={2} title="Étape 2: État du Véhicule">
-                         <select name="condition" onChange={handleChange} required className="p-3 border rounded w-full mb-4">
-                             <option value="">-- Sélectionnez l'état mécanique --</option>
-                             <option value="roulant">Roulant</option>
-                             <option value="en panne">En panne</option>
-                             <option value="accidenté">Accidenté</option>
-                             <option value="pour pièces">Pour pièces / Non roulant</option>
-                         </select>
-                         <input name="montantSouhaite" type="number" placeholder="Montant souhaité (€)" onChange={handleChange} className="p-3 border rounded w-full mb-4"/>
-                         <textarea name="description" placeholder="Décrivez brièvement l'état général, les dommages éventuels..." onChange={handleChange} rows={4} className="p-3 border rounded w-full"></textarea>
-                         <p className="text-sm mt-2 text-gray-500">Vous pourrez ajouter des photos ultérieurement si nécessaire.</p>
-                    </Step>
+                        <Step currentStep={step} stepNumber={2} title="Étape 2: État du Véhicule">
+                             <select name="condition" onChange={handleChange} required className="p-3 border rounded w-full mb-4">
+                                 <option value="">-- Sélectionnez l'état mécanique --</option>
+                                 <option value="roulant">Roulant</option>
+                                 <option value="en panne">En panne</option>
+                                 <option value="accidenté">Accidenté</option>
+                                 <option value="pour pièces">Pour pièces / Non roulant</option>
+                             </select>
+                             <input name="montantSouhaite" type="number" placeholder="Montant souhaité (€)" onChange={handleChange} className="p-3 border rounded w-full mb-4"/>
+                             <textarea name="description" placeholder="Décrivez brièvement l'état général, les dommages éventuels..." onChange={handleChange} rows={4} className="p-3 border rounded w-full"></textarea>
+                             <p className="text-sm mt-2 text-gray-500">Vous pourrez ajouter des photos ultérieurement si nécessaire.</p>
+                        </Step>
 
-                    <Step currentStep={step} stepNumber={3} title="Étape 3: Vos Coordonnées">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <input name="name" placeholder="Nom complet" onChange={handleChange} required className="p-3 border rounded"/>
-                            <input name="email" type="email" placeholder="Email" onChange={handleChange} required className="p-3 border rounded"/>
-                            <input name="phone" type="tel" placeholder="Téléphone" onChange={handleChange} required className="p-3 border rounded"/>
-                            <input name="address" placeholder="Adresse (pour l'enlèvement)" onChange={handleChange} required className="p-3 border rounded"/>
+                        <Step currentStep={step} stepNumber={3} title="Étape 3: Vos Coordonnées">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <input name="name" placeholder="Nom complet" onChange={handleChange} required className="p-3 border rounded"/>
+                                <input name="email" type="email" placeholder="Email" onChange={handleChange} required className="p-3 border rounded"/>
+                                <input name="phone" type="tel" placeholder="Téléphone" onChange={handleChange} required className="p-3 border rounded"/>
+                                <input name="address" placeholder="Adresse (pour l'enlèvement)" onChange={handleChange} required className="p-3 border rounded"/>
+                            </div>
+                        </Step>
+                        
+                        <div className="mt-8 flex justify-between">
+                            {step > 1 && <button type="button" onClick={prevStep} className="bg-expert-gray text-white py-2 px-6 rounded">Précédent</button>}
+                            {step < totalSteps && <button type="button" onClick={nextStep} className="bg-expert-blue text-white py-2 px-6 rounded ml-auto">Suivant</button>}
+                            {step === totalSteps && <button type="submit" disabled={isLoading} className="bg-expert-green text-white py-2 px-6 rounded ml-auto disabled:bg-gray-400">{isLoading ? 'Envoi...' : 'Obtenir mon offre'}</button>}
                         </div>
-                    </Step>
-                    
-                    <div className="mt-8 flex justify-between">
-                        {step > 1 && <button type="button" onClick={prevStep} className="bg-expert-gray text-white py-2 px-6 rounded">Précédent</button>}
-                        {step < totalSteps && <button type="button" onClick={nextStep} className="bg-expert-blue text-white py-2 px-6 rounded ml-auto">Suivant</button>}
-                        {step === totalSteps && <button type="submit" disabled={isLoading} className="bg-expert-green text-white py-2 px-6 rounded ml-auto disabled:bg-gray-400">{isLoading ? 'Envoi...' : 'Obtenir mon offre'}</button>}
-                    </div>
-                </form>
+                    </form>
+                </div>
             </div>
-        </div>
         </div>
     );
 }

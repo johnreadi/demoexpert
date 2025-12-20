@@ -1,8 +1,11 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import * as api from '../api';
+import { useSettings } from '../context/SettingsContext';
 
 export default function ScrapRemovalPage(): React.ReactNode {
+    const { settings } = useSettings();
+    const pageContent = settings?.pageContent?.removal;
     const [submitted, setSubmitted] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [formData, setFormData] = useState({
@@ -84,21 +87,40 @@ export default function ScrapRemovalPage(): React.ReactNode {
     );
 
     return (
-        <div className="w-full mx-auto px-4 py-12 sm:px-6 lg:px-8">
-            <div className="grid md:grid-cols-2 gap-12 items-start">
-                <div>
-                    <h1 className="text-4xl font-bold font-heading text-expert-blue">Enlèvement d'Épave Gratuit</h1>
-                    <p className="text-lg mt-4 mb-6">Débarrassez-vous de votre véhicule hors d'usage (VHU) en toute simplicité. Notre service est rapide, gratuit et respectueux de l'environnement.</p>
-                    <ul className="space-y-3 text-lg">
-                        <li className="flex items-center"><i className="fas fa-check-circle text-expert-green mr-3"></i>Intervention gratuite en Normandie</li>
-                        <li className="flex items-center"><i className="fas fa-check-circle text-expert-green mr-3"></i>Prise de rendez-vous rapide</li>
-                        <li className="flex items-center"><i className="fas fa-check-circle text-expert-green mr-3"></i>Formalités administratives simplifiées</li>
-                        <li className="flex items-center"><i className="fas fa-check-circle text-expert-green mr-3"></i>Certificat de destruction fourni</li>
-                    </ul>
+        <div>
+            {/* Hero Section */}
+            <div className="relative bg-expert-blue text-white overflow-hidden">
+                <div className="absolute inset-0">
+                    <img src={pageContent?.heroImage || "https://picsum.photos/seed/tow-truck/1920/1080"} alt={pageContent?.heroTitle || "Enlèvement d'épave gratuit"} className="w-full h-full object-cover opacity-30" />
                 </div>
+                <div className="relative w-full mx-auto px-4 sm:px-6 lg:px-8 py-20 text-center">
+                    <h1 className="text-4xl md:text-6xl font-bold font-heading mb-4">{pageContent?.heroTitle || "Enlèvement d'épave gratuit"}</h1>
+                    <p className="text-lg md:text-2xl">{pageContent?.heroSubtitle || "Service rapide et gratuit."}</p>
+                </div>
+            </div>
 
-                <div className="bg-white p-8 rounded-lg shadow-xl">
-                    <h2 className="text-2xl font-bold font-heading text-center text-expert-blue mb-6">Planifier un enlèvement</h2>
+            <div className="w-full mx-auto px-4 py-12 sm:px-6 lg:px-8">
+                <div className="grid md:grid-cols-2 gap-12 items-start">
+                    <div>
+                        <h2 className="text-3xl font-bold font-heading text-expert-blue mb-6">{pageContent?.contentTitle || "Enlèvement d'Épave Gratuit"}</h2>
+                        <div className="text-lg mb-6" dangerouslySetInnerHTML={{ __html: pageContent?.contentDescription || "Débarrassez-vous de votre véhicule hors d'usage (VHU) en toute simplicité. Notre service est rapide, gratuit et respectueux de l'environnement." }} />
+                        <ul className="space-y-3 text-lg">
+                            {(pageContent?.features && pageContent.features.length > 0 ? pageContent.features : [
+                                "<strong>Intervention gratuite en Normandie</strong>",
+                                "<strong>Prise de rendez-vous rapide</strong>",
+                                "<strong>Formalités administratives simplifiées</strong>",
+                                "<strong>Certificat de destruction fourni</strong>"
+                            ]).map((feature, i) => (
+                                <li key={i} className="flex items-center">
+                                    <i className="fas fa-check-circle text-expert-green mr-3"></i>
+                                    <span dangerouslySetInnerHTML={{ __html: feature }} />
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+
+                    <div className="bg-white p-8 rounded-lg shadow-xl sticky top-24">
+                        <h2 className="text-2xl font-bold font-heading text-center text-expert-blue mb-6">Planifier un enlèvement</h2>
                     <form onSubmit={handleSubmit} className="space-y-4">
                         <input name="name" value={formData.name} placeholder="Nom complet" onChange={handleChange} required className="w-full p-3 border rounded"/>
                         <input name="phone" value={formData.phone} type="tel" placeholder="Téléphone" onChange={handleChange} required className="w-full p-3 border rounded"/>
@@ -129,5 +151,6 @@ export default function ScrapRemovalPage(): React.ReactNode {
                 </div>
             </div>
         </div>
+    </div>
     );
 }

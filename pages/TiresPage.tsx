@@ -4,23 +4,18 @@ import { useSettings } from '../context/SettingsContext';
 
 export default function TiresPage(): React.ReactNode {
   const { settings } = useSettings();
-
-  if (!settings) {
-    return <div className="text-center py-20">Chargement...</div>;
-  }
-
-  const pageContent = settings.pageContent.tires;
+  const pageContent = settings?.pageContent?.tires;
 
   return (
     <div>
       {/* Hero Section */}
       <div className="relative bg-expert-blue text-white overflow-hidden">
         <div className="absolute inset-0">
-          <img src={pageContent.heroImage} alt={pageContent.heroTitle} className="w-full h-full object-cover opacity-30" />
+          <img src={pageContent?.heroImage || "https://picsum.photos/seed/tire-fitting/1920/1080"} alt={pageContent?.heroTitle || "Service Pneus"} className="w-full h-full object-cover opacity-30" />
         </div>
         <div className="relative w-full mx-auto px-4 sm:px-6 lg:px-8 py-20 text-center">
-          <h1 className="text-4xl md:text-6xl font-bold font-heading mb-4">{pageContent.heroTitle}</h1>
-          <p className="text-lg md:text-2xl">{pageContent.heroSubtitle}</p>
+          <h1 className="text-4xl md:text-6xl font-bold font-heading mb-4">{pageContent?.heroTitle || "Service Pneus"}</h1>
+          <p className="text-lg md:text-2xl">{pageContent?.heroSubtitle || "Vente, montage et équilibrage."}</p>
         </div>
       </div>
 
@@ -30,12 +25,14 @@ export default function TiresPage(): React.ReactNode {
           <div className="grid md:grid-cols-2 gap-12 items-center">
             {/* Text Content */}
             <div>
-              <h2 className="text-3xl font-bold font-heading text-expert-blue mb-6">{pageContent.contentTitle}</h2>
-              <p className="text-lg mb-6">
-                {pageContent.contentDescription}
-              </p>
+              <h2 className="text-3xl font-bold font-heading text-expert-blue mb-6">{pageContent?.contentTitle || "Votre sécurité, notre priorité"}</h2>
+              <div className="text-lg mb-6" dangerouslySetInnerHTML={{ __html: pageContent?.contentDescription || "Nous proposons une large gamme de pneus neufs et d'occasion." }} />
               <ul className="space-y-4 text-lg">
-                 {pageContent.features.map((feature, index) => (
+                 {(pageContent?.features && pageContent.features.length > 0 ? pageContent.features : [
+                     "<strong>Vente de pneus neufs et d'occasion</strong>",
+                     "<strong>Montage et équilibrage</strong>",
+                     "<strong>Réparation de crevaison</strong>"
+                 ]).map((feature, index) => (
                     <li key={index} className="flex items-start">
                         <i className="fas fa-check-circle text-expert-green mr-3 mt-1"></i>
                         <span dangerouslySetInnerHTML={{ __html: feature }}></span>
@@ -45,7 +42,7 @@ export default function TiresPage(): React.ReactNode {
             </div>
             {/* Image */}
             <div className="rounded-lg overflow-hidden shadow-xl">
-              <img src={pageContent.contentImage} alt="Roue sur une machine d'équilibrage" className="w-full h-full object-cover" />
+              <img src={pageContent?.contentImage || "https://picsum.photos/seed/wheel-balancing/800/600"} alt="Roue sur une machine d'équilibrage" className="w-full h-full object-cover" />
             </div>
           </div>
         </div>
