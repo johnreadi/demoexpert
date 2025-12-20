@@ -1339,8 +1339,10 @@ app.post('/api/admin/messages', async (req, res) => {
 
         await transporter.sendMail(mailOptions);
 
-        const saved = process.env.DATABASE_URL
-          ? await prisma.adminMessage.create({
+        let saved: any = { id: `sent-${Date.now()}` };
+        try {
+          if (process.env.DATABASE_URL) {
+            saved = await prisma.adminMessage.create({
               data: {
                 from: 'Administration',
                 senderName: currentUser?.name || 'Admin',
@@ -1353,10 +1355,14 @@ app.post('/api/admin/messages', async (req, res) => {
                 isArchived: false,
                 status: 'sent'
               }
-            })
-          : { id: `mock-sent-${Date.now()}` };
+            });
+          }
+        } catch (dbError) {
+           console.error('Email sent but failed to save to DB:', dbError);
+           // Continue to return success since email was sent
+        }
 
-        return res.status(201).json({ success: true, id: (saved as any).id });
+        return res.status(201).json({ success: true, id: saved.id });
       } catch (err: any) {
         console.error('SMTP send failed:', err);
         if (err.message === 'smtp_not_configured') {

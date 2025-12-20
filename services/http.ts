@@ -120,7 +120,7 @@ export async function http<T = any>(path: string, options: RequestInit = {}): Pr
     // Add timeout for API calls
     const timeoutId = setTimeout(() => {
       reject(new Error(`Request timeout for ${path}`));
-    }, 10000); // 10 second timeout
+    }, 30000); // 30 second timeout
     
     try {
       const res = await fetch(resolveUrl(path), {
