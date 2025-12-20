@@ -10,7 +10,7 @@ import ErrorMessage from '../components/ErrorMessage';
 import Modal from '../components/Modal';
 
 type AdminTab = 'dashboard' | 'products' | 'auctions' | 'users' | 'liftManagement' | 'messaging' | 'addressBook' | 'settings' | 'audit';
-type ServicePageTab = 'repairs' | 'maintenance' | 'tires' | 'vhu' | 'removal';
+type ServicePageTab = 'repairs' | 'maintenance' | 'tires' | 'vhu' | 'removal' | 'parts' | 'buyback' | 'windshield' | 'lift';
 
 const StatCard: React.FC<{ title: string; value: string | number; icon: string; }> = ({ title, value, icon }) => (
     <div className="bg-white p-6 rounded-lg shadow-md flex items-center animate-fade-in-up">
@@ -73,7 +73,7 @@ export default function AdminPage(): React.ReactNode {
   const [newService, setNewService] = useState({ icon: '', title: '', description: '', link: '' });
   const [isAdvancedSettingsOpen, setIsAdvancedSettingsOpen] = useState(false);
   const [activeServicePageTab, setActiveServicePageTab] = useState<ServicePageTab>('repairs');
-  const [newFeatureText, setNewFeatureText] = useState({ repairs: '', maintenance: '', tires: '', vhu: '', removal: '' });
+  const [newFeatureText, setNewFeatureText] = useState({ repairs: '', maintenance: '', tires: '', vhu: '', removal: '', parts: '', buyback: '', windshield: '', lift: '' });
   const [newFaqItem, setNewFaqItem] = useState({ question: '', answer: '' });
   
   // Messaging state

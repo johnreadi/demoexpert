@@ -8,7 +8,7 @@ import ErrorMessage from '../components/ErrorMessage';
 
 const HeroSection = () => {
     const { settings } = useSettings();
-    if (!settings) return null;
+    if (!settings) return <LoadingSpinner />;
 
     const heroStyle: React.CSSProperties = {};
     if (settings.hero.background.type === 'color') {

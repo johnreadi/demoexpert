@@ -33,7 +33,11 @@ const normalizeSettings = (input: any): SiteSettings => {
     maintenance: normalizePage(pc?.maintenance ?? {}),
     tires: normalizePage(pc?.tires ?? {}),
     vhu: normalizePage(pc?.vhu ?? {}),
-    removal: normalizePage(pc?.removal ?? {})
+    removal: normalizePage(pc?.removal ?? {}),
+    parts: normalizePage(pc?.parts ?? {}),
+    buyback: normalizePage(pc?.buyback ?? {}),
+    windshield: normalizePage(pc?.windshield ?? {}),
+    lift: normalizePage(pc?.lift ?? {})
   };
   const adv = input?.advancedSettings ?? {};
   const advancedSettings = {
