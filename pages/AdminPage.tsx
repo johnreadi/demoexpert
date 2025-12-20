@@ -1825,7 +1825,7 @@ export default function AdminPage(): React.ReactNode {
                     <div className="bg-white p-6 rounded-lg shadow-md">
                         <h3 className="text-xl font-bold font-heading text-expert-blue mb-4 border-b pb-2">Contenu des Pages de Service</h3>
                         <div className="flex border-b mb-4 flex-wrap">
-                            {(['repairs', 'maintenance', 'tires', 'vhu', 'removal'] as ServicePageTab[]).map(tab => (
+                            {(['repairs', 'maintenance', 'tires', 'vhu', 'removal', 'parts', 'buyback', 'windshield', 'lift'] as ServicePageTab[]).map(tab => (
                                 <button
                                     key={tab}
                                     type="button"
@@ -1840,7 +1840,15 @@ export default function AdminPage(): React.ReactNode {
                                       ? 'Pneus'
                                       : tab === 'vhu'
                                       ? 'VHU agréé'
-                                      : 'Enlèvement'}
+                                      : tab === 'removal'
+                                      ? 'Enlèvement'
+                                      : tab === 'parts'
+                                      ? 'Pièces'
+                                      : tab === 'buyback'
+                                      ? 'Rachat'
+                                      : tab === 'windshield'
+                                      ? 'Pare-brise'
+                                      : 'Pont'}
                                 </button>
                             ))}
                         </div>

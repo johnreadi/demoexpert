@@ -2,8 +2,11 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import * as api from '../api';
+import { useSettings } from '../context/SettingsContext';
 
 export default function WindshieldPage(): React.ReactNode {
+    const { settings } = useSettings();
+    const pageSettings = settings?.pageContent?.windshield;
     const [submitted, setSubmitted] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [formData, setFormData] = useState({

@@ -234,6 +234,10 @@ export interface SiteSettings {
       tires: ServicePageSettings;
       vhu: ServicePageSettings;
       removal: ServicePageSettings;
+      parts: ServicePageSettings;
+      buyback: ServicePageSettings;
+      windshield: ServicePageSettings;
+      lift: ServicePageSettings;
   };
   advancedSettings: AdvancedSettings;
 }

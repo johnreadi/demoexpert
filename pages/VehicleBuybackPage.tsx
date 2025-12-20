@@ -73,17 +73,42 @@ export default function VehicleBuybackPage(): React.ReactNode {
     }
     
     return (
-        <div className="w-full mx-auto px-4 py-12 sm:px-6 lg:px-8">
-            <div className="max-w-2xl mx-auto bg-white p-8 rounded-lg shadow-xl">
-                <header className="text-center mb-8">
-                    <h1 className="text-4xl font-bold font-heading text-expert-blue">Rachat de Véhicule</h1>
-                    <p className="text-lg mt-2">Obtenez une offre gratuite pour votre voiture en quelques étapes.</p>
-                </header>
-                
-                {/* Progress Bar */}
-                <div className="w-full bg-gray-200 rounded-full h-2.5 mb-8">
-                    <div className="bg-expert-green h-2.5 rounded-full" style={{ width: `${(step / totalSteps) * 100}%` }}></div>
+        <div>
+             {/* Hero Section */}
+            <div className="relative bg-expert-blue text-white overflow-hidden">
+                <div className="absolute inset-0">
+                    <img src={pageSettings?.heroImage || "https://picsum.photos/seed/buyback-hero/1920/1080"} alt="Rachat" className="w-full h-full object-cover opacity-30" />
                 </div>
+                <div className="relative w-full mx-auto px-4 sm:px-6 lg:px-8 py-20 text-center">
+                    <h1 className="text-4xl md:text-6xl font-bold font-heading mb-4">{pageSettings?.heroTitle || "Rachat de Véhicule"}</h1>
+                    <p className="text-lg md:text-2xl">{pageSettings?.heroSubtitle || "Obtenez une offre gratuite pour votre voiture en quelques étapes."}</p>
+                </div>
+            </div>
+
+            <div className="w-full mx-auto px-4 py-12 sm:px-6 lg:px-8">
+                {(pageSettings?.contentTitle || pageSettings?.contentDescription) && (
+                    <div className="max-w-4xl mx-auto mb-12">
+                        {pageSettings?.contentTitle && <h2 className="text-3xl font-bold font-heading text-expert-blue mb-4 text-center">{pageSettings.contentTitle}</h2>}
+                        {pageSettings?.contentDescription && <div className="text-lg text-center mb-8" dangerouslySetInnerHTML={{ __html: pageSettings.contentDescription }} />}
+                        
+                        {pageSettings?.features && pageSettings.features.length > 0 && (
+                             <div className="grid md:grid-cols-3 gap-6 mb-8">
+                                {pageSettings.features.map((f, i) => (
+                                    <div key={i} className="flex items-start bg-white p-4 rounded shadow-sm">
+                                        <i className="fas fa-check-circle text-expert-green text-xl mr-3 mt-1"></i>
+                                        <div dangerouslySetInnerHTML={{__html: f}} />
+                                    </div>
+                                ))}
+                             </div>
+                        )}
+                    </div>
+                )}
+
+                <div className="max-w-2xl mx-auto bg-white p-8 rounded-lg shadow-xl">
+                    {/* Progress Bar */}
+                    <div className="w-full bg-gray-200 rounded-full h-2.5 mb-8">
+                        <div className="bg-expert-green h-2.5 rounded-full" style={{ width: `${(step / totalSteps) * 100}%` }}></div>
+                    </div>
 
                 <form onSubmit={handleSubmit}>
                     <Step currentStep={step} stepNumber={1} title="Étape 1: Infos Véhicule">
@@ -131,6 +156,7 @@ export default function VehicleBuybackPage(): React.ReactNode {
                     </div>
                 </form>
             </div>
+        </div>
         </div>
     );
 }

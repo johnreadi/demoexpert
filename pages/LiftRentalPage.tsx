@@ -89,24 +89,35 @@ export default function LiftRentalPage(): React.ReactNode {
         <div>
             <div className="relative bg-expert-blue text-white overflow-hidden">
                 <div className="absolute inset-0">
-                    <img src="https://picsum.photos/seed/lift-rental/1920/1080" alt="Pont élévateur dans un garage" className="w-full h-full object-cover opacity-30" />
+                    <img src={pageSettings?.heroImage || "https://picsum.photos/seed/lift-rental/1920/1080"} alt="Pont élévateur dans un garage" className="w-full h-full object-cover opacity-30" />
                 </div>
                 <div className="relative w-full mx-auto px-4 sm:px-6 lg:px-8 py-20 text-center">
-                    <h1 className="text-4xl md:text-6xl font-bold font-heading mb-4">Location de Pont Élévateur</h1>
-                    <p className="text-lg md:text-2xl">Travaillez sur votre véhicule comme un pro dans notre atelier.</p>
+                    <h1 className="text-4xl md:text-6xl font-bold font-heading mb-4">{pageSettings?.heroTitle || "Location de Pont Élévateur"}</h1>
+                    <p className="text-lg md:text-2xl">{pageSettings?.heroSubtitle || "Travaillez sur votre véhicule comme un pro dans notre atelier."}</p>
                 </div>
             </div>
 
             <div className="w-full mx-auto px-4 py-16 sm:px-6 lg:px-8">
                 <div className="grid md:grid-cols-2 gap-12 items-start">
                     <div>
-                        <h2 className="text-3xl font-bold font-heading text-expert-blue mb-6">Un espace pour vos réparations</h2>
-                        <p className="text-lg mb-6">Vous êtes un mécanicien amateur ou passionné ? Louez l'un de nos ponts élévateurs et profitez d'un espace de travail sécurisé et professionnel pour effectuer l'entretien ou les réparations de votre véhicule.</p>
+                        <h2 className="text-3xl font-bold font-heading text-expert-blue mb-6">{pageSettings?.contentTitle || "Un espace pour vos réparations"}</h2>
+                        <div className="text-lg mb-6" dangerouslySetInnerHTML={{ __html: pageSettings?.contentDescription || "Vous êtes un mécanicien amateur ou passionné ? Louez l'un de nos ponts élévateurs et profitez d'un espace de travail sécurisé et professionnel pour effectuer l'entretien ou les réparations de votre véhicule." }} />
                         <ul className="space-y-4 text-lg">
-                            <li className="flex items-start"><i className="fas fa-check-circle text-expert-green mr-3 mt-1"></i><span>Pont élévateur 2 colonnes (jusqu'à 3.5 tonnes)</span></li>
-                            <li className="flex items-start"><i className="fas fa-check-circle text-expert-green mr-3 mt-1"></i><span>Environnement propre, éclairé et sécurisé</span></li>
-                            <li className="flex items-start"><i className="fas fa-check-circle text-expert-green mr-3 mt-1"></i><span>Accès à l'outillage de base (en option)</span></li>
-                            <li className="flex items-start"><i className="fas fa-check-circle text-expert-green mr-3 mt-1"></i><span>Conseils de nos experts sur place si besoin</span></li>
+                            {(pageSettings?.features && pageSettings.features.length > 0) ? (
+                                pageSettings.features.map((feature, i) => (
+                                    <li key={i} className="flex items-start">
+                                        <i className="fas fa-check-circle text-expert-green mr-3 mt-1"></i>
+                                        <span dangerouslySetInnerHTML={{ __html: feature }} />
+                                    </li>
+                                ))
+                            ) : (
+                                <>
+                                    <li className="flex items-start"><i className="fas fa-check-circle text-expert-green mr-3 mt-1"></i><span>Pont élévateur 2 colonnes (jusqu'à 3.5 tonnes)</span></li>
+                                    <li className="flex items-start"><i className="fas fa-check-circle text-expert-green mr-3 mt-1"></i><span>Environnement propre, éclairé et sécurisé</span></li>
+                                    <li className="flex items-start"><i className="fas fa-check-circle text-expert-green mr-3 mt-1"></i><span>Accès à l'outillage de base (en option)</span></li>
+                                    <li className="flex items-start"><i className="fas fa-check-circle text-expert-green mr-3 mt-1"></i><span>Conseils de nos experts sur place si besoin</span></li>
+                                </>
+                            )}
                         </ul>
                     </div>
                     <div className="bg-white p-8 rounded-lg shadow-xl sticky top-24">

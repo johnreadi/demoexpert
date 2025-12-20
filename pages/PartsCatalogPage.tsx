@@ -117,5 +117,6 @@ export default function PartsCatalogPage(): React.ReactNode {
                 </main>
             </div>
         </div>
+        </div>
     );
 }
