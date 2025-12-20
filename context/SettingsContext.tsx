@@ -32,7 +32,8 @@ const normalizeSettings = (input: any): SiteSettings => {
     repairs: normalizePage(pc?.repairs ?? {}),
     maintenance: normalizePage(pc?.maintenance ?? {}),
     tires: normalizePage(pc?.tires ?? {}),
-    vhu: normalizePage(pc?.vhu ?? {})
+    vhu: normalizePage(pc?.vhu ?? {}),
+    removal: normalizePage(pc?.removal ?? {})
   };
   const adv = input?.advancedSettings ?? {};
   const advancedSettings = {
@@ -140,7 +141,8 @@ const DEFAULT_SETTINGS: SiteSettings = {
     repairs: { heroTitle: "Réparation & Maintenance", heroSubtitle: "Diagnostic précis et réparations fiables.", heroImage: "https://picsum.photos/seed/mechanic-repair/1920/1080", contentTitle: "Un service expert", contentDescription: "Notre équipe est équipée pour diagnostiquer et résoudre tous types de problèmes.", contentImage: "https://picsum.photos/seed/diagnostic-tool/800/600", features: [ "<strong>Diagnostic électronique complet</strong>", "<strong>Réparation moteur</strong>", "<strong>Système de freinage</strong>" ] },
     maintenance: { heroTitle: "Vidange & Entretien", heroSubtitle: "Assurez la longévité de votre moteur.", heroImage: "https://picsum.photos/seed/oil-change/1920/1080", contentTitle: "L'entretien, clé de la fiabilité", contentDescription: "Nous proposons des forfaits d'entretien complets adaptés.", contentImage: "https://picsum.photos/seed/car-filters/800/600", features: [ "<strong>Vidange huile moteur</strong>", "<strong>Remplacement des filtres</strong>", "<strong>Contrôle des points de sécurité</strong>" ] },
     tires: { heroTitle: "Service Pneus", heroSubtitle: "Vente, montage et équilibrage.", heroImage: "https://picsum.photos/seed/tire-fitting/1920/1080", contentTitle: "Votre sécurité, notre priorité", contentDescription: "Nous proposons une large gamme de pneus neufs et d'occasion.", contentImage: "https://picsum.photos/seed/wheel-balancing/800/600", features: [ "<strong>Vente de pneus neufs et d'occasion</strong>", "<strong>Montage et équilibrage</strong>", "<strong>Réparation de crevaison</strong>" ] },
-    vhu: { heroTitle: "Centre VHU agréé", heroSubtitle: "Traitement réglementé des véhicules hors d’usage.", heroImage: "https://picsum.photos/seed/vhu-hero/1920/1080", contentTitle: "Procédure et conformité", contentDescription: "Enlèvement, dépollution, destruction avec certificat officiel.", contentImage: "https://picsum.photos/seed/vhu-procedure/800/600", features: [ "<strong>Centre VHU agréé</strong>", "<strong>Traçabilité complète</strong>", "<strong>Dépollution conforme</strong>" ] }
+    vhu: { heroTitle: "Centre VHU agréé", heroSubtitle: "Traitement réglementé des véhicules hors d’usage.", heroImage: "https://picsum.photos/seed/vhu-hero/1920/1080", contentTitle: "Procédure et conformité", contentDescription: "Enlèvement, dépollution, destruction avec certificat officiel.", contentImage: "https://picsum.photos/seed/vhu-procedure/800/600", features: [ "<strong>Centre VHU agréé</strong>", "<strong>Traçabilité complète</strong>", "<strong>Dépollution conforme</strong>" ] },
+    removal: { heroTitle: "Enlèvement d'épaves", heroSubtitle: "Service rapide et gratuit.", heroImage: "https://picsum.photos/seed/tow-truck/1920/1080", contentTitle: "Libérez-vous de votre épave", contentDescription: "Nous intervenons rapidement pour l'enlèvement de votre véhicule hors d'usage.", contentImage: "https://picsum.photos/seed/scrap-yard/800/600", features: [ "<strong>Enlèvement gratuit</strong>", "<strong>Intervention rapide</strong>", "<strong>Formalités administratives incluses</strong>" ] }
   },
   advancedSettings: {
     smtp: { host: "smtp.example.com", port: 587, user: "user@example.com", pass: "", fromName: "Demolition Expert", fromEmail: "no-reply@casseautopro.fr" },

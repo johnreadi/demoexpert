@@ -233,6 +233,7 @@ export interface SiteSettings {
       maintenance: ServicePageSettings;
       tires: ServicePageSettings;
       vhu: ServicePageSettings;
+      removal: ServicePageSettings;
   };
   advancedSettings: AdvancedSettings;
 }

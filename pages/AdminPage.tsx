@@ -10,7 +10,7 @@ import ErrorMessage from '../components/ErrorMessage';
 import Modal from '../components/Modal';
 
 type AdminTab = 'dashboard' | 'products' | 'auctions' | 'users' | 'liftManagement' | 'messaging' | 'addressBook' | 'settings' | 'audit';
-type ServicePageTab = 'repairs' | 'maintenance' | 'tires' | 'vhu';
+type ServicePageTab = 'repairs' | 'maintenance' | 'tires' | 'vhu' | 'removal';
 
 const StatCard: React.FC<{ title: string; value: string | number; icon: string; }> = ({ title, value, icon }) => (
     <div className="bg-white p-6 rounded-lg shadow-md flex items-center animate-fade-in-up">
@@ -73,7 +73,7 @@ export default function AdminPage(): React.ReactNode {
   const [newService, setNewService] = useState({ icon: '', title: '', description: '', link: '' });
   const [isAdvancedSettingsOpen, setIsAdvancedSettingsOpen] = useState(false);
   const [activeServicePageTab, setActiveServicePageTab] = useState<ServicePageTab>('repairs');
-  const [newFeatureText, setNewFeatureText] = useState({ repairs: '', maintenance: '', tires: '', vhu: '' });
+  const [newFeatureText, setNewFeatureText] = useState({ repairs: '', maintenance: '', tires: '', vhu: '', removal: '' });
   const [newFaqItem, setNewFaqItem] = useState({ question: '', answer: '' });
   
   // Messaging state
@@ -1825,7 +1825,7 @@ export default function AdminPage(): React.ReactNode {
                     <div className="bg-white p-6 rounded-lg shadow-md">
                         <h3 className="text-xl font-bold font-heading text-expert-blue mb-4 border-b pb-2">Contenu des Pages de Service</h3>
                         <div className="flex border-b mb-4 flex-wrap">
-                            {(['repairs', 'maintenance', 'tires', 'vhu'] as ServicePageTab[]).map(tab => (
+                            {(['repairs', 'maintenance', 'tires', 'vhu', 'removal'] as ServicePageTab[]).map(tab => (
                                 <button
                                     key={tab}
                                     type="button"
@@ -1838,7 +1838,9 @@ export default function AdminPage(): React.ReactNode {
                                       ? 'Entretien'
                                       : tab === 'tires'
                                       ? 'Pneus'
-                                      : 'VHU agréé'}
+                                      : tab === 'vhu'
+                                      ? 'VHU agréé'
+                                      : 'Enlèvement'}
                                 </button>
                             ))}
                         </div>
