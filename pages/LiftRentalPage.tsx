@@ -72,6 +72,8 @@ export default function LiftRentalPage(): React.ReactNode {
         return `${hour.toString().padStart(2, '0')}:00`;
     });
 
+    if (!settings) return <div className="p-8 text-center">Chargement...</div>;
+
     if (submitted) {
         return (
             <div className="w-full mx-auto px-4 py-12 sm:px-6 lg:px-8">

@@ -54,6 +54,8 @@ export default function VehicleBuybackPage(): React.ReactNode {
 
     const totalSteps = 3;
 
+    if (!settings) return <div className="p-8 text-center">Chargement...</div>;
+
     if (isSubmitted) {
         return (
              <div className="w-full mx-auto px-4 py-12 sm:px-6 lg:px-8">

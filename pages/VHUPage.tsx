@@ -6,6 +6,8 @@ export default function VHUPage(): React.ReactNode {
   const { settings } = useSettings();
   const vhu = settings?.pageContent?.vhu;
 
+  if (!settings) return <div className="p-8 text-center">Chargement...</div>;
+
   return (
     <div>
       <div className="relative bg-expert-blue text-white overflow-hidden">

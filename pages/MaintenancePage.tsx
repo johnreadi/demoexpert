@@ -6,6 +6,8 @@ export default function MaintenancePage(): React.ReactNode {
   const { settings } = useSettings();
   const pageContent = settings?.pageContent?.maintenance;
 
+  if (!settings) return <div className="p-8 text-center">Chargement...</div>;
+
   return (
     <div>
       {/* Hero Section */}

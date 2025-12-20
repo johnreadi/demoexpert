@@ -72,6 +72,8 @@ export default function PartsCatalogPage(): React.ReactNode {
         setFilters({ ...filters, [e.target.name]: e.target.value });
     };
 
+    if (!settings) return <div className="p-8 text-center">Chargement...</div>;
+
     return (
         <div>
             {/* Hero Section */}

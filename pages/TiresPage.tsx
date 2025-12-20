@@ -6,6 +6,8 @@ export default function TiresPage(): React.ReactNode {
   const { settings } = useSettings();
   const pageContent = settings?.pageContent?.tires;
 
+  if (!settings) return <div className="p-8 text-center">Chargement...</div>;
+
   return (
     <div>
       {/* Hero Section */}
