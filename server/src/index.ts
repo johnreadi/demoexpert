@@ -116,11 +116,36 @@ function normalizeSettings(input: any) {
     linkedin: input?.socialLinks?.linkedin ?? DEFAULT_SETTINGS.socialLinks.linkedin,
   };
   const pc = input?.pageContent ?? {};
-  const normalizePage = (p: any) => ({ heroTitle: p?.heroTitle ?? '', heroSubtitle: p?.heroSubtitle ?? '', heroImage: p?.heroImage ?? '', contentTitle: p?.contentTitle ?? '', contentDescription: p?.contentDescription ?? '', contentImage: p?.contentImage ?? '', features: Array.isArray(p?.features) ? p.features : [] });
-  const pageContent = { repairs: normalizePage(pc?.repairs ?? {}), maintenance: normalizePage(pc?.maintenance ?? {}), tires: normalizePage(pc?.tires ?? {}) };
+  const normalizePage = (p: any, def: any) => ({
+    heroTitle: p?.heroTitle ?? def.heroTitle,
+    heroSubtitle: p?.heroSubtitle ?? def.heroSubtitle,
+    heroImage: p?.heroImage ?? def.heroImage,
+    contentTitle: p?.contentTitle ?? def.contentTitle,
+    contentDescription: p?.contentDescription ?? def.contentDescription,
+    contentImage: p?.contentImage ?? def.contentImage,
+    features: Array.isArray(p?.features) ? p.features : def.features
+  });
+  const pageContent = {
+    repairs: normalizePage(pc?.repairs ?? {}, DEFAULT_SETTINGS.pageContent.repairs),
+    maintenance: normalizePage(pc?.maintenance ?? {}, DEFAULT_SETTINGS.pageContent.maintenance),
+    tires: normalizePage(pc?.tires ?? {}, DEFAULT_SETTINGS.pageContent.tires),
+    vhu: normalizePage(pc?.vhu ?? {}, DEFAULT_SETTINGS.pageContent.vhu),
+    removal: normalizePage(pc?.removal ?? {}, DEFAULT_SETTINGS.pageContent.removal),
+    parts: normalizePage(pc?.parts ?? {}, DEFAULT_SETTINGS.pageContent.parts),
+    buyback: normalizePage(pc?.buyback ?? {}, DEFAULT_SETTINGS.pageContent.buyback),
+    windshield: normalizePage(pc?.windshield ?? {}, DEFAULT_SETTINGS.pageContent.windshield),
+    lift: normalizePage(pc?.lift ?? {}, DEFAULT_SETTINGS.pageContent.lift)
+  };
   const adv = input?.advancedSettings ?? {};
   const advancedSettings = {
-    smtp: { host: adv?.smtp?.host ?? '', port: adv?.smtp?.port ?? 0, user: adv?.smtp?.user ?? '', pass: adv?.smtp?.pass ?? '' },
+    smtp: {
+      host: adv?.smtp?.host ?? '',
+      port: adv?.smtp?.port ?? 0,
+      user: adv?.smtp?.user ?? '',
+      pass: adv?.smtp?.pass ?? '',
+      fromName: adv?.smtp?.fromName ?? DEFAULT_SETTINGS.advancedSettings.smtp.fromName,
+      fromEmail: adv?.smtp?.fromEmail ?? DEFAULT_SETTINGS.advancedSettings.smtp.fromEmail,
+    },
     ai: { chatModel: adv?.ai?.chatModel ?? '', estimationModel: adv?.ai?.estimationModel ?? '' },
     seo: { metaTitle: adv?.seo?.metaTitle ?? '', metaDescription: adv?.seo?.metaDescription ?? '', keywords: adv?.seo?.keywords ?? '' },
     security: { allowPublicRegistration: adv?.security?.allowPublicRegistration ?? true }
@@ -140,14 +165,18 @@ function normalizeSettings(input: any) {
   const services = normalizedServices.length >= DEFAULT_SETTINGS.services.length
     ? normalizedServices
     : [...normalizedServices, ...DEFAULT_SETTINGS.services.slice(normalizedServices.length)];
+
   const testimonials = Array.isArray(input?.testimonials) && input.testimonials.length > 0 ? input.testimonials : DEFAULT_SETTINGS.testimonials;
+
+  const faq = Array.isArray(input?.faq) ? input.faq : DEFAULT_SETTINGS.faq;
+
   const f = input?.footer ?? {};
   const footer = {
     description: f?.description ?? DEFAULT_SETTINGS.footer.description,
     servicesLinks: Array.isArray(f?.servicesLinks) && f.servicesLinks.length > 0 ? f.servicesLinks : DEFAULT_SETTINGS.footer.servicesLinks,
     infoLinks: Array.isArray(f?.infoLinks) && f.infoLinks.length > 0 ? f.infoLinks : DEFAULT_SETTINGS.footer.infoLinks,
   };
-  return { ...input, businessInfo, socialLinks, hero, services, testimonials, pageContent, advancedSettings, footer };
+  return { ...input, businessInfo, socialLinks, hero, services, testimonials, faq, pageContent, advancedSettings, footer };
 }
 
 const DEFAULT_SETTINGS = {
@@ -183,6 +212,13 @@ const DEFAULT_SETTINGS = {
     { id: 'test-2', text: "Enlèvement de mon épave en 48h, tout s'est très bien passé. Équipe très professionnelle.", author: 'Sylvie M., Le Havre' },
     { id: 'test-3', text: "J'ai trouvé un alternateur pour ma 308 que je ne trouvais nulle part ailleurs. Merci Démolition Expert !", author: 'Garage Martin' }
   ],
+  faq: [
+    {
+      id: "faq-1",
+      question: "Comment fonctionne le rachat de véhicule ?",
+      answer: "Vous nous contactez via le formulaire dédié ou par téléphone. Nous évaluons votre véhicule et vous faisons une proposition."
+    },
+  ],
   footer: {
     description: "Votre spécialiste de la pièce automobile d'occasion et du recyclage en Normandie.",
     servicesLinks: [
@@ -193,8 +229,10 @@ const DEFAULT_SETTINGS = {
     ],
     infoLinks: [
       { id: 'fil-1', text: 'Contact', url: '/contact' },
-      { id: 'fil-3', text: 'CGV', url: '/cgv' },
-      { id: 'fil-4', text: 'Mentions Légales', url: '/mentions-legales' }
+      { id: 'fil-2', text: 'VHU agréé', url: '/vhu' },
+      { id: 'fil-3', text: 'FAQ', url: '/faq' },
+      { id: 'fil-4', text: 'CGV', url: '/cgv' },
+      { id: 'fil-5', text: 'Mentions Légales', url: '/mentions-legales' }
     ]
   },
   legal: {
@@ -209,10 +247,16 @@ const DEFAULT_SETTINGS = {
   pageContent: {
     repairs: { heroTitle: 'Réparation & Maintenance', heroSubtitle: 'Diagnostic précis et réparations fiables.', heroImage: 'https://picsum.photos/seed/mechanic-repair/1920/1080', contentTitle: 'Un service expert', contentDescription: "Notre équipe est équipée pour diagnostiquer et résoudre tous types de problèmes.", contentImage: 'https://picsum.photos/seed/diagnostic-tool/800/600', features: [ '<strong>Diagnostic électronique complet</strong>', '<strong>Réparation moteur</strong>', '<strong>Système de freinage</strong>' ] },
     maintenance: { heroTitle: 'Vidange & Entretien', heroSubtitle: 'Assurez la longévité de votre moteur.', heroImage: 'https://picsum.photos/seed/oil-change/1920/1080', contentTitle: "L'entretien, clé de la fiabilité", contentDescription: 'Nous proposons des forfaits d\'entretien complets adaptés.', contentImage: 'https://picsum.photos/seed/car-filters/800/600', features: [ '<strong>Vidange huile moteur</strong>', '<strong>Remplacement des filtres</strong>', '<strong>Contrôle des points de sécurité</strong>' ] },
-    tires: { heroTitle: 'Service Pneus', heroSubtitle: 'Vente, montage et équilibrage.', heroImage: 'https://picsum.photos/seed/tire-fitting/1920/1080', contentTitle: 'Votre sécurité, notre priorité', contentDescription: "Nous proposons une large gamme de pneus neufs et d'occasion.", contentImage: 'https://picsum.photos/seed/wheel-balancing/800/600', features: [ '<strong>Vente de pneus neufs et d\'occasion</strong>', '<strong>Montage et équilibrage</strong>', '<strong>Réparation de crevaison</strong>' ] }
+    tires: { heroTitle: 'Service Pneus', heroSubtitle: 'Vente, montage et équilibrage.', heroImage: 'https://picsum.photos/seed/tire-fitting/1920/1080', contentTitle: 'Votre sécurité, notre priorité', contentDescription: "Nous proposons une large gamme de pneus neufs et d'occasion.", contentImage: 'https://picsum.photos/seed/wheel-balancing/800/600', features: [ '<strong>Vente de pneus neufs et d\'occasion</strong>', '<strong>Montage et équilibrage</strong>', '<strong>Réparation de crevaison</strong>' ] },
+    vhu: { heroTitle: "Centre VHU agréé", heroSubtitle: "Traitement réglementé des véhicules hors d’usage.", heroImage: "https://picsum.photos/seed/vhu-hero/1920/1080", contentTitle: "Procédure et conformité", contentDescription: "Enlèvement, dépollution, destruction avec certificat officiel.", contentImage: "https://picsum.photos/seed/vhu-procedure/800/600", features: [ "<strong>Centre VHU agréé</strong>", "<strong>Traçabilité complète</strong>", "<strong>Dépollution conforme</strong>" ] },
+    removal: { heroTitle: "Enlèvement d'épaves", heroSubtitle: "Service rapide et gratuit.", heroImage: "https://picsum.photos/seed/tow-truck/1920/1080", contentTitle: "Libérez-vous de votre épave", contentDescription: "Nous intervenons rapidement pour l'enlèvement de votre véhicule hors d'usage.", contentImage: "https://picsum.photos/seed/scrap-yard/800/600", features: [ "<strong>Enlèvement gratuit</strong>", "<strong>Intervention rapide</strong>", "<strong>Formalités administratives incluses</strong>" ] },
+    parts: { heroTitle: "Catalogue de Pièces", heroSubtitle: "Trouvez la pièce parfaite pour votre véhicule parmi notre large sélection.", heroImage: "https://picsum.photos/seed/parts-hero/1920/1080", contentTitle: "Un large choix de pièces", contentDescription: "Toutes nos pièces sont démontées, testées et garanties.", contentImage: "https://picsum.photos/seed/parts-stock/800/600", features: [ "<strong>Pièces garanties</strong>", "<strong>Testées par nos experts</strong>", "<strong>Prix attractifs</strong>" ] },
+    buyback: { heroTitle: "Rachat de Véhicule", heroSubtitle: "Obtenez une offre gratuite pour votre voiture en quelques étapes.", heroImage: "https://picsum.photos/seed/buyback-hero/1920/1080", contentTitle: "Vendez votre véhicule simplement", contentDescription: "Nous rachetons tous types de véhicules, quel que soit leur état.", contentImage: "https://picsum.photos/seed/car-cash/800/600", features: [ "<strong>Estimation gratuite</strong>", "<strong>Paiement immédiat</strong>", "<strong>Pas de contrôle technique requis</strong>" ] },
+    windshield: { heroTitle: "Remplacement & Réparation de Pare-Brise", heroSubtitle: "Visibilité et sécurité maximales avec notre service expert.", heroImage: "https://picsum.photos/seed/windshield-bg/1920/1080", contentTitle: "Un service complet pour votre visibilité", contentDescription: "Un impact ou une fissure sur votre pare-brise ? N'attendez pas que les dégâts s'aggravent. Chez Démolition Expert, nous évaluons rapidement les dommages et proposons la meilleure solution.", contentImage: "https://picsum.photos/seed/windshield-repair/800/600", features: [ "<strong>Réparation d'impact</strong>", "<strong>Remplacement de Pare-Brise</strong>", "<strong>Compatible toutes assurances</strong>" ] },
+    lift: { heroTitle: "Location de Pont Élévateur", heroSubtitle: "Travaillez sur votre véhicule comme un pro dans notre atelier.", heroImage: "https://picsum.photos/seed/lift-rental/1920/1080", contentTitle: "Un atelier tout équipé", contentDescription: "Louez un pont et profitez de notre outillage professionnel.", contentImage: "https://picsum.photos/seed/garage-workshop/800/600", features: [ "<strong>Ponts professionnels</strong>", "<strong>Outillage disponible</strong>", "<strong>Conseils de pros</strong>" ] }
   },
   advancedSettings: {
-    smtp: { host: 'smtp.example.com', port: 587, user: 'user@example.com', pass: '' },
+    smtp: { host: 'smtp.example.com', port: 587, user: 'user@example.com', pass: '', fromName: "Demolition Expert", fromEmail: "no-reply@casseautopro.fr" },
     ai: { chatModel: 'gemini-2.5-flash', estimationModel: 'gemini-2.5-flash' },
     seo: { metaTitle: 'Démolition Expert', metaDescription: "Pièces auto d'occasion garanties.", keywords: 'casse auto, pièces occasion' },
     security: { allowPublicRegistration: true }
