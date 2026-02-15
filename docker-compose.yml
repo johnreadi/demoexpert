@@ -31,10 +31,9 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=dokploy-network"
-      - "traefik.http.routers.demoexpert-api.rule=Host(`app.demoexpert.fr`) && PathPrefix(`/api`)"
+      - "traefik.http.routers.demoexpert-api.rule=Host(`api.demoexpert.fr`)"
       - "traefik.http.routers.demoexpert-api.entrypoints=websecure"
       - "traefik.http.routers.demoexpert-api.tls.certresolver=letsencrypt"
-      - "traefik.http.routers.demoexpert-api.priority=100"
       - "traefik.http.routers.demoexpert-api.service=demoexpert-api"
       - "traefik.http.services.demoexpert-api.loadbalancer.server.port=8080"
 
@@ -47,7 +46,7 @@ services:
       backend:
         condition: service_healthy
     environment:
-      VITE_API_BASE_URL: /api
+      VITE_API_BASE_URL: https://api.demoexpert.fr
       VITE_USE_LOCAL_API: "false"
     networks:
       - dokploy-overlay
