@@ -20,6 +20,7 @@ services:
       DEFAULT_ADMIN_PASSWORD: ${DEFAULT_ADMIN_PASSWORD:-demo76000}
     networks:
       - dokploy-overlay
+      - dokploy-network
     command: sh -c "npx prisma migrate deploy && npx prisma generate && npm start"
 
   app:
@@ -32,6 +33,7 @@ services:
       VITE_USE_LOCAL_API: "false"
     networks:
       - dokploy-overlay
+      - dokploy-network
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.demoexpert.rule=Host(`app.demoexpert.fr`)"
@@ -48,4 +50,6 @@ services:
 
 networks:
   dokploy-overlay:
+    external: true
+  dokploy-network:
     external: true
