@@ -29,7 +29,7 @@ services:
       retries: 20
       start_period: 45s
 
-  app:
+  frontend:
     build:
       context: .
       dockerfile: Dockerfile.web
