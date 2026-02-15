@@ -28,6 +28,15 @@ services:
       timeout: 3s
       retries: 20
       start_period: 45s
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=dokploy-network"
+      - "traefik.http.routers.demoexpert-api.rule=Host(`app.demoexpert.fr`) && PathPrefix(`/api`)"
+      - "traefik.http.routers.demoexpert-api.entrypoints=websecure"
+      - "traefik.http.routers.demoexpert-api.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.demoexpert-api.priority=100"
+      - "traefik.http.routers.demoexpert-api.service=demoexpert-api"
+      - "traefik.http.services.demoexpert-api.loadbalancer.server.port=8080"
 
   app:
     build:
