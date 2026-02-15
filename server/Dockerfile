@@ -26,4 +26,4 @@ COPY --from=build /app/prisma ./prisma
 COPY --from=build /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=build /app/node_modules/@prisma ./node_modules/@prisma
 EXPOSE 8080
-CMD ["node", "dist/index.js"]
+CMD ["sh", "-c", "if [ \"${RUN_SEED:-false}\" = \"true\" ]; then node dist/seed.js; fi; node dist/index.js"]
