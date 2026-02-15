@@ -79,6 +79,19 @@ app.use(session({
 
 type UserSession = { id: string; name: string; email: string; role: 'Admin'|'Staff'; status: 'approved'|'pending' };
 
+function requireAuth(req: any, res: any, next: any) {
+  const user = (req.session as any)?.user as UserSession | undefined;
+  if (!user) return res.status(401).json({ error: 'unauthorized' });
+  next();
+}
+
+function requireAdmin(req: any, res: any, next: any) {
+  const user = (req.session as any)?.user as UserSession | undefined;
+  if (!user) return res.status(401).json({ error: 'unauthorized' });
+  if (user.role !== 'Admin') return res.status(403).json({ error: 'forbidden' });
+  next();
+}
+
 app.get('/healthz', (_req, res) => {
   res.status(200).json({ status: 'ok', env: NODE_ENV });
 });
@@ -97,6 +110,167 @@ app.get('/api/db/health', async (_req, res) => {
   } catch (e) {
     res.status(503).json({ ok: false, error: 'db_unreachable' });
   }
+});
+
+app.get('/api/admin/users', requireAdmin, async (_req, res) => {
+  try {
+    const users = await prisma.user.findMany({
+      orderBy: { createdAt: 'desc' },
+      select: { id: true, name: true, email: true, role: true, status: true, createdAt: true, updatedAt: true }
+    });
+    return res.json(users);
+  } catch {
+    return res.status(500).json({ error: 'failed_to_list_users' });
+  }
+});
+
+app.post('/api/admin/users', requireAdmin, async (req, res) => {
+  try {
+    const { name, email, password, role } = req.body || {};
+    if (!name || !email || !password) return res.status(400).json({ error: 'missing_fields' });
+    const hash = await bcrypt.hash(String(password), 10);
+    const created = await prisma.user.create({
+      data: {
+        name: String(name),
+        email: String(email).toLowerCase(),
+        password: hash,
+        role: role === 'Admin' ? 'Admin' : 'Staff',
+        status: 'approved',
+      },
+      select: { id: true, name: true, email: true, role: true, status: true, createdAt: true, updatedAt: true }
+    });
+    return res.status(201).json(created);
+  } catch (e: any) {
+    if (String(e?.code || '').toLowerCase() === 'p2002') return res.status(409).json({ error: 'email_already_exists' });
+    return res.status(500).json({ error: 'failed_to_create_user' });
+  }
+});
+
+app.put('/api/admin/users/:id', requireAdmin, async (req, res) => {
+  try {
+    const { name, email, role } = req.body || {};
+    const updated = await prisma.user.update({
+      where: { id: req.params.id },
+      data: {
+        ...(name !== undefined ? { name: String(name) } : {}),
+        ...(email !== undefined ? { email: String(email).toLowerCase() } : {}),
+        ...(role !== undefined ? { role: role === 'Admin' ? 'Admin' : 'Staff' } : {}),
+      },
+      select: { id: true, name: true, email: true, role: true, status: true, createdAt: true, updatedAt: true }
+    });
+    return res.json(updated);
+  } catch {
+    return res.status(500).json({ error: 'failed_to_update_user' });
+  }
+});
+
+app.post('/api/admin/users/:id/approve', requireAdmin, async (req, res) => {
+  try {
+    const updated = await prisma.user.update({
+      where: { id: req.params.id },
+      data: { status: 'approved' },
+      select: { id: true, name: true, email: true, role: true, status: true, createdAt: true, updatedAt: true }
+    });
+    return res.json(updated);
+  } catch {
+    return res.status(500).json({ error: 'failed_to_approve_user' });
+  }
+});
+
+app.delete('/api/admin/users/:id', requireAdmin, async (req, res) => {
+  try {
+    await prisma.user.delete({ where: { id: req.params.id } });
+    return res.json({ success: true });
+  } catch {
+    return res.status(404).json({ error: 'not_found' });
+  }
+});
+
+app.get('/api/admin/messages', requireAdmin, async (_req, res) => {
+  try {
+    const msgs = await prisma.adminMessage.findMany({ orderBy: { receivedAt: 'desc' } });
+    return res.json(msgs);
+  } catch {
+    return res.status(500).json({ error: 'failed_to_list_messages' });
+  }
+});
+
+app.post('/api/admin/messages', requireAdmin, async (req, res) => {
+  try {
+    const { to, subject, content } = req.body || {};
+    if (!to || !subject || !content) return res.status(400).json({ error: 'missing_fields' });
+    await getSmtpTransport();
+    return res.json({ success: true });
+  } catch (e: any) {
+    if (e?.message === 'smtp_not_configured') return res.status(400).json({ error: 'smtp_not_configured' });
+    return res.status(500).json({ error: 'smtp_send_failed' });
+  }
+});
+
+app.put('/api/admin/messages/:id', requireAdmin, async (req, res) => {
+  try {
+    const { isArchived } = req.body || {};
+    const updated = await prisma.adminMessage.update({ where: { id: req.params.id }, data: { isArchived: Boolean(isArchived) } });
+    return res.json(updated);
+  } catch {
+    return res.status(404).json({ error: 'not_found' });
+  }
+});
+
+app.delete('/api/admin/messages/:id', requireAdmin, async (req, res) => {
+  try {
+    await prisma.adminMessage.delete({ where: { id: req.params.id } });
+    return res.json({ success: true });
+  } catch {
+    return res.status(404).json({ error: 'not_found' });
+  }
+});
+
+app.get('/api/audit-logs', requireAdmin, async (_req, res) => {
+  try {
+    const logs = await prisma.auditLogEntry.findMany({ orderBy: { createdAt: 'desc' } });
+    return res.json(logs);
+  } catch {
+    return res.status(500).json({ error: 'failed_to_list_audit_logs' });
+  }
+});
+
+app.get('/api/lift-bookings', requireAdmin, async (_req, res) => {
+  try {
+    const bookings = await prisma.liftRentalBooking.findMany({ orderBy: { createdAt: 'desc' } });
+    return res.json(bookings);
+  } catch {
+    return res.status(500).json({ error: 'failed_to_list_lift_bookings' });
+  }
+});
+
+app.put('/api/lift-bookings/:id/status', requireAdmin, async (req, res) => {
+  try {
+    const { status } = req.body || {};
+    const updated = await prisma.liftRentalBooking.update({ where: { id: req.params.id }, data: { status: String(status || 'pending') } });
+    return res.json(updated);
+  } catch {
+    return res.status(404).json({ error: 'not_found' });
+  }
+});
+
+app.post('/api/contacts/delete', requireAdmin, async (req, res) => {
+  try {
+    const { ids = [], emails = [] } = req.body || {};
+    const idsArr = Array.isArray(ids) ? ids.filter(Boolean).map(String) : [];
+    const emailsArr = Array.isArray(emails) ? emails.filter(Boolean).map((e: any) => String(e).toLowerCase()) : [];
+    const r = await prisma.contact.deleteMany({ where: { OR: [
+      ...(idsArr.length ? [{ id: { in: idsArr } }] : []),
+      ...(emailsArr.length ? [{ email: { in: emailsArr } }] : []),
+    ] } });
+    return res.json({ deleted: r.count });
+  } catch {
+    return res.status(500).json({ error: 'failed_to_delete_contacts' });
+  }
+});
+
+app.get('/api/it-tracking', requireAdmin, (_req, res) => {
+  return res.json([]);
 });
 
 function normalizeSettings(input: any) {
