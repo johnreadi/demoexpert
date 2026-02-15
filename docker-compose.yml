@@ -29,7 +29,8 @@ services:
       retries: 20
       start_period: 45s
 
-  frontend:
+  app:
+    container_name: demoexpert-app
     build:
       context: .
       dockerfile: Dockerfile.web
