@@ -2,56 +2,50 @@
 version: '3.8'
 
 services:
-  # Application (comme Agria - frontend + backend combinés)
-  demoexpert-app:
+  backend:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      NODE_ENV: ${NODE_ENV:-production}
+      PORT: ${PORT:-8080}
+      DATABASE_URL: ${DATABASE_URL}
+      SESSION_SECRET: ${SESSION_SECRET}
+      CORS_ORIGIN: ${CORS_ORIGIN:-https://app.demoexpert.fr}
+      TRUST_PROXY: ${TRUST_PROXY:-1}
+      COOKIE_SECURE: ${COOKIE_SECURE:-true}
+      COOKIE_SAME_SITE: ${COOKIE_SAME_SITE:-none}
+      DEFAULT_ADMIN_EMAIL: ${DEFAULT_ADMIN_EMAIL:-admin@demoexpert.fr}
+      DEFAULT_ADMIN_PASSWORD: ${DEFAULT_ADMIN_PASSWORD:-demo76000}
+    networks:
+      - dokploy-overlay
+    command: sh -c "npx prisma migrate deploy && npx prisma generate && npm start"
+
+  frontend:
     build:
       context: .
-      dockerfile: Dockerfile.combined  # À créer
-    restart: always
+      dockerfile: Dockerfile.web
+    restart: unless-stopped
     environment:
-      NODE_ENV: production
-      PORT: 3000
-      DATABASE_URL: postgresql://demoexpert:${DB_PASSWORD}@demoexpert-db:5432/demoexpert
-      SESSION_SECRET: ${SESSION_SECRET}
-      CORS_ORIGIN: https://app.demoexpert.fr
-      TRUST_PROXY: 1
-      COOKIE_SECURE: "true"
-      COOKIE_SAME_SITE: none
-      GEMINI_API_KEY: ${GEMINI_API_KEY}
-    depends_on:
-      demoexpert-db:
-        condition: service_healthy
+      VITE_API_BASE_URL: /api
+      VITE_USE_LOCAL_API: "false"
     networks:
-      - dokploy-network
+      - dokploy-overlay
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.demoexpert.rule=Host(`app.demoexpert.fr`)"
       - "traefik.http.routers.demoexpert.entrypoints=websecure"
       - "traefik.http.routers.demoexpert.tls.certresolver=letsencrypt"
-      - "traefik.http.services.demoexpert.loadbalancer.server.port=3000"
-      - "traefik.http.services.demoexpert.loadbalancer.healthcheck.path=/api/healthz"
-
-  # Base de données
-  demoexpert-db:
-    image: postgres:15-alpine
-    restart: always
-    environment:
-      POSTGRES_DB: demoexpert
-      POSTGRES_USER: demoexpert
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
-    volumes:
-      - demoexpert_db_data:/var/lib/postgresql/data
-    networks:
-      - dokploy-network
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U demoexpert"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+      - "traefik.http.services.demoexpert.loadbalancer.server.port=80"
+      - "traefik.http.routers.demoexpert.middlewares=demoexpert-api"
+      - "traefik.http.middlewares.demoexpert-api.stripprefix.prefixes=/api"
+      - "traefik.http.routers.demoexpert-api.rule=Host(`app.demoexpert.fr`) && PathPrefix(`/api`)"
+      - "traefik.http.routers.demoexpert-api.entrypoints=websecure"
+      - "traefik.http.routers.demoexpert-api.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.demoexpert-api.service=demoexpert-api"
+      - "traefik.http.services.demoexpert-api.loadbalancer.server.port=8080"
 
 networks:
-  dokploy-network:
+  dokploy-overlay:
     external: true
-
-volumes:
-  demoexpert_db_data:
