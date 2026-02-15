@@ -859,11 +859,7 @@ app.get('/auctions/:id', async (req, res) => {
   }
 });
 
-function requireAdmin(req: any, res: any, next: any) {
-  const user = req.session?.user;
-  if (!user || user.role !== 'Admin') return res.status(403).json({ error: 'forbidden' });
-  next();
-}
+ 
 
 app.post('/auctions', requireAdmin, async (req, res) => {
   try {
