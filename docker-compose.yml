@@ -22,7 +22,7 @@ services:
       - dokploy-overlay
     command: sh -c "npx prisma migrate deploy && npx prisma generate && npm start"
 
-  frontend:
+  app:
     build:
       context: .
       dockerfile: Dockerfile.web
