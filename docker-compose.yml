@@ -22,12 +22,20 @@ services:
       - dokploy-overlay
       - dokploy-network
     command: sh -c "npx prisma migrate deploy && npx prisma generate && npm start"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:${PORT:-8080}/api/healthz >/dev/null || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 20
 
   app:
     build:
       context: .
       dockerfile: Dockerfile.web
     restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
     environment:
       VITE_API_BASE_URL: /api
       VITE_USE_LOCAL_API: "false"
