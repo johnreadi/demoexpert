@@ -35,7 +35,7 @@ services:
       context: .
       dockerfile: Dockerfile.web
       args:
-        VITE_API_BASE_URL: https://api.demoexpert.fr
+        VITE_API_BASE_URL: https://api.demoexpert.fr/api
         VITE_USE_LOCAL_API: "false"
     restart: unless-stopped
     depends_on:
