@@ -230,7 +230,12 @@ app.get('/api/audit-logs', requireAdmin, async (_req, res) => {
   try {
     const logs = await prisma.auditLogEntry.findMany({ orderBy: { createdAt: 'desc' } });
     return res.json(logs);
-  } catch {
+  } catch (e: any) {
+    const code = String(e?.code || '');
+    console.error('Failed to list audit logs:', { code, message: e?.message });
+    if (code === 'P2021' || code === 'P2022') {
+      return res.json([]);
+    }
     return res.status(500).json({ error: 'failed_to_list_audit_logs' });
   }
 });
@@ -239,7 +244,12 @@ app.get('/api/lift-bookings', requireAdmin, async (_req, res) => {
   try {
     const bookings = await prisma.liftRentalBooking.findMany({ orderBy: { createdAt: 'desc' } });
     return res.json(bookings);
-  } catch {
+  } catch (e: any) {
+    const code = String(e?.code || '');
+    console.error('Failed to list lift bookings:', { code, message: e?.message });
+    if (code === 'P2021' || code === 'P2022') {
+      return res.json([]);
+    }
     return res.status(500).json({ error: 'failed_to_list_lift_bookings' });
   }
 });
