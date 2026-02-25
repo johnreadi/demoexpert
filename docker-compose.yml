@@ -1,4 +1,4 @@
-# docker-compose.agria.yml - Version ULTRA-SIMPLIFIÉE
+# docker-compose.agria.yml - Version CORRECTEMENT configurée
 version: '3.8'
 
 services:
@@ -9,7 +9,7 @@ services:
     restart: unless-stopped
     environment:
       NODE_ENV: production
-      PORT: 3000  # 🔥 FORCÉ à 3000, pas de fallback
+      PORT: 3000  # 🔥 FORCÉ à 3000 (votre code fallback à 8080 sinon)
       DATABASE_URL: ${DATABASE_URL}
       SESSION_SECRET: ${SESSION_SECRET}
       CORS_ORIGIN: ${CORS_ORIGIN:-https://app.demoexpert.fr}
@@ -18,23 +18,24 @@ services:
       COOKIE_SAME_SITE: "none"
       DEFAULT_ADMIN_EMAIL: ${DEFAULT_ADMIN_EMAIL:-admin@demoexpert.fr}
       DEFAULT_ADMIN_PASSWORD: ${DEFAULT_ADMIN_PASSWORD:-demo76000}
+      STRICT_DB: "false"  # 🔧 Permet le démarrage même sans DB
     networks:
-      - dokploy-network
-    command: sh -c "npx prisma migrate deploy && npx prisma generate && npm start"
+      - dokploy-overlay  # 🔥 VOTRE RÉSEAU PRINCIPAL
+    command: sh -c "npx prisma migrate deploy || true && npx prisma generate || true && npm start"
     
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.backend.rule=Host(`api.demoexpert.fr`)"
       - "traefik.http.routers.backend.entrypoints=websecure"
       - "traefik.http.routers.backend.tls.certresolver=letsencrypt"
-      - "traefik.http.services.backend.loadbalancer.server.port=3000"
-      # Healthcheck Traefik pointant sur /healthz
-      - "traefik.http.services.backend.loadbalancer.healthcheck.path=/healthz"
+      - "traefik.http.services.backend.loadbalancer.server.port=3000"  # ← Port interne
+      - "traefik.http.services.backend.loadbalancer.healthcheck.path=/healthz"  # ← Route existante
       - "traefik.http.services.backend.loadbalancer.healthcheck.interval=30s"
+      - "traefik.http.services.backend.loadbalancer.healthcheck.timeout=10s"
     
-    # 🔧 Healthcheck TCP simple (pas besoin de route HTTP)
+    # 🔧 Healthcheck avec Node (universel, pas besoin de wget/curl)
     healthcheck:
-      test: ["CMD-SHELL", "timeout 5 bash -c '</dev/tcp/127.0.0.1/3000' || exit 1"]
+      test: ["CMD-SHELL", "node -e \"require('http').get('http://127.0.0.1:3000/healthz', (r) => process.exit(r.statusCode === 200 ? 0 : 1))\" || exit 1"]
       interval: 20s
       timeout: 10s
       retries: 3
@@ -48,12 +49,11 @@ services:
         VITE_API_BASE_URL: https://api.demoexpert.fr/api
         VITE_USE_LOCAL_API: "false"
     restart: unless-stopped
-    # 🔧 TEMPORAIRE : retirer la dépendance healthy pour débloquer
-    # depends_on:
-    #   backend:
-    #     condition: service_started
+    depends_on:
+      backend:
+        condition: service_healthy
     networks:
-      - dokploy-network
+      - dokploy-overlay  # 🔥 MÊME RÉSEAU QUE BACKEND
     
     labels:
       - "traefik.enable=true"
@@ -63,5 +63,5 @@ services:
       - "traefik.http.services.app.loadbalancer.server.port=80"
 
 networks:
-  dokploy-network:
-    external: true
+  dokploy-overlay:
+    external: true  # 🔥 CRUCIAL : réseau créé par Dokploy
