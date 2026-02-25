@@ -1,4 +1,4 @@
-# docker-compose.agria.yml - Version corrigée
+# docker-compose.agria.yml - Version Finale Corrigée
 version: '3.8'
 
 services:
@@ -28,17 +28,19 @@ services:
       - "traefik.http.routers.backend.entrypoints=websecure"
       - "traefik.http.routers.backend.tls.certresolver=letsencrypt"
       - "traefik.http.services.backend.loadbalancer.server.port=3000"
-      # Healthcheck Traefik (optionnel, peut être retiré si problème)
-      - "traefik.http.services.backend.loadbalancer.healthcheck.path=/health"
-      - "traefik.http.services.backend.loadbalancer.healthcheck.interval=30s"
+      
+      # 🔧 CORRECTION ICI : Utiliser /healthz au lieu de /health
+      - "traefik.http.services.backend.loadbalancer.healthcheck.path=/healthz"
+      - "traefik.http.services.backend.loadbalancer.healthcheck.interval=10s"
+      - "traefik.http.services.backend.loadbalancer.healthcheck.timeout=5s"
     
-    # 🔧 Healthcheck Docker simplifié et robuste
+    # 🔧 CORRECTION ICI : Utiliser /healthz au lieu de /health
     healthcheck:
-      test: ["CMD-SHELL", "node -e \"require('http').get('http://localhost:${PORT:-3000}/health', (r) => process.exit(r.statusCode === 200 ? 0 : 1))\" || exit 1"]
+      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1:${PORT:-3000}/healthz || exit 1"]
       interval: 15s
       timeout: 10s
       retries: 5
-      start_period: 120s  # 👈 Augmenté pour Prisma + démarrage
+      start_period: 120s
 
   app:
     build:
@@ -50,7 +52,7 @@ services:
     restart: unless-stopped
     depends_on:
       backend:
-        condition: service_healthy  # ← Peut être retiré temporairement pour tester
+        condition: service_healthy
     networks:
       - dokploy-network
     
