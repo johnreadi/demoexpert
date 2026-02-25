@@ -1,4 +1,4 @@
-# docker-compose.agria.yml - Version SANS CONFLIT
+# docker-compose.agria.yml - Version FINALE (sans warnings)
 version: '3.8'
 
 services:
@@ -9,7 +9,7 @@ services:
     restart: unless-stopped
     environment:
       NODE_ENV: production
-      PORT: 3000  # 🔥 FORCÉ à 3000 (votre code fallback à 8080 sinon)
+      PORT: 3000
       DATABASE_URL: ${DATABASE_URL}
       SESSION_SECRET: ${SESSION_SECRET}
       CORS_ORIGIN: ${CORS_ORIGIN:-https://app.demoexpert.fr}
@@ -23,17 +23,13 @@ services:
       - dokploy-overlay
     command: sh -c "npx prisma migrate deploy || true && npx prisma generate || true && npm start"
     
-    # 🔧 UNIQUEMENT les labels "service" (pas de "router" !)
+    # 🔧 UNIQUEMENT les labels "service" (pas de "router" pour éviter les conflits)
     labels:
       - "traefik.enable=true"
-      # Port interne du container (CRUCIAL - non géré par Dokploy)
       - "traefik.http.services.backend.loadbalancer.server.port=3000"
-      # Healthcheck pour Traefik (optionnel mais recommandé)
       - "traefik.http.services.backend.loadbalancer.healthcheck.path=/healthz"
       - "traefik.http.services.backend.loadbalancer.healthcheck.interval=30s"
-      - "traefik.http.services.backend.loadbalancer.healthcheck.timeout=10s"
     
-    # 🔧 Healthcheck Docker avec Node (universel)
     healthcheck:
       test: ["CMD-SHELL", "node -e \"require('http').get('http://127.0.0.1:3000/healthz', (r) => process.exit(r.statusCode === 200 ? 0 : 1))\" || exit 1"]
       interval: 20s
@@ -55,12 +51,9 @@ services:
     networks:
       - dokploy-overlay
     
-    # 🔧 UNIQUEMENT les labels "service" pour l'app frontend
     labels:
       - "traefik.enable=true"
       - "traefik.http.services.app.loadbalancer.server.port=80"
-      - "traefik.http.services.app.loadbalancer.healthcheck.path=/"
-      - "traefik.http.services.app.loadbalancer.healthcheck.interval=30s"
 
 networks:
   dokploy-overlay:
