@@ -1,7 +1,3 @@
-# docker-compose.agria.yml - Version standardisée et optimisée
-version: '3.8'
-
-services:
   backend:
     build:
       context: ./server
@@ -19,74 +15,22 @@ services:
       DEFAULT_ADMIN_EMAIL: ${DEFAULT_ADMIN_EMAIL:-admin@demoexpert.fr}
       DEFAULT_ADMIN_PASSWORD: ${DEFAULT_ADMIN_PASSWORD:-demo76000}
     networks:
-      - dokploy-overlay
-      - dokploy-network
+      - dokploy-network  # ← Un seul réseau pour simplifier
     command: sh -c "npx prisma migrate deploy && npx prisma generate && npm start"
     
-    # 🔧 Labels Traefik pour éviter les erreurs 502
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.backend.rule=Host(`api.demoexpert.fr`)"
       - "traefik.http.routers.backend.entrypoints=websecure"
       - "traefik.http.routers.backend.tls.certresolver=letsencrypt"
-      - "traefik.http.routers.backend.tls=true"
-      
-      # Port interne du service (CRUCIAL)
       - "traefik.http.services.backend.loadbalancer.server.port=3000"
-      
-      # Health check Traefik
+      # Health check simple
       - "traefik.http.services.backend.loadbalancer.healthcheck.path=/health"
       - "traefik.http.services.backend.loadbalancer.healthcheck.interval=10s"
-      - "traefik.http.services.backend.loadbalancer.healthcheck.timeout=5s"
-      - "traefik.http.services.backend.loadbalancer.healthcheck.retries=3"
-      
-      # Middleware de retry (optionnel)
-      - "traefik.http.routers.backend.middlewares=retry@file"
-      
-      # Headers de sécurité
-      - "traefik.http.routers.backend.middlewares=security-headers@file"
     
-    # 🔧 Health check Docker amélioré
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://127.0.0.1:${PORT:-3000}/health || exit 1"]
+      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1:${PORT:-3000}/health || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 30
       start_period: 90s
-
-  app:
-    build:
-      context: .
-      dockerfile: Dockerfile.web
-      args:
-        VITE_API_BASE_URL: https://api.demoexpert.fr/api
-        VITE_USE_LOCAL_API: "false"
-    restart: unless-stopped
-    depends_on:
-      backend:
-        condition: service_healthy
-    networks:
-      - dokploy-overlay
-      - dokploy-network
-    
-    # 🔧 Labels Traefik pour le frontend
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.app.rule=Host(`app.demoexpert.fr`)"
-      - "traefik.http.routers.app.entrypoints=websecure"
-      - "traefik.http.routers.app.tls.certresolver=letsencrypt"
-      - "traefik.http.routers.app.tls=true"
-      
-      # Port interne (généralement 80 pour Nginx/Apache dans un container web)
-      - "traefik.http.services.app.loadbalancer.server.port=80"
-      
-      # Health check pour le frontend
-      - "traefik.http.services.app.loadbalancer.healthcheck.path=/"
-      - "traefik.http.services.app.loadbalancer.healthcheck.interval=10s"
-      - "traefik.http.services.app.loadbalancer.healthcheck.timeout=5s"
-
-networks:
-  dokploy-overlay:
-    external: true
-  dokploy-network:
-    external: true
