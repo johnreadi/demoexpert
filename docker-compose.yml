@@ -1,3 +1,7 @@
+# docker-compose.agria.yml
+version: '3.8'
+
+services:
   backend:
     build:
       context: ./server
@@ -15,16 +19,16 @@
       DEFAULT_ADMIN_EMAIL: ${DEFAULT_ADMIN_EMAIL:-admin@demoexpert.fr}
       DEFAULT_ADMIN_PASSWORD: ${DEFAULT_ADMIN_PASSWORD:-demo76000}
     networks:
-      - dokploy-network  # ← Un seul réseau pour simplifier
+      - dokploy-network
     command: sh -c "npx prisma migrate deploy && npx prisma generate && npm start"
     
+    # Labels Traefik - Backend API
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.backend.rule=Host(`api.demoexpert.fr`)"
       - "traefik.http.routers.backend.entrypoints=websecure"
       - "traefik.http.routers.backend.tls.certresolver=letsencrypt"
       - "traefik.http.services.backend.loadbalancer.server.port=3000"
-      # Health check simple
       - "traefik.http.services.backend.loadbalancer.healthcheck.path=/health"
       - "traefik.http.services.backend.loadbalancer.healthcheck.interval=10s"
     
@@ -34,3 +38,31 @@
       timeout: 5s
       retries: 30
       start_period: 90s
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.web
+      args:
+        VITE_API_BASE_URL: https://api.demoexpert.fr/api
+        VITE_USE_LOCAL_API: "false"
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - dokploy-network
+    
+    # Labels Traefik - Frontend
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.app.rule=Host(`app.demoexpert.fr`)"
+      - "traefik.http.routers.app.entrypoints=websecure"
+      - "traefik.http.routers.app.tls.certresolver=letsencrypt"
+      - "traefik.http.services.app.loadbalancer.server.port=80"
+      - "traefik.http.services.app.loadbalancer.healthcheck.path=/"
+      - "traefik.http.services.app.loadbalancer.healthcheck.interval=10s"
+
+networks:
+  dokploy-network:
+    external: true
