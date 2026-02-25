@@ -1,4 +1,4 @@
-# docker-compose.agria.yml - Version Finale Corrigée
+# docker-compose.agria.yml - Version FINALEMENT corrigée
 version: '3.8'
 
 services:
@@ -9,7 +9,7 @@ services:
     restart: unless-stopped
     environment:
       NODE_ENV: ${NODE_ENV:-production}
-      PORT: ${PORT:-3000}
+      PORT: 3000  # 🔧 FORCER le port à 3000 (pas de fallback)
       DATABASE_URL: ${DATABASE_URL}
       SESSION_SECRET: ${SESSION_SECRET}
       CORS_ORIGIN: ${CORS_ORIGIN:-https://app.demoexpert.fr}
@@ -27,16 +27,14 @@ services:
       - "traefik.http.routers.backend.rule=Host(`api.demoexpert.fr`)"
       - "traefik.http.routers.backend.entrypoints=websecure"
       - "traefik.http.routers.backend.tls.certresolver=letsencrypt"
-      - "traefik.http.services.backend.loadbalancer.server.port=3000"
-      
-      # 🔧 CORRECTION ICI : Utiliser /healthz au lieu de /health
-      - "traefik.http.services.backend.loadbalancer.healthcheck.path=/healthz"
+      - "traefik.http.services.backend.loadbalancer.server.port=3000"  # ← Port interne
+      - "traefik.http.services.backend.loadbalancer.healthcheck.path=/healthz"  # ← /healthz, pas /health
       - "traefik.http.services.backend.loadbalancer.healthcheck.interval=10s"
       - "traefik.http.services.backend.loadbalancer.healthcheck.timeout=5s"
     
-    # 🔧 CORRECTION ICI : Utiliser /healthz au lieu de /health
+    # 🔧 Healthcheck avec node (universel, pas besoin de wget/curl)
     healthcheck:
-      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1:${PORT:-3000}/healthz || exit 1"]
+      test: ["CMD-SHELL", "node -e \"require('http').get('http://127.0.0.1:3000/healthz', (r) => process.exit(r.statusCode === 200 ? 0 : 1))\" || exit 1"]
       interval: 15s
       timeout: 10s
       retries: 5
