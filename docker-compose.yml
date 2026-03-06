@@ -36,7 +36,7 @@ services:
       - "traefik.http.services.backend.loadbalancer.healthcheck.interval=30s"
     
     healthcheck:
-      test: ["CMD-SHELL", "exit 0"]
+      test: ["CMD-SHELL", "nc -z localhost 3000 || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 5
