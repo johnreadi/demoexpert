@@ -1,5 +1,6 @@
 # Script de nettoyage Docker pour Demoexpert (PowerShell)
 # Supprime les conteneurs arrêtés, les réseaux inutilisés et les images orphelines (dangling)
+# SÉCURITÉ : La suppression des volumes est désactivée par défaut pour éviter la perte de données de base de données.
 
 Write-Host "--- DÉBUT DU NETTOYAGE DOCKER ---" -ForegroundColor Cyan
 
@@ -16,9 +17,11 @@ docker network prune -f
 Write-Host "Suppression des images orphelines..." -ForegroundColor Yellow
 docker image prune -f
 
-# 4. Supprimer les volumes inutilisés (Attention : supprime TOUS les volumes non attachés)
-# C'est sans danger pour Demoexpert car la base de données est externe
-Write-Host "Suppression des volumes orphelins..." -ForegroundColor Yellow
-docker volume prune -f
+# 4. Supprimer les volumes inutilisés
+# ATTENTION : Cette commande est commentée par sécurité.
+# Si votre base de données est sur ce serveur et est arrêtée, cette commande SUPPRIMERAIT ses données.
+# Décommentez la ligne suivante UNIQUEMENT si vous êtes sûr de ce que vous faites.
+# Write-Host "Suppression des volumes orphelins..." -ForegroundColor Red
+# docker volume prune -f
 
 Write-Host "--- NETTOYAGE TERMINÉ ---" -ForegroundColor Cyan

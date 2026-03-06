@@ -1,6 +1,7 @@
 #!/bin/sh
 # Script de nettoyage Docker pour Demoexpert
-# Supprime les conteneurs arrêtés, les réseaux inutilisés et les images orphelines (dangling)
+# Supprime les conteneurs arrêtés et les images orphelines
+# SÉCURITÉ : La suppression des volumes est désactivée par défaut pour éviter la perte de données de base de données.
 
 echo "--- DÉBUT DU NETTOYAGE DOCKER ---"
 
@@ -17,9 +18,11 @@ docker network prune -f
 echo "Suppression des images orphelines..."
 docker image prune -f
 
-# 4. Supprimer les volumes inutilisés (Attention : supprime TOUS les volumes non attachés)
-# C'est sans danger pour Demoexpert car la base de données est externe
-echo "Suppression des volumes orphelins..."
-docker volume prune -f
+# 4. Supprimer les volumes inutilisés
+# ATTENTION : Cette commande est commentée par sécurité.
+# Si votre base de données est sur ce serveur et est arrêtée, cette commande SUPPRIMERAIT ses données.
+# Décommentez la ligne suivante UNIQUEMENT si vous êtes sûr de ce que vous faites.
+# echo "Suppression des volumes orphelins..."
+# docker volume prune -f
 
 echo "--- NETTOYAGE TERMINÉ ---"

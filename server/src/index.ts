@@ -24,8 +24,8 @@ const app = express();
 const PORT = Number(process.env.PORT || 8080);
 const NODE_ENV = process.env.NODE_ENV || 'development';
 const SESSION_SECRET = process.env.SESSION_SECRET || 'dev_session_secret_change_me';
-const CORS_ORIGIN = process.env.CORS_ORIGIN || 'http://localhost:3000';
-const ALLOWED_ORIGINS = (CORS_ORIGIN.includes(',') ? CORS_ORIGIN.split(',') : [CORS_ORIGIN]).map(o => o.trim());
+const CORS_ORIGIN_STR = process.env.CORS_ORIGIN || 'http://localhost:3000';
+const ALLOWED_ORIGINS = (CORS_ORIGIN_STR.includes(',') ? CORS_ORIGIN_STR.split(',') : [CORS_ORIGIN_STR]).map(o => o.trim());
 
 const TRUST_PROXY = process.env.TRUST_PROXY ? Number(process.env.TRUST_PROXY) : 0;
 const IS_PROD = NODE_ENV === 'production';
