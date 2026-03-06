@@ -8,12 +8,28 @@ const server = http.createServer((req, res) => {
     
     // Handle CORS
     const origin = req.headers.origin || '*';
-    
-    res.writeHead(503, {
+    const headers = {
         'Content-Type': 'application/json',
         'Access-Control-Allow-Origin': origin,
-        'Access-Control-Allow-Credentials': 'true'
-    });
+        'Access-Control-Allow-Credentials': 'true',
+        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With'
+    };
+
+    if (req.method === 'OPTIONS') {
+        res.writeHead(204, headers);
+        res.end();
+        return;
+    }
+
+    // Health check endpoints - return 200 so Traefik keeps routing traffic
+    if (req.url === '/healthz' || req.url === '/api/healthz' || req.url === '/api/db/health') {
+        res.writeHead(200, headers);
+        res.end(JSON.stringify({ status: 'fallback-mode', ok: true }));
+        return;
+    }
+    
+    res.writeHead(503, headers);
     
     res.end(JSON.stringify({
         error: 'backend_crashed',
