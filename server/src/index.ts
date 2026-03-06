@@ -25,6 +25,8 @@ const PORT = Number(process.env.PORT || 8080);
 const NODE_ENV = process.env.NODE_ENV || 'development';
 const SESSION_SECRET = process.env.SESSION_SECRET || 'dev_session_secret_change_me';
 const CORS_ORIGIN = process.env.CORS_ORIGIN || 'http://localhost:3000';
+const ALLOWED_ORIGINS = (CORS_ORIGIN.includes(',') ? CORS_ORIGIN.split(',') : [CORS_ORIGIN]).map(o => o.trim());
+
 const TRUST_PROXY = process.env.TRUST_PROXY ? Number(process.env.TRUST_PROXY) : 0;
 const IS_PROD = NODE_ENV === 'production';
 const COOKIE_SECURE_RAW = (process.env.COOKIE_SECURE || '').toLowerCase();
@@ -44,6 +46,22 @@ const COOKIE_SAME_SITE: 'lax' | 'strict' | 'none' =
 
 app.set('trust proxy', TRUST_PROXY);
 
+// CORS configuration - MOVED UP before other middleware
+app.use(cors({
+  origin: (origin, callback) => {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    if (ALLOWED_ORIGINS.indexOf(origin) !== -1 || !IS_PROD) {
+      callback(null, true);
+    } else {
+      console.warn(`Blocked CORS request from origin: ${origin}`);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+}));
+
 app.use(helmet({
   contentSecurityPolicy: {
     directives: {
@@ -52,7 +70,7 @@ app.use(helmet({
       styleSrc: ["'self'", "https:", "'unsafe-inline'"],
       fontSrc: ["'self'", "https:", "data:"],
       imgSrc: ["'self'", "data:", "https:"],
-      connectSrc: ["'self'", CORS_ORIGIN]
+      connectSrc: ["'self'", ...ALLOWED_ORIGINS]
     }
   }
 }));
