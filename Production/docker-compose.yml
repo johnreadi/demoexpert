@@ -1,0 +1,108 @@
+version: '3.8'
+
+services:
+  # Base de données MySQL
+  mysql:
+    image: mysql:8.0
+    container_name: demolition-expert-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-rootpassword}
+      MYSQL_DATABASE: ${DB_NAME:-demolition_expert}
+      MYSQL_USER: ${DB_USER:-demolition_user}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-secure_password}
+    ports:
+      - "${DB_PORT:-3306}:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./database_schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+      - ./Production/migrate-data.js:/docker-entrypoint-initdb.d/02-migrate-data.js:ro
+    networks:
+      - demolition-expert-network
+    command: --default-authentication-plugin=mysql_native_password
+
+  # Backend API
+  backend:
+    build:
+      context: ./Production/Back-end
+      dockerfile: Dockerfile
+    container_name: demolition-expert-backend
+    restart: unless-stopped
+    environment:
+      NODE_ENV: ${NODE_ENV:-production}
+      PORT: ${BACKEND_PORT:-5000}
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_NAME: ${DB_NAME:-demolition_expert}
+      DB_USER: ${DB_USER:-demolition_user}
+      DB_PASSWORD: ${DB_PASSWORD:-secure_password}
+      JWT_SECRET: ${JWT_SECRET:-your_jwt_secret_here_change_this_in_production}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-24h}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
+      GOOGLE_AI_API_KEY: ${GOOGLE_AI_API_KEY:-your_google_ai_api_key_here}
+      BCRYPT_ROUNDS: ${BCRYPT_ROUNDS:-12}
+    ports:
+      - "${BACKEND_PORT:-5000}:5000"
+    volumes:
+      - ./Production/Back-end/uploads:/app/uploads
+      - ./Production/Back-end/logs:/app/logs
+    depends_on:
+      - mysql
+    networks:
+      - demolition-expert-network
+    command: sh -c "sleep 30 && npm start"
+
+  # Frontend React
+  frontend:
+    build:
+      context: ./Production/Front-end
+      dockerfile: Dockerfile
+      args:
+        VITE_API_BASE_URL: ${FRONTEND_API_URL:-http://localhost:5000}
+    container_name: demolition-expert-frontend
+    restart: unless-stopped
+    ports:
+      - "${FRONTEND_PORT:-3000}:80"
+    depends_on:
+      - backend
+    networks:
+      - demolition-expert-network
+
+  # Nginx (reverse proxy et serveur web)
+  nginx:
+    image: nginx:alpine
+    container_name: demolition-expert-nginx
+    restart: unless-stopped
+    ports:
+      - "${NGINX_PORT:-80}:80"
+      - "${NGINX_SSL_PORT:-443}:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./Production/Front-end/dist:/usr/share/nginx/html:ro
+      - ./ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - frontend
+      - backend
+    networks:
+      - demolition-expert-network
+
+  # Redis (optionnel - pour le cache et les sessions)
+  redis:
+    image: redis:7-alpine
+    container_name: demolition-expert-redis
+    restart: unless-stopped
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - demolition-expert-network
+    command: redis-server --appendonly yes
+
+volumes:
+  mysql_data:
+  redis_data:
+
+networks:
+  demolition-expert-network:
+    driver: bridge

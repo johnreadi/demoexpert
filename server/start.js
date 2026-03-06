@@ -70,6 +70,13 @@ function startFallback() {
 }
 
 async function main() {
+    // Log Environment Variables (Masked)
+    if (process.env.DATABASE_URL) {
+        console.log('DATABASE_URL is set (masked): ' + process.env.DATABASE_URL.replace(/:[^:]*@/, ':****@'));
+    } else {
+        console.log('DATABASE_URL is NOT set!');
+    }
+
     // 1. Run migrations
     console.log('--- RUNNING MIGRATIONS ---');
     // We use a simple timeout approach

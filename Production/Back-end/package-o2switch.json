@@ -1,0 +1,87 @@
+{
+  "name": "demolition-expert-backend-o2switch",
+  "version": "1.0.0",
+  "description": "Backend API pour Démolition Expert - Optimisé pour o2Switch",
+  "main": "dist/server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node dist/server.js",
+    "dev": "tsx watch src/server.ts",
+    "build": "tsc",
+    "clean": "rm -rf dist uploads logs",
+    "setup": "npm install && npm run build",
+    "migrate": "node migrate-data.js",
+    "health": "curl -f http://localhost:3001/api/health || exit 1",
+    "logs": "tail -f logs/*.log"
+  },
+  "keywords": [
+    "nodejs",
+    "express",
+    "typescript",
+    "mysql",
+    "o2switch",
+    "hebergement-mutualise"
+  ],
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "helmet": "^7.1.0",
+    "express-rate-limit": "^7.1.5",
+    "mysql2": "^3.6.5",
+    "bcryptjs": "^2.4.3",
+    "jsonwebtoken": "^9.0.2",
+    "joi": "^17.11.0",
+    "multer": "^1.4.5-lts.1",
+    "nodemailer": "^6.9.7",
+    "uuid": "^9.0.1",
+    "dotenv": "^16.3.1",
+    "compression": "^1.7.4",
+    "morgan": "^1.10.0"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/cors": "^2.8.17",
+    "@types/bcryptjs": "^2.4.6",
+    "@types/jsonwebtoken": "^9.0.5",
+    "@types/multer": "^1.4.11",
+    "@types/nodemailer": "^6.4.14",
+    "@types/uuid": "^9.0.7",
+    "@types/compression": "^1.7.5",
+    "@types/morgan": "^1.9.9",
+    "typescript": "^5.3.3",
+    "tsx": "^4.6.2",
+    "@types/node": "^20.10.5"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  },
+  "os": [
+    "linux"
+  ],
+  "cpu": [
+    "x64"
+  ],
+  "optionalDependencies": {
+    "bufferutil": "^4.0.8",
+    "utf-8-validate": "^6.0.3"
+  },
+  "config": {
+    "o2switch": {
+      "memory_limit": "256m",
+      "max_connections": 50,
+      "rate_limit": "50 requests/minute",
+      "db_pool_size": 5
+    }
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/votre-repo/demolition-expert.git"
+  },
+  "author": "Votre Nom",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/votre-repo/demolition-expert/issues"
+  },
+  "homepage": "https://votre-domaine.com"
+}
