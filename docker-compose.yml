@@ -27,9 +27,11 @@ services:
     environment:
       NODE_ENV: production
       PORT: 3000
-      DATABASE_URL: postgresql://user:password@db:5432/demoexpert
-      SESSION_SECRET: ${SESSION_SECRET}
-      CORS_ORIGIN: ${CORS_ORIGIN:-https://app.demoexpert.fr}
+      # Use provided DATABASE_URL (Dokploy/Production) or fallback to local db service
+      DATABASE_URL: ${DATABASE_URL:-postgresql://user:password@db:5432/demoexpert}
+      SESSION_SECRET: ${SESSION_SECRET:-supersecret}
+      # CORS: Allow frontend origin or * for development
+      CORS_ORIGIN: ${CORS_ORIGIN:-*}${CORS_ORIGIN:-https://app.demoexpert.fr}
       TRUST_PROXY: "1"
       COOKIE_SECURE: "true"
       COOKIE_SAME_SITE: "none"
@@ -49,9 +51,9 @@ services:
       (npx prisma migrate deploy || echo '--- MIGRATION FAILED (CONTINUING) ---') && 
       ls -la dist/ && 
       (npm start || echo '--- NPM START FAILED ---'); 
-      echo '--- STARTING FALLBACK SERVER ---'; 
-      node -e 'require(\"http\").createServer((req,res)=>{console.log(\"Fallback req: \"+req.url);res.writeHead(503,{\"Content-Type\":\"application/json\",\"Access-Control-Allow-Origin\":\"*\",\"Access-Control-Allow-Credentials\":\"true\"});res.end(JSON.stringify({error:\"backend_crashed\",status:503,message:\"The backend server failed to start. Please check container logs.\"}));}).listen(process.env.PORT||3000,\"0.0.0.0\",()=>{console.log(\"Fallback server running on \"+(process.env.PORT||3000))});'; 
-      sleep 3600"
+       echo '--- STARTING FALLBACK SERVER ---'; 
+       node -e 'require(\"http\").createServer((req,res)=>{console.log(\"Fallback req: \"+req.url);const origin=req.headers.origin||\"*\";res.writeHead(503,{\"Content-Type\":\"application/json\",\"Access-Control-Allow-Origin\":origin,\"Access-Control-Allow-Credentials\":\"true\"});res.end(JSON.stringify({error:\"backend_crashed\",status:503,message:\"The backend server failed to start. Please check container logs.\"}));}).listen(process.env.PORT||3000,\"0.0.0.0\",()=>{console.log(\"Fallback server running on \"+(process.env.PORT||3000))});'; 
+       sleep 3600"
     
     # 🔧 UNIQUEMENT les labels "service" (pas de "router" pour éviter les conflits)
     labels:
