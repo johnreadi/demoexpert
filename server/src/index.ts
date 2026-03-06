@@ -447,6 +447,29 @@ const DEFAULT_SETTINGS = {
   }
 };
 
+// Global error handlers to prevent silent crashes
+process.on('uncaughtException', (err) => {
+  console.error('UNCAUGHT EXCEPTION! Shutting down...', err);
+  process.exit(1); // Exit to let Docker restart the container
+});
+
+process.on('unhandledRejection', (err) => {
+  console.error('UNHANDLED REJECTION! Shutting down...', err);
+  process.exit(1); // Exit to let Docker restart the container
+});
+
+process.on('SIGTERM', async () => {
+  console.log('SIGTERM received. Shutting down gracefully');
+  await prisma.$disconnect();
+  process.exit(0);
+});
+
+process.on('SIGINT', async () => {
+  console.log('SIGINT received. Shutting down gracefully');
+  await prisma.$disconnect();
+  process.exit(0);
+});
+
 async function ensureDefaultSettings() {
   try {
     const s = await prisma.settings.findUnique({ where: { key: 'site_settings' } });

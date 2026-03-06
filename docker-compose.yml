@@ -21,7 +21,7 @@ services:
       STRICT_DB: "false"
     networks:
       - dokploy-overlay
-    command: sh -c "npx prisma migrate deploy || true && npx prisma generate || true && npm start"
+    command: sh -c "npx prisma migrate deploy || true && npx prisma generate || true && exec npm start"
     
     # 🔧 UNIQUEMENT les labels "service" (pas de "router" pour éviter les conflits)
     labels:
@@ -31,11 +31,11 @@ services:
       - "traefik.http.services.backend.loadbalancer.healthcheck.interval=30s"
     
     healthcheck:
-      test: ["CMD-SHELL", "node -e \"require('http').get('http://127.0.0.1:3000/healthz', (r) => process.exit(r.statusCode === 200 ? 0 : 1))\" || exit 1"]
-      interval: 20s
-      timeout: 10s
-      retries: 3
-      start_period: 180s
+      test: ["CMD-SHELL", "node -e \"require('http').get('http://127.0.0.1:3000/healthz', (res) => { if (res.statusCode !== 200) process.exit(1); }).on('error', (e) => { console.error(e); process.exit(1); })\""]
+      interval: 10s
+      timeout: 3s
+      retries: 20
+      start_period: 45s
 
   app:
     build:
