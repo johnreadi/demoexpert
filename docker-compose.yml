@@ -21,8 +21,9 @@ services:
       STRICT_DB: "false"
     networks:
       - dokploy-overlay
-    # Diagnostic command: verify build presence and start server
-    command: sh -c "echo 'Checking dist/:' && ls -la dist/ && npm start"
+    # Diagnostic command: verify build presence and start server.
+    # Keep container alive if npm start fails to allow log inspection.
+    command: sh -c "echo '--- CONTAINER START ---' && ls -la dist/ && (npm start || (echo '--- SERVER CRASHED ---' && sleep 3600))"
     
     # 🔧 UNIQUEMENT les labels "service" (pas de "router" pour éviter les conflits)
     labels:
