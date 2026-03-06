@@ -21,9 +21,8 @@ services:
       STRICT_DB: "false"
     networks:
       - dokploy-overlay
-    # Simplify command to ensure startup. Prisma deploy can be run manually or in a separate step if it fails.
-    # The || true ensures it doesn't block startup.
-    command: npm start
+    # Diagnostic command: verify build presence and start server
+    command: sh -c "echo 'Checking dist/:' && ls -la dist/ && npm start"
     
     # 🔧 UNIQUEMENT les labels "service" (pas de "router" pour éviter les conflits)
     labels:
@@ -33,7 +32,7 @@ services:
       - "traefik.http.services.backend.loadbalancer.healthcheck.interval=30s"
     
     healthcheck:
-      test: ["CMD-SHELL", "node healthcheck.js || exit 1"]
+      test: ["CMD-SHELL", "nc -z localhost 3000 || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 5
