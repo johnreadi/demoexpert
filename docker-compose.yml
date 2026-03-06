@@ -21,7 +21,7 @@ services:
       STRICT_DB: "false"
     networks:
       - dokploy-overlay
-    command: sh -c "npx prisma migrate deploy || true && npx prisma generate || true && exec npm start"
+    command: sh -c "npx prisma migrate deploy || true && exec npm start"
     
     # 🔧 UNIQUEMENT les labels "service" (pas de "router" pour éviter les conflits)
     labels:
@@ -35,7 +35,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-      start_period: 60s
+      start_period: 120s
 
   app:
     build:
