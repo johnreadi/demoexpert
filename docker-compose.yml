@@ -31,7 +31,7 @@ services:
       DATABASE_URL: ${DATABASE_URL:-postgresql://user:password@db:5432/demoexpert}
       SESSION_SECRET: ${SESSION_SECRET:-supersecret}
       # CORS: Allow frontend origin or * for development
-      CORS_ORIGIN: ${CORS_ORIGIN:-*}${CORS_ORIGIN:-https://app.demoexpert.fr}
+      CORS_ORIGIN: ${CORS_ORIGIN:-*}
       TRUST_PROXY: "1"
       COOKIE_SECURE: "true"
       COOKIE_SAME_SITE: "none"
@@ -52,7 +52,7 @@ services:
       ls -la dist/ && 
       (npm start || echo '--- NPM START FAILED ---'); 
        echo '--- STARTING FALLBACK SERVER ---'; 
-       node -e 'require(\"http\").createServer((req,res)=>{console.log(\"Fallback req: \"+req.url);const origin=req.headers.origin||\"*\";res.writeHead(503,{\"Content-Type\":\"application/json\",\"Access-Control-Allow-Origin\":origin,\"Access-Control-Allow-Credentials\":\"true\"});res.end(JSON.stringify({error:\"backend_crashed\",status:503,message:\"The backend server failed to start. Please check container logs.\"}));}).listen(process.env.PORT||3000,\"0.0.0.0\",()=>{console.log(\"Fallback server running on \"+(process.env.PORT||3000))});'; 
+       node -e 'const http=require("http");const port=process.env.PORT||3000;console.log("Starting fallback on "+port);http.createServer((req,res)=>{console.log("Fallback req: "+req.url);const origin=req.headers.origin||"*";res.writeHead(503,{"Content-Type":"application/json","Access-Control-Allow-Origin":origin,"Access-Control-Allow-Credentials":"true"});res.end(JSON.stringify({error:"backend_crashed",status:503,message:"The backend server failed to start. Please check container logs."}));}).listen(port,"0.0.0.0",()=>{console.log("Fallback server running on "+port)});' || echo '--- FALLBACK SERVER FAILED ---'; 
        sleep 3600"
     
     # 🔧 UNIQUEMENT les labels "service" (pas de "router" pour éviter les conflits)
