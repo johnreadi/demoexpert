@@ -315,10 +315,20 @@ process.on('SIGINT', async () => {
 });
 
 async function ensureDefaultSettings() {
+  const dbUrl = process.env.DATABASE_URL || '';
+  console.log('Database URL is set:', dbUrl ? 'Yes' : 'No');
+  if (dbUrl.includes('localhost')) {
+    console.warn('WARNING: DATABASE_URL points to localhost. This will fail inside Docker unless using host networking.');
+  }
+
   try {
     const s = await prisma.settings.findUnique({ where: { key: 'site_settings' } });
     if (!s) {
+      console.log('No settings found in database. Creating default settings...');
       await prisma.settings.create({ data: { key: 'site_settings', value: DEFAULT_SETTINGS } });
+      console.log('Default settings created successfully.');
+    } else {
+      console.log('Settings loaded successfully from database.');
     }
   } catch (e) {
     console.error('Failed to ensure default settings (database may not be available):', e);
@@ -1036,21 +1046,13 @@ app.post('/api/quote', async (req, res) => {
 
 // --- Admin messaging ---
 
-app.get('/api/admin/messages', async (_req, res) => {
-  try {
-    const messages = await prisma.adminMessage.findMany({ orderBy: { receivedAt: 'desc' } });
-    return res.json(messages);
-  } catch (error) {
-    console.error('Failed to fetch admin messages:', error);
-    return res.status(500).json({ error: 'failed_to_fetch_admin_messages' });
-  }
-});
+// Removed duplicate /api/admin/messages endpoint here
+
 
 // --- Site settings ---
 
-app.get('/api/settings', (_req, _res, next) => next());
+// Removed duplicate /api/settings stubs here
 
-app.put('/api/settings', (req, res, next) => next());
 
 app.get('/api/contact', async (_req, res) => {
   try {
@@ -1356,12 +1358,7 @@ app.get('/sitemap.xml', async (req, res) => {
   res.type('application/xml').send(xml);
 });
 
-ensureDefaultSettings().finally(() => {
-  app.listen(PORT, '0.0.0.0', () => {
-    console.log(`API listening on 0.0.0.0:${PORT} (${NODE_ENV})`);
-    console.log('Note: Some features may be limited without a database connection');
-  });
-});
+ensureDefaultSettings().catch(console.error);
 
 // --- Admin Messages API ---
 app.get('/api/admin/messages', async (req, res) => {

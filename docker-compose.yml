@@ -2,6 +2,23 @@
 version: '3.8'
 
 services:
+  db:
+    image: postgres:15-alpine
+    restart: always
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: demoexpert
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    networks:
+      - dokploy-overlay
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d demoexpert"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   backend:
     build:
       context: ./server
@@ -10,7 +27,7 @@ services:
     environment:
       NODE_ENV: production
       PORT: 3000
-      DATABASE_URL: ${DATABASE_URL}
+      DATABASE_URL: postgresql://user:password@db:5432/demoexpert
       SESSION_SECRET: ${SESSION_SECRET}
       CORS_ORIGIN: ${CORS_ORIGIN:-https://app.demoexpert.fr}
       TRUST_PROXY: "1"
@@ -19,11 +36,14 @@ services:
       DEFAULT_ADMIN_EMAIL: ${DEFAULT_ADMIN_EMAIL:-admin@demoexpert.fr}
       DEFAULT_ADMIN_PASSWORD: ${DEFAULT_ADMIN_PASSWORD:-demo76000}
       STRICT_DB: "false"
+    depends_on:
+      db:
+        condition: service_healthy
     networks:
       - dokploy-overlay
     # Diagnostic command: verify build presence and start server.
     # Keep container alive if npm start fails to allow log inspection.
-    command: sh -c "echo '--- CONTAINER START ---' && ls -la dist/ && (npm start || (echo '--- SERVER CRASHED ---' && sleep 3600))"
+    command: sh -c "echo '--- CONTAINER START ---' && npx prisma migrate deploy && ls -la dist/ && (npm start || (echo '--- SERVER CRASHED ---' && sleep 3600))"
     
     # 🔧 UNIQUEMENT les labels "service" (pas de "router" pour éviter les conflits)
     labels:
@@ -60,3 +80,6 @@ services:
 networks:
   dokploy-overlay:
     external: true
+
+volumes:
+  db_data:
