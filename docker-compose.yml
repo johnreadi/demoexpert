@@ -73,5 +73,3 @@ networks:
     external: true
   dokploy-network:
     external: true
-
-volumes:
