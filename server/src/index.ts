@@ -1,5 +1,16 @@
 import express from 'express';
 import session from 'express-session';
+
+console.log('--- STARTING SERVER ---');
+process.on('uncaughtException', (err) => {
+  console.error('UNCAUGHT EXCEPTION!', err);
+  process.exit(1);
+});
+process.on('unhandledRejection', (err) => {
+  console.error('UNHANDLED REJECTION!', err);
+  process.exit(1);
+});
+
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';

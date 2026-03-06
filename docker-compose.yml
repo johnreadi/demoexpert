@@ -23,7 +23,7 @@ services:
       - dokploy-overlay
     # Simplify command to ensure startup. Prisma deploy can be run manually or in a separate step if it fails.
     # The || true ensures it doesn't block startup.
-    command: sh -c "npx prisma migrate deploy || true && exec npm start"
+    command: npm start
     
     # 🔧 UNIQUEMENT les labels "service" (pas de "router" pour éviter les conflits)
     labels:
