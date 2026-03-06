@@ -1723,3 +1723,17 @@ app.get('/api/audit-logs', requireAdmin, async (_req, res) => {
 app.use('/api', (_req, res) => {
   res.status(404).json({ error: 'not_found' });
 });
+
+const server = app.listen(PORT, '0.0.0.0', () => {
+  console.log(`Server running in ${NODE_ENV} mode on port ${PORT}`);
+});
+
+// Graceful shutdown
+process.on('SIGTERM', () => {
+  console.log('SIGTERM signal received: closing HTTP server');
+  server.close(() => {
+    console.log('HTTP server closed');
+    prisma.$disconnect();
+  });
+});
+
