@@ -11,7 +11,7 @@ services:
       NODE_ENV: production
       PORT: 3000
       # Use provided DATABASE_URL from Dokploy environment
-      DATABASE_URL: ${DATABASE_URL}
+      DATABASE_URL: ${DATABASE_URL:-postgresql://dokploy:dokploy@demoexpert-expertdb-djopvt:5432/demoexpert}
       SESSION_SECRET: ${SESSION_SECRET:-supersecret}
       # CORS: Allow frontend origin or * for development
       CORS_ORIGIN: ${CORS_ORIGIN:-*}
@@ -29,9 +29,10 @@ services:
     # Fallback server prevents 502 Bad Gateway and allows error reporting.
     command: >
       sh -c "echo '--- CONTAINER START ---' && 
-      (npx prisma migrate deploy || echo '--- MIGRATION FAILED (CONTINUING) ---') && 
+      echo '--- DB HOST: demoexpert-expertdb-djopvt (fallback) ---' &&
+      (timeout 15s npx prisma migrate deploy || echo '--- MIGRATION SKIPPED/FAILED (TIMEOUT) ---') && 
       ls -la dist/ && 
-      (npm start || echo '--- NPM START FAILED ---'); 
+      (timeout 30s npm start || echo '--- NPM START FAILED/TIMEOUT ---'); 
        echo '--- STARTING FALLBACK SERVER ---'; 
        node -e 'const http=require("http");const port=process.env.PORT||3000;console.log("Starting fallback on "+port);http.createServer((req,res)=>{console.log("Fallback req: "+req.url);const origin=req.headers.origin||"*";res.writeHead(503,{"Content-Type":"application/json","Access-Control-Allow-Origin":origin,"Access-Control-Allow-Credentials":"true"});res.end(JSON.stringify({error:"backend_crashed",status:503,message:"The backend server failed to start. Please check container logs."}));}).listen(port,"0.0.0.0",()=>{console.log("Fallback server running on "+port)});' || echo '--- FALLBACK SERVER FAILED ---'; 
        sleep 3600"
