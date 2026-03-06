@@ -48,17 +48,7 @@ app.set('trust proxy', TRUST_PROXY);
 
 // CORS configuration - MOVED UP before other middleware
 app.use(cors({
-  origin: (origin, callback) => {
-    // Allow requests with no origin (like mobile apps or curl requests)
-    if (!origin) return callback(null, true);
-    
-    if (ALLOWED_ORIGINS.indexOf(origin) !== -1 || !IS_PROD) {
-      callback(null, true);
-    } else {
-      console.warn(`Blocked CORS request from origin: ${origin}`);
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
+  origin: true, // Allow ALL origins (reflects request origin) to eliminate CORS issues
   credentials: true,
 }));
 
@@ -88,10 +78,6 @@ app.use('/api', (_req, res, next) => {
   res.set('Vary', 'Origin');
   next();
 });
-app.use(cors({
-  origin: CORS_ORIGIN,
-  credentials: true,
-}));
 
 app.use(session({
   secret: SESSION_SECRET,
