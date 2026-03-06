@@ -8,8 +8,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY package.json package-lock.json* yarn.lock* pnpm-lock.yaml* ./
 RUN npm install --no-fund --no-audit
 COPY tsconfig.json ./
-COPY start.sh fallback.js ./
-RUN chmod +x start.sh
+COPY start.js fallback.js ./
 COPY prisma ./prisma
 COPY src ./src
 RUN npx prisma generate && npm run build
@@ -27,6 +26,7 @@ COPY --from=build /app/dist ./dist
 COPY --from=build /app/prisma ./prisma
 COPY --from=build /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=build /app/node_modules/@prisma ./node_modules/@prisma
+COPY start.js fallback.js ./
 COPY healthcheck.js ./healthcheck.js
 EXPOSE 8080
 CMD ["sh", "-c", "if [ \"${RUN_SEED:-false}\" = \"true\" ]; then node dist/seed.js; fi; node dist/index.js"]
