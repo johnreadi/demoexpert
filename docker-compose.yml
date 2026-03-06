@@ -27,7 +27,7 @@ services:
     # Diagnostic command: verify build presence and start server.
     # Keep container alive if npm start fails to allow log inspection.
     # Fallback server prevents 502 Bad Gateway and allows error reporting.
-    command: ["./start.sh"]
+    command: ["node", "start.js"]
     
     labels:
       - "traefik.enable=true"
