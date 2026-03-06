@@ -6,7 +6,7 @@ import morgan from 'morgan';
 import cookieParser from 'cookie-parser';
 import bcrypt from 'bcryptjs';
 import nodemailer from 'nodemailer';
-const { prisma } = require('./prisma.js');
+import { prisma } from './prisma';
 
 const app = express();
 
@@ -632,6 +632,7 @@ app.get('/api/products', async (req, res) => {
     const take = limit ? Number(limit) : undefined;
 
     if (!process.env.DATABASE_URL) {
+      console.warn('Warning: DATABASE_URL not set in environment');
       return res.status(503).json({ error: 'database_not_configured' });
     }
 
@@ -646,7 +647,8 @@ app.get('/api/products', async (req, res) => {
     });
     res.json(products);
   } catch (e) {
-    res.json([]);
+    console.error('Error fetching products:', e);
+    res.status(500).json({ error: 'failed_to_fetch_products' });
   }
 });
 

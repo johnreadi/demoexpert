@@ -91,8 +91,9 @@ const FeaturedProducts = () => {
             try {
                 const featuredProducts = await api.getProducts({ limit: 6 });
                 setProducts(featuredProducts);
-            } catch (err) {
-                setError("Impossible de charger les produits à la une. Veuillez réessayer plus tard.");
+            } catch (err: any) {
+                console.error("Error fetching products:", err);
+                setError(`Impossible de charger les produits à la une. ${err.message || err.status || ''}`);
             } finally {
                 setIsLoading(false);
             }
