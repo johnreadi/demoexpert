@@ -27,15 +27,7 @@ services:
     # Diagnostic command: verify build presence and start server.
     # Keep container alive if npm start fails to allow log inspection.
     # Fallback server prevents 502 Bad Gateway and allows error reporting.
-    command: >
-      sh -c "echo '--- CONTAINER START ---' && 
-      echo '--- DB HOST: demoexpert-expertdb-djopvt (fallback) ---' &&
-      (timeout 15s npx prisma migrate deploy || echo '--- MIGRATION SKIPPED/FAILED (TIMEOUT) ---') && 
-      ls -la dist/ && 
-      (timeout 30s npm start || echo '--- NPM START FAILED/TIMEOUT ---'); 
-       echo '--- STARTING FALLBACK SERVER ---'; 
-       node -e 'const http=require("http");const port=process.env.PORT||3000;console.log("Starting fallback on "+port);http.createServer((req,res)=>{console.log("Fallback req: "+req.url);const origin=req.headers.origin||"*";res.writeHead(503,{"Content-Type":"application/json","Access-Control-Allow-Origin":origin,"Access-Control-Allow-Credentials":"true"});res.end(JSON.stringify({error:"backend_crashed",status:503,message:"The backend server failed to start. Please check container logs."}));}).listen(port,"0.0.0.0",()=>{console.log("Fallback server running on "+port)});' || echo '--- FALLBACK SERVER FAILED ---'; 
-       sleep 3600"
+    command: ["./start.sh"]
     
     labels:
       - "traefik.enable=true"
