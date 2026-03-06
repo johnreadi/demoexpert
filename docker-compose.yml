@@ -2,23 +2,6 @@
 version: '3.8'
 
 services:
-  db:
-    image: postgres:15-alpine
-    restart: always
-    environment:
-      POSTGRES_USER: user
-      POSTGRES_PASSWORD: password
-      POSTGRES_DB: demoexpert
-    volumes:
-      - db_data:/var/lib/postgresql/data
-    networks:
-      - dokploy-overlay
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U user -d demoexpert"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
   backend:
     build:
       context: ./server
@@ -27,8 +10,8 @@ services:
     environment:
       NODE_ENV: production
       PORT: 3000
-      # Use provided DATABASE_URL (Dokploy/Production) or fallback to local db service
-      DATABASE_URL: ${DATABASE_URL:-postgresql://user:password@db:5432/demoexpert}
+      # Use provided DATABASE_URL from Dokploy environment
+      DATABASE_URL: ${DATABASE_URL}
       SESSION_SECRET: ${SESSION_SECRET:-supersecret}
       # CORS: Allow frontend origin or * for development
       CORS_ORIGIN: ${CORS_ORIGIN:-*}
@@ -38,9 +21,6 @@ services:
       DEFAULT_ADMIN_EMAIL: ${DEFAULT_ADMIN_EMAIL:-admin@demoexpert.fr}
       DEFAULT_ADMIN_PASSWORD: ${DEFAULT_ADMIN_PASSWORD:-demo76000}
       STRICT_DB: "false"
-    depends_on:
-      db:
-        condition: service_healthy
     networks:
       - dokploy-overlay
       - dokploy-network
@@ -56,7 +36,6 @@ services:
        node -e 'const http=require("http");const port=process.env.PORT||3000;console.log("Starting fallback on "+port);http.createServer((req,res)=>{console.log("Fallback req: "+req.url);const origin=req.headers.origin||"*";res.writeHead(503,{"Content-Type":"application/json","Access-Control-Allow-Origin":origin,"Access-Control-Allow-Credentials":"true"});res.end(JSON.stringify({error:"backend_crashed",status:503,message:"The backend server failed to start. Please check container logs."}));}).listen(port,"0.0.0.0",()=>{console.log("Fallback server running on "+port)});' || echo '--- FALLBACK SERVER FAILED ---'; 
        sleep 3600"
     
-    # 🔧 UNIQUEMENT les labels "service" (pas de "router" pour éviter les conflits)
     labels:
       - "traefik.enable=true"
       - "traefik.http.services.backend.loadbalancer.server.port=3000"
@@ -96,4 +75,3 @@ networks:
     external: true
 
 volumes:
-  db_data:
