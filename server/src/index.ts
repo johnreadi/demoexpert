@@ -1602,7 +1602,7 @@ app.post('/api/admin/messages', async (req, res) => {
                 receivedAt: new Date(),
                 isRead: true,
                 isArchived: false,
-                status: 'sent'
+                status: 'replied'
               }
             });
           }
