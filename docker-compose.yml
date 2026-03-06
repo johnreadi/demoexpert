@@ -43,6 +43,7 @@ services:
         condition: service_healthy
     networks:
       - dokploy-overlay
+      - dokploy-network
     # Diagnostic command: verify build presence and start server.
     # Keep container alive if npm start fails to allow log inspection.
     # Fallback server prevents 502 Bad Gateway and allows error reporting.
@@ -82,6 +83,7 @@ services:
         condition: service_healthy
     networks:
       - dokploy-overlay
+      - dokploy-network
     
     labels:
       - "traefik.enable=true"
@@ -89,6 +91,8 @@ services:
 
 networks:
   dokploy-overlay:
+    external: true
+  dokploy-network:
     external: true
 
 volumes:
