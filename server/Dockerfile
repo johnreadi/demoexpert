@@ -25,5 +25,6 @@ COPY --from=build /app/dist ./dist
 COPY --from=build /app/prisma ./prisma
 COPY --from=build /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=build /app/node_modules/@prisma ./node_modules/@prisma
+COPY healthcheck.js ./healthcheck.js
 EXPOSE 8080
 CMD ["sh", "-c", "if [ \"${RUN_SEED:-false}\" = \"true\" ]; then node dist/seed.js; fi; node dist/index.js"]
