@@ -39,10 +39,11 @@ else
   npx --yes prisma migrate deploy || echo "⚠️ Migration failed (npx), skipping..."
 fi
 
-# 2. Generate Client (Should be done in build, but safe to redo)
-# echo "Generating Prisma Client..."
-# npx prisma generate || echo "⚠️ Generation failed, skipping..."
+# 3. Seed Database (Optional, for local dev or fresh install)
+if [ "$SEED_DB" = "true" ]; then
+  echo "🌱 Seeding database..."
+  npm run seed || echo "⚠️ Seeding failed"
+fi
 
-# 3. Start Application
-echo "Starting Node.js application..."
+# 4. Start Application
 exec "$@"
