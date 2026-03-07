@@ -20,7 +20,16 @@ fi
 
 echo "DATABASE_URL is set (masked): $(echo $DATABASE_URL | sed 's/:[^:@]*@/:****@/')"
 
-# 1. Run Migrations (Safe to run on every startup, idempotent)
+# 1. Run Diagnostic Connection Test (Added for debugging)
+echo "--- 🔍 DATABASE DIAGNOSTIC START ---"
+if [ -f "./test-db-connection.js" ]; then
+  node ./test-db-connection.js || echo "Diagnostic failed (non-critical)"
+else
+  echo "⚠️ Diagnostic script not found!"
+fi
+echo "--- 🔍 DATABASE DIAGNOSTIC END ---"
+
+# 2. Run Migrations (Safe to run on every startup, idempotent)
 echo "Running Prisma migrations..."
 # Use --yes to skip interactive prompts if npx is used
 # Or if prisma is installed globally, use it directly
