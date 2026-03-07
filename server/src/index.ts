@@ -122,7 +122,21 @@ app.use('/api', (_req, res, next) => {
   next();
 });
 app.use(cors({
-  origin: CORS_ORIGIN,
+  origin: (origin, callback) => {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    // Allow all origins in development or if CORS_ORIGIN is set to '*'
+    if (NODE_ENV !== 'production' || CORS_ORIGIN === '*') return callback(null, true);
+
+    // Check if origin matches allowed origin
+    if (origin === CORS_ORIGIN || origin.startsWith('https://app.demoexpert.fr') || origin.startsWith('https://demoexpert.fr')) {
+      return callback(null, true);
+    } else {
+      console.warn(`Blocked by CORS: ${origin}`);
+      return callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true,
 }));
 
