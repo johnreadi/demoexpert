@@ -1,0 +1,8 @@
+# Force Unix line endings for shell scripts and Docker files
+*.sh text eol=lf
+*.ts text eol=lf
+*.js text eol=lf
+*.json text eol=lf
+Dockerfile text eol=lf
+docker-compose.yml text eol=lf
+.gitignore text eol=lf
