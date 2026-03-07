@@ -1549,11 +1549,16 @@ app.get('/sitemap.xml', async (req, res) => {
   res.type('application/xml').send(xml);
 });
 
-ensureDefaultSettings().finally(() => {
-  app.listen(PORT, '0.0.0.0', () => {
-    console.log(`API listening on 0.0.0.0:${PORT} (${NODE_ENV})`);
-    console.log('Note: Some features may be limited without a database connection');
-  });
+// --- 🔧 FIX: Start Server Immediately ---
+// Do not wait for DB connection or settings.
+// This prevents 502 Bad Gateway errors if DB is slow.
+ensureDefaultSettings().catch(err => {
+  console.error('Failed to ensure default settings on startup:', err);
+});
+
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`API listening on 0.0.0.0:${PORT} (${NODE_ENV})`);
+  console.log('Note: Some features may be limited without a database connection');
 });
 
 // --- Admin Messages API ---
