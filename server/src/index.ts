@@ -7,19 +7,19 @@ import cookieParser from 'cookie-parser';
 import bcrypt from 'bcryptjs';
 import nodemailer from 'nodemailer';
 
-// 🔧 FIX DISABLED: We suspect the data might actually be in the 'postgres' database (default).
-// if (process.env.DATABASE_URL) {
-//   try {
-//     const url = new URL(process.env.DATABASE_URL);
-//     if (url.pathname === '/postgres') {
-//        console.log('⚠️ Fixing DATABASE_URL: Changing target DB from "postgres" to "demoexpert-expertdb-djopvt"');
-//        url.pathname = '/demoexpert-expertdb-djopvt';
-//        process.env.DATABASE_URL = url.toString();
-//     }
-//   } catch (e) {
-//     console.error('Failed to parse/fix DATABASE_URL:', e);
-//   }
-// }
+// 🔧 FIX ENABLED: We suspect the data is in 'demoexpert-expertdb-djopvt' but URL might be 'postgres'.
+if (process.env.DATABASE_URL) {
+  try {
+    const url = new URL(process.env.DATABASE_URL);
+    if (url.pathname === '/postgres') {
+       console.log('⚠️ Fixing DATABASE_URL: Changing target DB from "postgres" to "demoexpert-expertdb-djopvt"');
+       url.pathname = '/demoexpert-expertdb-djopvt';
+       process.env.DATABASE_URL = url.toString();
+    }
+  } catch (e) {
+    console.error('Failed to parse/fix DATABASE_URL:', e);
+  }
+}
 
 const { prisma } = require('./prisma.js');
 

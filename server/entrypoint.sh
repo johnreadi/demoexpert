@@ -3,22 +3,20 @@ set -e
 
 echo "--- 🚀 STARTUP SCRIPT (entrypoint.sh) ---"
 
-# 🔧 FIX DISABLED: We suspect the data might actually be in the 'postgres' database (default).
-# If we force change to 'demoexpert-expertdb-djopvt', we might be connecting to an empty DB.
-# Let's trust the DATABASE_URL provided by Dokploy for now.
-# if [ -n "$DATABASE_URL" ]; then
-#   echo "Checking DATABASE_URL..."
-#   case "$DATABASE_URL" in
-#     */postgres)
-#       echo "⚠️ Fixing DATABASE_URL: Changing target DB from 'postgres' to 'demoexpert-expertdb-djopvt'"
-#       export DATABASE_URL="${DATABASE_URL%/postgres}/demoexpert-expertdb-djopvt"
-#       ;;
-#     */postgres?*)
-#       echo "⚠️ Fixing DATABASE_URL (with query params): Changing target DB from 'postgres' to 'demoexpert-expertdb-djopvt'"
-#       export DATABASE_URL=$(echo "$DATABASE_URL" | sed 's|/postgres|/demoexpert-expertdb-djopvt|')
-#       ;;
-#   esac
-# fi
+# 🔧 FIX ENABLED: Ensure we connect to the correct database name
+if [ -n "$DATABASE_URL" ]; then
+  echo "Checking DATABASE_URL..."
+  case "$DATABASE_URL" in
+    */postgres)
+      echo "⚠️ Fixing DATABASE_URL: Changing target DB from 'postgres' to 'demoexpert-expertdb-djopvt'"
+      export DATABASE_URL="${DATABASE_URL%/postgres}/demoexpert-expertdb-djopvt"
+      ;;
+    */postgres?*)
+      echo "⚠️ Fixing DATABASE_URL (with query params): Changing target DB from 'postgres' to 'demoexpert-expertdb-djopvt'"
+      export DATABASE_URL=$(echo "$DATABASE_URL" | sed 's|/postgres|/demoexpert-expertdb-djopvt|')
+      ;;
+  esac
+fi
 
 echo "DATABASE_URL is set (masked): $(echo $DATABASE_URL | sed 's/:[^:@]*@/:****@/')"
 
