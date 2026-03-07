@@ -6,6 +6,22 @@ import morgan from 'morgan';
 import cookieParser from 'cookie-parser';
 import bcrypt from 'bcryptjs';
 import nodemailer from 'nodemailer';
+
+// 🔧 FIX: Dokploy injects DATABASE_URL with default 'postgres' DB name.
+// We must correct it to 'demoexpert-expertdb-djopvt' BEFORE initializing Prisma.
+if (process.env.DATABASE_URL) {
+  try {
+    const url = new URL(process.env.DATABASE_URL);
+    if (url.pathname === '/postgres') {
+       console.log('⚠️ Fixing DATABASE_URL: Changing target DB from "postgres" to "demoexpert-expertdb-djopvt"');
+       url.pathname = '/demoexpert-expertdb-djopvt';
+       process.env.DATABASE_URL = url.toString();
+    }
+  } catch (e) {
+    console.error('Failed to parse/fix DATABASE_URL:', e);
+  }
+}
+
 const { prisma } = require('./prisma.js');
 
 // --- DIAGNOSTIC START ---
