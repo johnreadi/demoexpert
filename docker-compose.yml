@@ -22,7 +22,7 @@ services:
       STRICT_DB: "false"
     networks:
       - dokploy-overlay
-    command: sh -c "npx prisma migrate deploy || true && npx prisma generate || true && npm start"
+    command: node dist/index.js
     
     # 🔧 UNIQUEMENT les labels "service" (pas de "router" pour éviter les conflits)
     labels:
