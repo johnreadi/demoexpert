@@ -22,6 +22,7 @@ services:
       STRICT_DB: "false"
     networks:
       - dokploy-overlay
+      - dokploy-network
     command: sh -c "npx prisma migrate deploy || true && npx prisma generate || true && npm start"
     
     # 🔧 UNIQUEMENT les labels "service" (pas de "router" pour éviter les conflits)
@@ -58,4 +59,6 @@ services:
 
 networks:
   dokploy-overlay:
+    external: true
+  dokploy-network:
     external: true

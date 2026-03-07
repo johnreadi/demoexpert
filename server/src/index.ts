@@ -8,6 +8,52 @@ import bcrypt from 'bcryptjs';
 import nodemailer from 'nodemailer';
 const { prisma } = require('./prisma.js');
 
+// --- DIAGNOSTIC START ---
+(async () => {
+  console.log('--- STARTUP DIAGNOSTICS ---');
+  console.log('NODE_ENV:', process.env.NODE_ENV);
+  console.log('Hostname:', process.env.HOSTNAME);
+  
+  const dbUrl = process.env.DATABASE_URL || '';
+  if (dbUrl) {
+    const masked = dbUrl.replace(/:([^:@]+)@/, ':****@');
+    console.log('DATABASE_URL (masked):', masked);
+    
+    // Parse URL to debug parts
+     try {
+       const url = new URL(dbUrl);
+       console.log('DB Host:', url.hostname);
+       console.log('DB Port:', url.port);
+       console.log('DB Name:', url.pathname);
+       
+       // DNS Lookup
+       try {
+         const dns = require('dns').promises;
+         const lookup = await dns.lookup(url.hostname);
+         console.log(`DNS Lookup for ${url.hostname}:`, lookup);
+       } catch (dnsErr: any) {
+         console.error(`DNS Lookup FAILED for ${url.hostname}:`, dnsErr.message);
+       }
+     } catch (e) {
+       console.log('Invalid DATABASE_URL format');
+     }
+
+    // Attempt direct connection
+    try {
+      console.log('Testing DB connection...');
+      await prisma.$connect();
+      console.log('✅ DB Connection SUCCESS');
+      await prisma.$disconnect();
+    } catch (e: any) {
+      console.error('❌ DB Connection FAILED:', e.message);
+    }
+  } else {
+    console.error('❌ DATABASE_URL is NOT set');
+  }
+  console.log('--- END DIAGNOSTICS ---');
+})();
+// --- DIAGNOSTIC END ---
+
 const app = express();
 
 const PORT = Number(process.env.PORT || 8080);
