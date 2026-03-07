@@ -27,9 +27,13 @@ echo "DATABASE_URL is set (masked): $(echo $DATABASE_URL | sed 's/:[^:@]*@/:****
 
 # 1. Run Migrations (Safe to run on every startup, idempotent)
 echo "Running Prisma migrations..."
-# Use || true to prevent startup failure if DB is temporarily unreachable
-# (The app will retry connection in background)
-npx prisma migrate deploy || echo "⚠️ Migration failed, skipping..."
+# Use --yes to skip interactive prompts if npx is used
+# Or if prisma is installed globally, use it directly
+if command -v prisma >/dev/null 2>&1; then
+  prisma migrate deploy || echo "⚠️ Migration failed (prisma global), skipping..."
+else
+  npx --yes prisma migrate deploy || echo "⚠️ Migration failed (npx), skipping..."
+fi
 
 # 2. Generate Client (Should be done in build, but safe to redo)
 # echo "Generating Prisma Client..."
