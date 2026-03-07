@@ -103,7 +103,7 @@ app.use(helmet({
       styleSrc: ["'self'", "https:", "'unsafe-inline'"],
       fontSrc: ["'self'", "https:", "data:"],
       imgSrc: ["'self'", "data:", "https:"],
-      connectSrc: ["'self'", CORS_ORIGIN]
+      connectSrc: ["'self'", CORS_ORIGIN, "https://app.demoexpert.fr", "https://demoexpert.fr"]
     }
   }
 }));
