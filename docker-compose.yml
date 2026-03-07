@@ -27,6 +27,7 @@ services:
     # 🔧 UNIQUEMENT les labels "service" (pas de "router" pour éviter les conflits)
     labels:
       - "traefik.enable=true"
+      - "traefik.docker.network=dokploy-overlay"
       - "traefik.http.services.backend.loadbalancer.server.port=3000"
       - "traefik.http.services.backend.loadbalancer.healthcheck.path=/healthz"
       - "traefik.http.services.backend.loadbalancer.healthcheck.interval=30s"
@@ -54,6 +55,7 @@ services:
     
     labels:
       - "traefik.enable=true"
+      - "traefik.docker.network=dokploy-overlay"
       - "traefik.http.services.app.loadbalancer.server.port=80"
 
 networks:
