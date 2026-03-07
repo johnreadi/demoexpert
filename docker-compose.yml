@@ -27,8 +27,8 @@ services:
     # 🔧 UNIQUEMENT les labels "service" (pas de "router" pour éviter les conflits)
     labels:
       - "traefik.enable=true"
-      # FORCE TRAEFIK TO USE dokploy-overlay (shared with DB)
-      - "traefik.docker.network=dokploy-overlay"
+      # Use dokploy-network for Traefik ingress (standard)
+      - "traefik.docker.network=dokploy-network"
       - "traefik.http.services.backend.loadbalancer.server.port=3000"
       - "traefik.http.services.backend.loadbalancer.healthcheck.path=/healthz"
       - "traefik.http.services.backend.loadbalancer.healthcheck.interval=30s"
@@ -56,8 +56,8 @@ services:
     
     labels:
       - "traefik.enable=true"
-      # FORCE TRAEFIK TO USE dokploy-overlay
-      - "traefik.docker.network=dokploy-overlay"
+      # Use dokploy-network for Traefik ingress (standard)
+      - "traefik.docker.network=dokploy-network"
       - "traefik.http.services.app.loadbalancer.server.port=80"
 
 networks:
