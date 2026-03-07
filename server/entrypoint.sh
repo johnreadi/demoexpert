@@ -3,25 +3,22 @@ set -e
 
 echo "--- 🚀 STARTUP SCRIPT (entrypoint.sh) ---"
 
-# 🔧 FIX: Dokploy injects DATABASE_URL with default 'postgres' DB name.
-# We must correct it to 'demoexpert-expertdb-djopvt' BEFORE initializing Prisma migrations.
-if [ -n "$DATABASE_URL" ]; then
-  echo "Checking DATABASE_URL..."
-  # Use shell parameter expansion to replace /postgres with /demoexpert-expertdb-djopvt
-  # Note: This is a simple string replacement.
-  # If the URL ends with /postgres, replace it.
-  case "$DATABASE_URL" in
-    */postgres)
-      echo "⚠️ Fixing DATABASE_URL: Changing target DB from 'postgres' to 'demoexpert-expertdb-djopvt'"
-      export DATABASE_URL="${DATABASE_URL%/postgres}/demoexpert-expertdb-djopvt"
-      ;;
-    */postgres?*)
-      # Handle cases with query parameters
-      echo "⚠️ Fixing DATABASE_URL (with query params): Changing target DB from 'postgres' to 'demoexpert-expertdb-djopvt'"
-      export DATABASE_URL=$(echo "$DATABASE_URL" | sed 's|/postgres|/demoexpert-expertdb-djopvt|')
-      ;;
-  esac
-fi
+# 🔧 FIX DISABLED: We suspect the data might actually be in the 'postgres' database (default).
+# If we force change to 'demoexpert-expertdb-djopvt', we might be connecting to an empty DB.
+# Let's trust the DATABASE_URL provided by Dokploy for now.
+# if [ -n "$DATABASE_URL" ]; then
+#   echo "Checking DATABASE_URL..."
+#   case "$DATABASE_URL" in
+#     */postgres)
+#       echo "⚠️ Fixing DATABASE_URL: Changing target DB from 'postgres' to 'demoexpert-expertdb-djopvt'"
+#       export DATABASE_URL="${DATABASE_URL%/postgres}/demoexpert-expertdb-djopvt"
+#       ;;
+#     */postgres?*)
+#       echo "⚠️ Fixing DATABASE_URL (with query params): Changing target DB from 'postgres' to 'demoexpert-expertdb-djopvt'"
+#       export DATABASE_URL=$(echo "$DATABASE_URL" | sed 's|/postgres|/demoexpert-expertdb-djopvt|')
+#       ;;
+#   esac
+# fi
 
 echo "DATABASE_URL is set (masked): $(echo $DATABASE_URL | sed 's/:[^:@]*@/:****@/')"
 
