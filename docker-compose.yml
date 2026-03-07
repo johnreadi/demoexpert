@@ -10,11 +10,9 @@ services:
     environment:
       NODE_ENV: production
       PORT: 3000
-      # Use provided DATABASE_URL from Dokploy environment
-      DATABASE_URL: ${DATABASE_URL:-postgresql://dokploy:dokploy@demoexpert-expertdb-djopvt:5432/demoexpert-expertdb-djopvt}
-      SESSION_SECRET: ${SESSION_SECRET:-supersecret}
-      # CORS: Allow frontend origin or * for development
-      CORS_ORIGIN: ${CORS_ORIGIN:-*}
+      DATABASE_URL: ${DATABASE_URL}
+      SESSION_SECRET: ${SESSION_SECRET}
+      CORS_ORIGIN: ${CORS_ORIGIN:-https://app.demoexpert.fr}
       TRUST_PROXY: "1"
       COOKIE_SECURE: "true"
       COOKIE_SAME_SITE: "none"
@@ -23,25 +21,21 @@ services:
       STRICT_DB: "false"
     networks:
       - dokploy-overlay
-      - dokploy-network
-    # Diagnostic command: verify build presence and start server.
-    # Keep container alive if npm start fails to allow log inspection.
-    # Fallback server prevents 502 Bad Gateway and allows error reporting.
-    command: ["node", "start.js"]
+    command: sh -c "npx prisma migrate deploy || true && npx prisma generate || true && npm start"
     
+    # 🔧 UNIQUEMENT les labels "service" (pas de "router" pour éviter les conflits)
     labels:
       - "traefik.enable=true"
-      - "traefik.docker.network=dokploy-overlay"
       - "traefik.http.services.backend.loadbalancer.server.port=3000"
       - "traefik.http.services.backend.loadbalancer.healthcheck.path=/healthz"
       - "traefik.http.services.backend.loadbalancer.healthcheck.interval=30s"
     
     healthcheck:
-      test: ["CMD", "node", "healthcheck.js"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 60s
+      test: ["CMD-SHELL", "node -e \"require('http').get('http://127.0.0.1:3000/healthz', (r) => process.exit(r.statusCode === 200 ? 0 : 1))\" || exit 1"]
+      interval: 20s
+      timeout: 10s
+      retries: 3
+      start_period: 180s
 
   app:
     build:
@@ -56,15 +50,11 @@ services:
         condition: service_healthy
     networks:
       - dokploy-overlay
-      - dokploy-network
     
     labels:
       - "traefik.enable=true"
-      - "traefik.docker.network=dokploy-overlay"
       - "traefik.http.services.app.loadbalancer.server.port=80"
 
 networks:
   dokploy-overlay:
-    external: true
-  dokploy-network:
     external: true

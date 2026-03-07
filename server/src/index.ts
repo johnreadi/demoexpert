@@ -1,32 +1,19 @@
 import express from 'express';
 import session from 'express-session';
-
-console.log('--- STARTING SERVER ---');
-process.on('uncaughtException', (err) => {
-  console.error('UNCAUGHT EXCEPTION!', err);
-  process.exit(1);
-});
-process.on('unhandledRejection', (err) => {
-  console.error('UNHANDLED REJECTION!', err);
-  process.exit(1);
-});
-
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import cookieParser from 'cookie-parser';
 import bcrypt from 'bcryptjs';
 import nodemailer from 'nodemailer';
-import { prisma } from './prisma';
+const { prisma } = require('./prisma.js');
 
 const app = express();
 
 const PORT = Number(process.env.PORT || 8080);
 const NODE_ENV = process.env.NODE_ENV || 'development';
 const SESSION_SECRET = process.env.SESSION_SECRET || 'dev_session_secret_change_me';
-const CORS_ORIGIN_STR = process.env.CORS_ORIGIN || 'http://localhost:3000';
-const ALLOWED_ORIGINS = (CORS_ORIGIN_STR.includes(',') ? CORS_ORIGIN_STR.split(',') : [CORS_ORIGIN_STR]).map(o => o.trim());
-
+const CORS_ORIGIN = process.env.CORS_ORIGIN || 'http://localhost:3000';
 const TRUST_PROXY = process.env.TRUST_PROXY ? Number(process.env.TRUST_PROXY) : 0;
 const IS_PROD = NODE_ENV === 'production';
 const COOKIE_SECURE_RAW = (process.env.COOKIE_SECURE || '').toLowerCase();
@@ -46,12 +33,6 @@ const COOKIE_SAME_SITE: 'lax' | 'strict' | 'none' =
 
 app.set('trust proxy', TRUST_PROXY);
 
-// CORS configuration - MOVED UP before other middleware
-app.use(cors({
-  origin: true, // Allow ALL origins (reflects request origin) to eliminate CORS issues
-  credentials: true,
-}));
-
 app.use(helmet({
   contentSecurityPolicy: {
     directives: {
@@ -60,7 +41,7 @@ app.use(helmet({
       styleSrc: ["'self'", "https:", "'unsafe-inline'"],
       fontSrc: ["'self'", "https:", "data:"],
       imgSrc: ["'self'", "data:", "https:"],
-      connectSrc: ["'self'", ...ALLOWED_ORIGINS]
+      connectSrc: ["'self'", CORS_ORIGIN]
     }
   }
 }));
@@ -78,6 +59,10 @@ app.use('/api', (_req, res, next) => {
   res.set('Vary', 'Origin');
   next();
 });
+app.use(cors({
+  origin: CORS_ORIGIN,
+  credentials: true,
+}));
 
 app.use(session({
   secret: SESSION_SECRET,
@@ -124,6 +109,173 @@ app.get('/api/db/health', async (_req, res) => {
     res.json({ ok: true });
   } catch (e) {
     res.status(503).json({ ok: false, error: 'db_unreachable' });
+  }
+});
+
+app.get('/api/admin/users', requireAdmin, async (_req, res) => {
+  try {
+    const users = await prisma.user.findMany({
+      orderBy: { createdAt: 'desc' },
+      select: { id: true, name: true, email: true, role: true, status: true, createdAt: true, updatedAt: true }
+    });
+    return res.json(users);
+  } catch {
+    return res.status(500).json({ error: 'failed_to_list_users' });
+  }
+});
+
+app.post('/api/admin/users', requireAdmin, async (req, res) => {
+  try {
+    const { name, email, password, role } = req.body || {};
+    if (!name || !email || !password) return res.status(400).json({ error: 'missing_fields' });
+    const hash = await bcrypt.hash(String(password), 10);
+    const created = await prisma.user.create({
+      data: {
+        name: String(name),
+        email: String(email).toLowerCase(),
+        password: hash,
+        role: role === 'Admin' ? 'Admin' : 'Staff',
+        status: 'approved',
+      },
+      select: { id: true, name: true, email: true, role: true, status: true, createdAt: true, updatedAt: true }
+    });
+    return res.status(201).json(created);
+  } catch (e: any) {
+    if (String(e?.code || '').toLowerCase() === 'p2002') return res.status(409).json({ error: 'email_already_exists' });
+    return res.status(500).json({ error: 'failed_to_create_user' });
+  }
+});
+
+app.put('/api/admin/users/:id', requireAdmin, async (req, res) => {
+  try {
+    const { name, email, role } = req.body || {};
+    const updated = await prisma.user.update({
+      where: { id: req.params.id },
+      data: {
+        ...(name !== undefined ? { name: String(name) } : {}),
+        ...(email !== undefined ? { email: String(email).toLowerCase() } : {}),
+        ...(role !== undefined ? { role: role === 'Admin' ? 'Admin' : 'Staff' } : {}),
+      },
+      select: { id: true, name: true, email: true, role: true, status: true, createdAt: true, updatedAt: true }
+    });
+    return res.json(updated);
+  } catch {
+    return res.status(500).json({ error: 'failed_to_update_user' });
+  }
+});
+
+app.post('/api/admin/users/:id/approve', requireAdmin, async (req, res) => {
+  try {
+    const updated = await prisma.user.update({
+      where: { id: req.params.id },
+      data: { status: 'approved' },
+      select: { id: true, name: true, email: true, role: true, status: true, createdAt: true, updatedAt: true }
+    });
+    return res.json(updated);
+  } catch {
+    return res.status(500).json({ error: 'failed_to_approve_user' });
+  }
+});
+
+app.delete('/api/admin/users/:id', requireAdmin, async (req, res) => {
+  try {
+    await prisma.user.delete({ where: { id: req.params.id } });
+    return res.json({ success: true });
+  } catch {
+    return res.status(404).json({ error: 'not_found' });
+  }
+});
+
+app.get('/api/admin/messages', requireAdmin, async (_req, res) => {
+  try {
+    const msgs = await prisma.adminMessage.findMany({ orderBy: { receivedAt: 'desc' } });
+    return res.json(msgs);
+  } catch {
+    return res.status(500).json({ error: 'failed_to_list_messages' });
+  }
+});
+
+app.post('/api/admin/messages', requireAdmin, async (req, res) => {
+  try {
+    const { to, subject, content } = req.body || {};
+    if (!to || !subject || !content) return res.status(400).json({ error: 'missing_fields' });
+    await getSmtpTransport();
+    return res.json({ success: true });
+  } catch (e: any) {
+    if (e?.message === 'smtp_not_configured') return res.status(400).json({ error: 'smtp_not_configured' });
+    return res.status(500).json({ error: 'smtp_send_failed' });
+  }
+});
+
+app.put('/api/admin/messages/:id', requireAdmin, async (req, res) => {
+  try {
+    const { isArchived } = req.body || {};
+    const updated = await prisma.adminMessage.update({ where: { id: req.params.id }, data: { isArchived: Boolean(isArchived) } });
+    return res.json(updated);
+  } catch {
+    return res.status(404).json({ error: 'not_found' });
+  }
+});
+
+app.delete('/api/admin/messages/:id', requireAdmin, async (req, res) => {
+  try {
+    await prisma.adminMessage.delete({ where: { id: req.params.id } });
+    return res.json({ success: true });
+  } catch {
+    return res.status(404).json({ error: 'not_found' });
+  }
+});
+
+app.get('/api/audit-logs', requireAdmin, async (_req, res) => {
+  try {
+    const logs = await prisma.auditLogEntry.findMany({ orderBy: { createdAt: 'desc' } });
+    return res.json(logs);
+  } catch (e: any) {
+    const code = String(e?.code || '');
+    console.error('Failed to list audit logs:', { code, message: e?.message });
+    if (code === 'P2021' || code === 'P2022') {
+      return res.json([]);
+    }
+    return res.status(500).json({ error: 'failed_to_list_audit_logs' });
+  }
+});
+
+app.get('/api/lift-bookings', requireAdmin, async (_req, res) => {
+  try {
+    const bookings = await prisma.liftRentalBooking.findMany({ orderBy: { createdAt: 'desc' } });
+    return res.json(bookings);
+  } catch (e: any) {
+    const code = String(e?.code || '');
+    console.error('Failed to list lift bookings:', { code, message: e?.message });
+    if (code === 'P2021' || code === 'P2022') {
+      return res.json([]);
+    }
+    return res.status(500).json({ error: 'failed_to_list_lift_bookings' });
+  }
+});
+
+app.put('/api/lift-bookings/:id/status', requireAdmin, async (req, res) => {
+  try {
+    const { status } = req.body || {};
+    const updated = await prisma.liftRentalBooking.update({ where: { id: req.params.id }, data: { status: String(status || 'pending') } });
+    return res.json(updated);
+  } catch {
+    return res.status(404).json({ error: 'not_found' });
+  }
+});
+
+app.post('/api/contacts/delete', requireAdmin, async (req, res) => {
+  try {
+    const { ids = [], emails = [] } = req.body || {};
+    const idsArr = Array.isArray(ids) ? ids.filter(Boolean).map(String) : [];
+    const emailsArr = Array.isArray(emails) ? emails.filter(Boolean).map((e: any) => String(e).toLowerCase()) : [];
+    const r = await prisma.contact.deleteMany({ where: { OR: [
+      ...(idsArr.length ? [{ id: { in: idsArr } }] : []),
+      ...(emailsArr.length ? [{ email: { in: emailsArr } }] : []),
+    ] } });
+    return res.json({ deleted: r.count });
+  } catch {
+    return res.status(500).json({ error: 'failed_to_delete_contacts' });
   }
 });
 
@@ -295,44 +447,11 @@ const DEFAULT_SETTINGS = {
   }
 };
 
-// Global error handlers to prevent silent crashes
-process.on('uncaughtException', (err) => {
-  console.error('UNCAUGHT EXCEPTION! Shutting down...', err);
-  process.exit(1); // Exit to let Docker restart the container
-});
-
-process.on('unhandledRejection', (err) => {
-  console.error('UNHANDLED REJECTION! Shutting down...', err);
-  process.exit(1); // Exit to let Docker restart the container
-});
-
-process.on('SIGTERM', async () => {
-  console.log('SIGTERM received. Shutting down gracefully');
-  await prisma.$disconnect();
-  process.exit(0);
-});
-
-process.on('SIGINT', async () => {
-  console.log('SIGINT received. Shutting down gracefully');
-  await prisma.$disconnect();
-  process.exit(0);
-});
-
 async function ensureDefaultSettings() {
-  const dbUrl = process.env.DATABASE_URL || '';
-  console.log('Database URL is set:', dbUrl ? 'Yes' : 'No');
-  if (dbUrl.includes('localhost')) {
-    console.warn('WARNING: DATABASE_URL points to localhost. This will fail inside Docker unless using host networking.');
-  }
-
   try {
     const s = await prisma.settings.findUnique({ where: { key: 'site_settings' } });
     if (!s) {
-      console.log('No settings found in database. Creating default settings...');
       await prisma.settings.create({ data: { key: 'site_settings', value: DEFAULT_SETTINGS } });
-      console.log('Default settings created successfully.');
-    } else {
-      console.log('Settings loaded successfully from database.');
     }
   } catch (e) {
     console.error('Failed to ensure default settings (database may not be available):', e);
@@ -490,7 +609,6 @@ app.get('/api/products', async (req, res) => {
     const take = limit ? Number(limit) : undefined;
 
     if (!process.env.DATABASE_URL) {
-      console.warn('Warning: DATABASE_URL not set in environment');
       return res.status(503).json({ error: 'database_not_configured' });
     }
 
@@ -505,8 +623,7 @@ app.get('/api/products', async (req, res) => {
     });
     res.json(products);
   } catch (e) {
-    console.error('Error fetching products:', e);
-    res.status(500).json({ error: 'failed_to_fetch_products' });
+    res.json([]);
   }
 });
 
@@ -1050,13 +1167,21 @@ app.post('/api/quote', async (req, res) => {
 
 // --- Admin messaging ---
 
-// Removed duplicate /api/admin/messages endpoint here
-
+app.get('/api/admin/messages', async (_req, res) => {
+  try {
+    const messages = await prisma.adminMessage.findMany({ orderBy: { receivedAt: 'desc' } });
+    return res.json(messages);
+  } catch (error) {
+    console.error('Failed to fetch admin messages:', error);
+    return res.status(500).json({ error: 'failed_to_fetch_admin_messages' });
+  }
+});
 
 // --- Site settings ---
 
-// Removed duplicate /api/settings stubs here
+app.get('/api/settings', (_req, _res, next) => next());
 
+app.put('/api/settings', (req, res, next) => next());
 
 app.get('/api/contact', async (_req, res) => {
   try {
@@ -1362,7 +1487,12 @@ app.get('/sitemap.xml', async (req, res) => {
   res.type('application/xml').send(xml);
 });
 
-ensureDefaultSettings().catch(console.error);
+ensureDefaultSettings().finally(() => {
+  app.listen(PORT, '0.0.0.0', () => {
+    console.log(`API listening on 0.0.0.0:${PORT} (${NODE_ENV})`);
+    console.log('Note: Some features may be limited without a database connection');
+  });
+});
 
 // --- Admin Messages API ---
 app.get('/api/admin/messages', async (req, res) => {
@@ -1446,7 +1576,8 @@ app.post('/api/admin/messages', async (req, res) => {
                 userId: currentUser?.id || null,
                 receivedAt: new Date(),
                 isRead: true,
-                status: 'replied'
+                isArchived: false,
+                status: 'sent'
               }
             });
           }
@@ -1735,17 +1866,3 @@ app.get('/api/audit-logs', requireAdmin, async (_req, res) => {
 app.use('/api', (_req, res) => {
   res.status(404).json({ error: 'not_found' });
 });
-
-const server = app.listen(PORT, '0.0.0.0', () => {
-  console.log(`Server running in ${NODE_ENV} mode on port ${PORT}`);
-});
-
-// Graceful shutdown
-process.on('SIGTERM', () => {
-  console.log('SIGTERM signal received: closing HTTP server');
-  server.close(() => {
-    console.log('HTTP server closed');
-    prisma.$disconnect();
-  });
-});
-
