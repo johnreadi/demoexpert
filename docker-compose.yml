@@ -24,8 +24,8 @@ services:
       STRICT_DB: "false"
     networks:
       - dokploy-overlay
-      # Explicitly add dokploy-network to ensure Traefik connectivity
-      - dokploy-network
+      # Removing dokploy-network to force single-interface communication via overlay
+      # - dokploy-network
     command: node dist/index.js
     
     # 🔧 UNIQUEMENT les labels "service" (pas de "router" pour éviter les conflits)
@@ -57,8 +57,8 @@ services:
         condition: service_healthy
     networks:
       - dokploy-overlay
-      # Explicitly add dokploy-network to ensure Traefik connectivity
-      - dokploy-network
+      # Removing dokploy-network to force single-interface communication via overlay
+      # - dokploy-network
     
     labels:
       - "traefik.enable=true"
