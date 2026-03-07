@@ -1,7 +1,25 @@
-# docker-compose.agria.yml - Version FINALE (sans warnings)
 version: '3.8'
 
 services:
+  # Restore Local DB Service to recover data from volume
+  db:
+    image: postgres:15-alpine
+    restart: unless-stopped
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    environment:
+      # Use credentials matching the suspected correct DB (Dokploy default)
+      POSTGRES_DB: demoexpert-expertdb-djopvt
+      POSTGRES_USER: dokploy
+      POSTGRES_PASSWORD: dokploy
+    networks:
+      - dokploy-overlay
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dokploy -d demoexpert-expertdb-djopvt"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   backend:
     build:
       context: ./server
@@ -69,3 +87,8 @@ networks:
     external: true
   dokploy-network:
     external: true
+
+volumes:
+  db_data:
+    external: true
+    name: demoexpert-expertdb-djopvt-data
