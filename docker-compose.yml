@@ -3,7 +3,7 @@ version: '3.8'
 services:
   # Restore Local DB Service to recover data from volume
   db:
-    image: postgres:15-alpine
+    image: postgres:16-alpine
     restart: unless-stopped
     volumes:
       - db_data:/var/lib/postgresql/data
