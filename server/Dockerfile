@@ -29,6 +29,6 @@ COPY entrypoint.sh ./entrypoint.sh
 COPY test-db-connection.js ./test-db-connection.js
 RUN chmod +x ./entrypoint.sh
 
-EXPOSE 8080
+EXPOSE 3000
 ENTRYPOINT ["./entrypoint.sh"]
 CMD ["node", "dist/index.js"]

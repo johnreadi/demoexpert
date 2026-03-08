@@ -25,9 +25,6 @@ services:
       SEED_DB: "true"
     networks:
       - dokploy-overlay
-      # Removing dokploy-network to force single-interface communication via overlay
-      # - dokploy-network
-    command: node dist/index.js
     
     labels:
       - "traefik.enable=true"
