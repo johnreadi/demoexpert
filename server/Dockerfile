@@ -26,6 +26,7 @@ COPY --from=build /app/prisma ./prisma
 COPY --from=build /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=build /app/node_modules/@prisma ./node_modules/@prisma
 COPY entrypoint.sh ./entrypoint.sh
+COPY test-db-connection.js ./test-db-connection.js
 RUN chmod +x ./entrypoint.sh
 
 EXPOSE 8080
