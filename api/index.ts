@@ -248,3 +248,7 @@ export const deleteAdminMessage = (messageId: string): Promise<{ success: boolea
 
 export const deleteContactsBulk = (ids: string[] = [], emails: string[] = []): Promise<{ deleted: number }> =>
   USE_LOCAL_API ? simulateApiCall({ deleted: ids.length || emails.length }) : http<{ deleted: number }>(`/api/contacts/delete`, { method: 'POST', body: JSON.stringify({ ids, emails }) });
+
+// Test SMTP configuration
+export const testSmtpConfig = (testEmail: string): Promise<{ success: boolean; message?: string }> =>
+  http<{ success: boolean; message?: string }>(`/api/test-smtp`, { method: 'POST', body: JSON.stringify({ testEmail }) });

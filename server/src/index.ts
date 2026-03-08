@@ -1957,6 +1957,88 @@ app.get('/api/audit-logs', requireAdmin, async (_req, res) => {
   }
 });
 
+// Test SMTP configuration endpoint
+app.post('/api/test-smtp', requireAuth, async (req, res) => {
+  try {
+    const { testEmail } = req.body || {};
+    if (!testEmail) {
+      return res.status(400).json({ error: 'missing_test_email' });
+    }
+
+    // Get current settings
+    let settingsValue: any = null;
+    try {
+      const s = await prisma.settings.findUnique({ where: { key: 'site_settings' } });
+      settingsValue = s?.value ?? null;
+    } catch {}
+
+    const normalized = normalizeSettings(settingsValue);
+    const smtp = normalized?.advancedSettings?.smtp;
+
+    if (!smtp?.host || !smtp?.user || !smtp?.pass) {
+      return res.status(503).json({ error: 'smtp_not_configured', details: 'Configuration SMTP incomplète' });
+    }
+
+    // Create transporter with current settings
+    const transporter = nodemailer.createTransport({
+      host: smtp.host,
+      port: smtp.port || 587,
+      secure: (smtp.port || 587) === 465,
+      auth: {
+        user: smtp.user,
+        pass: smtp.pass
+      },
+      tls: {
+        rejectUnauthorized: false
+      }
+    });
+
+    // Verify connection
+    await transporter.verify();
+
+    // Send test email
+    const fromName = smtp.fromName || 'Démolition Expert';
+    const fromEmail = smtp.fromEmail || smtp.user;
+    
+    await transporter.sendMail({
+      from: `"${fromName}" <${fromEmail}>`,
+      to: testEmail,
+      subject: 'Test de configuration SMTP - Démolition Expert',
+      text: `Bonjour,
+
+Ceci est un email de test pour vérifier la configuration SMTP de votre application Démolition Expert.
+
+Configuration utilisée:
+- Serveur: ${smtp.host}:${smtp.port || 587}
+- Utilisateur: ${smtp.user}
+- Expéditeur: ${fromName} <${fromEmail}>
+
+Si vous recevez cet email, votre configuration SMTP est correcte!
+
+Cordialement,
+L'équipe Démolition Expert`,
+      html: `<p>Bonjour,</p>
+<p>Ceci est un email de test pour vérifier la configuration SMTP de votre application <strong>Démolition Expert</strong>.</p>
+<p><strong>Configuration utilisée:</strong></p>
+<ul>
+<li>Serveur: ${smtp.host}:${smtp.port || 587}</li>
+<li>Utilisateur: ${smtp.user}</li>
+<li>Expéditeur: ${fromName} &lt;${fromEmail}&gt;</li>
+</ul>
+<p style="color: green;"><strong>Si vous recevez cet email, votre configuration SMTP est correcte!</strong></p>
+<p>Cordialement,<br>L'équipe Démolition Expert</p>`
+    });
+
+    return res.json({ success: true, message: 'Email de test envoyé avec succès' });
+  } catch (err: any) {
+    console.error('SMTP test failed:', err);
+    return res.status(503).json({ 
+      error: 'smtp_test_failed', 
+      details: err.message || 'Échec de l\'envoi de l\'email de test' 
+    });
+  }
+});
+
 // Catch-all 404 for API (must be last)
 app.use('/api', (_req, res) => {
   res.status(404).json({ error: 'not_found' });

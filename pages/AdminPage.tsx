@@ -158,6 +158,10 @@ export default function AdminPage(): React.ReactNode {
   const [calendarDate, setCalendarDate] = useState(new Date());
   const [newPricingTier, setNewPricingTier] = useState({ duration: '', price: '' });
 
+  // SMTP test state
+  const [smtpTestEmail, setSmtpTestEmail] = useState('');
+  const [isTestingSmtp, setIsTestingSmtp] = useState(false);
+
   useEffect(() => {
     if (initialSettings) {
         setSettingsFormData(JSON.parse(JSON.stringify(initialSettings))); // Deep copy
@@ -458,6 +462,33 @@ export default function AdminPage(): React.ReactNode {
       showToast("Utilisateur supprimé.", 'success');
     } catch(error) {
         showToast("Erreur lors de la suppression.", 'error');
+    }
+  };
+
+  // --- SMTP Test ---
+  const handleTestSmtp = async () => {
+    if (!smtpTestEmail) {
+      showToast("Veuillez saisir une adresse email de test.", 'error');
+      return;
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(smtpTestEmail)) {
+      showToast("Veuillez saisir une adresse email valide.", 'error');
+      return;
+    }
+    setIsTestingSmtp(true);
+    try {
+      const result = await api.testSmtpConfig(smtpTestEmail);
+      showToast(result.message || "Email de test envoyé avec succès !", 'success');
+    } catch (error: any) {
+      const errBody = error?.body || {};
+      if (errBody.error === 'smtp_not_configured') {
+        showToast("Erreur: SMTP non configuré. Vérifiez vos paramètres.", 'error');
+      } else {
+        showToast(`Erreur d'envoi SMTP: ${errBody.details || error?.message || 'Échec de l\'envoi'}`, 'error');
+      }
+    } finally {
+      setIsTestingSmtp(false);
     }
   };
   
@@ -1914,6 +1945,42 @@ export default function AdminPage(): React.ReactNode {
                               onChange={e => handleSettingsChange('advancedSettings.smtp.fromEmail', e.target.value)}
                             />
                           </div>
+                        </div>
+
+                        {/* Test SMTP Section */}
+                        <div className="mt-6 pt-6 border-t border-gray-200">
+                          <h4 className="text-lg font-semibold text-expert-blue mb-3">Tester la configuration SMTP</h4>
+                          <div className="flex flex-col sm:flex-row gap-3">
+                            <input
+                              type="email"
+                              className="flex-1 p-2 border rounded"
+                              placeholder="votre-email@exemple.com"
+                              value={smtpTestEmail}
+                              onChange={e => setSmtpTestEmail(e.target.value)}
+                              disabled={isTestingSmtp}
+                            />
+                            <button
+                              type="button"
+                              onClick={handleTestSmtp}
+                              disabled={isTestingSmtp}
+                              className="bg-expert-blue text-white font-semibold py-2 px-4 rounded hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center min-w-[180px]"
+                            >
+                              {isTestingSmtp ? (
+                                <>
+                                  <i className="fas fa-spinner fa-spin mr-2"></i>
+                                  Envoi en cours...
+                                </>
+                              ) : (
+                                <>
+                                  <i className="fas fa-paper-plane mr-2"></i>
+                                  Tester l'envoi
+                                </>
+                              )}
+                            </button>
+                          </div>
+                          <p className="text-sm text-gray-500 mt-2">
+                            Un email de test sera envoyé à l'adresse saisie pour vérifier que votre configuration SMTP fonctionne correctement.
+                          </p>
                         </div>
                     </div>
 
