@@ -141,7 +141,7 @@ export default function AdminPage(): React.ReactNode {
       if (selectedContactIds.size === 0) return;
       if (!window.confirm(`Supprimer ${selectedContactIds.size} contact(s) ?`)) return;
       
-      const ids = Array.from(selectedContactIds);
+      const ids = Array.from(selectedContactIds) as string[];
       try {
           const { deleted } = await api.deleteContactsBulk(ids, []);
           if (deleted > 0) {
@@ -563,7 +563,7 @@ export default function AdminPage(): React.ReactNode {
       if (selectedMessageIds.size === 0) return;
       if (!window.confirm(`Supprimer ${selectedMessageIds.size} message(s) définitivement ?`)) return;
       
-      const ids = Array.from(selectedMessageIds);
+      const ids = Array.from(selectedMessageIds) as string[];
       
       const results = await Promise.all(ids.map(async id => {
           try {
