@@ -20,30 +20,25 @@ fi
 
 echo "DATABASE_URL is set (masked): $(echo $DATABASE_URL | sed 's/:[^:@]*@/:****@/')"
 
-# 1. Run Diagnostic Connection Test (Added for debugging)
-echo "--- 🔍 DATABASE DIAGNOSTIC START ---"
-if [ -f "./test-db-connection.js" ]; then
-  node ./test-db-connection.js || echo "Diagnostic failed (non-critical)"
-else
-  echo "⚠️ Diagnostic script not found!"
-fi
-echo "--- 🔍 DATABASE DIAGNOSTIC END ---"
-
-# 2. Run Migrations (Safe to run on every startup, idempotent)
+# 1. Run Migrations - use --skip-generate to avoid issues, fallback to db push
 echo "Running Prisma migrations..."
-# Use --yes to skip interactive prompts if npx is used
-# Or if prisma is installed globally, use it directly
 if command -v prisma >/dev/null 2>&1; then
-  prisma migrate deploy || echo "⚠️ Migration failed (prisma global), skipping..."
+  prisma migrate deploy || {
+    echo "⚠️ migrate deploy failed, trying db push..."
+    prisma db push --accept-data-loss || echo "⚠️ db push also failed, continuing..."
+  }
 else
-  npx --yes prisma migrate deploy || echo "⚠️ Migration failed (npx), skipping..."
+  npx --yes prisma migrate deploy || {
+    echo "⚠️ migrate deploy failed, trying db push..."
+    npx --yes prisma db push --accept-data-loss || echo "⚠️ db push also failed, continuing..."
+  }
 fi
 
-# 3. Seed Database (Optional, for local dev or fresh install)
+# 2. Seed Database
 if [ "$SEED_DB" = "true" ]; then
   echo "🌱 Seeding database..."
-  npm run seed || echo "⚠️ Seeding failed"
+  npm run seed || echo "⚠️ Seeding failed (non-critical)"
 fi
 
-# 4. Start Application
+# 3. Start Application
 exec "$@"
