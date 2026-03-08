@@ -1263,9 +1263,40 @@ app.get('/api/admin/messages', async (_req, res) => {
 
 // --- Site settings ---
 
-app.get('/api/settings', (_req, _res, next) => next());
+app.get('/api/settings', async (_req, res) => {
+  try {
+    if (!process.env.DATABASE_URL) {
+      return res.json({ key: 'site_settings', value: DEFAULT_SETTINGS });
+    }
+    let s = await prisma.settings.findUnique({ where: { key: 'site_settings' } });
+    if (!s) {
+      s = await prisma.settings.create({ data: { key: 'site_settings', value: DEFAULT_SETTINGS } });
+    }
+    return res.json(s.value ?? DEFAULT_SETTINGS);
+  } catch (e: any) {
+    console.error('[GET /api/settings] error:', e?.message);
+    // Fallback to default settings if DB is unavailable
+    return res.json(DEFAULT_SETTINGS);
+  }
+});
 
-app.put('/api/settings', (req, res, next) => next());
+app.put('/api/settings', requireAdmin, async (req, res) => {
+  try {
+    if (!process.env.DATABASE_URL) {
+      return res.status(503).json({ error: 'database_not_configured' });
+    }
+    const value = req.body;
+    const s = await prisma.settings.upsert({
+      where: { key: 'site_settings' },
+      update: { value },
+      create: { key: 'site_settings', value },
+    });
+    return res.json(s.value);
+  } catch (e: any) {
+    console.error('[PUT /api/settings] error:', e?.message);
+    return res.status(500).json({ error: 'failed_to_update_settings' });
+  }
+});
 
 app.get('/api/contact', async (_req, res) => {
   try {
