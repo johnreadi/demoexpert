@@ -133,7 +133,8 @@ export const deleteAuction = async (auctionId: string): Promise<{ success: boole
   USE_LOCAL_API ? simulateApiCall(db.deleteAuction(auctionId)) : http<{ success: boolean }>(`auctions/${auctionId}`, { method: 'DELETE' });
 
 // --- Blog API ---
-export const getBlogPosts = (): Promise<BlogPost[]> => simulateApiCall(db.getBlogPosts());
+export const getBlogPosts = (): Promise<BlogPost[]> => 
+  USE_LOCAL_API ? simulateApiCall(db.getBlogPosts()) : http<BlogPost[]>(`/api/blog`);
 
 
 // --- Forms API ---
@@ -203,31 +204,43 @@ export const deleteUser = (userId: string): Promise<{ success: boolean }> =>
 
 
 // --- User Account API ---
-export const getBidsForUser = (userId: string): Promise<any[]> => simulateApiCall(db.getBidsForUser(userId));
-export const getMessagesForUser = (userEmail: string): Promise<AdminMessage[]> => simulateApiCall(db.getMessagesForUser(userEmail));
-export const updateUserProfile = (userId: string, data: { name: string, email: string }): Promise<User> => simulateApiCall(db.updateUserProfile(userId, data));
+export const getBidsForUser = (userId: string): Promise<any[]> => 
+  USE_LOCAL_API ? simulateApiCall(db.getBidsForUser(userId)) : http<any[]>(`/api/users/${userId}/bids`);
+export const getMessagesForUser = (userEmail: string): Promise<AdminMessage[]> => 
+  USE_LOCAL_API ? simulateApiCall(db.getMessagesForUser(userEmail)) : http<AdminMessage[]>(`/api/users/me/messages`);
+export const updateUserProfile = (userId: string, data: { name: string, email: string }): Promise<User> => 
+  USE_LOCAL_API ? simulateApiCall(db.updateUserProfile(userId, data)) : http<User>(`/api/users/${userId}`, { method: 'PUT', body: JSON.stringify(data) });
 export const updateUserPassword = (userId: string, data: { current: string, new: string }): Promise<{ success: boolean }> => {
-    try {
-        return simulateApiCall(db.updateUserPassword(userId, data));
-    } catch(e: any) {
-        return simulateApiError(e.message);
+    if (USE_LOCAL_API) {
+        try {
+            return simulateApiCall(db.updateUserPassword(userId, data));
+        } catch(e: any) {
+            return simulateApiError(e.message);
+        }
     }
+    return http<{ success: boolean }>(`/api/users/${userId}/password`, { method: 'PUT', body: JSON.stringify(data) });
 };
 
 // --- Auth API ---
 export const registerUser = (data: any): Promise<{ success: true }> => {
-    try {
-        return simulateApiCall(db.registerUser(data));
-    } catch (e: any) {
-        return simulateApiError(e.message);
+    if (USE_LOCAL_API) {
+        try {
+            return simulateApiCall(db.registerUser(data));
+        } catch (e: any) {
+            return simulateApiError(e.message);
+        }
     }
+    return http<{ success: true }>(`/auth/register`, { method: 'POST', body: JSON.stringify(data) });
 };
 export const loginUser = (email: string, password: string): Promise<User> => {
-    try {
-        return simulateApiCall(db.loginUser(email, password));
-    } catch (e: any) {
-        return simulateApiError(e.message);
+    if (USE_LOCAL_API) {
+        try {
+            return simulateApiCall(db.loginUser(email, password));
+        } catch (e: any) {
+            return simulateApiError(e.message);
+        }
     }
+    return http<User>(`/auth/login`, { method: 'POST', body: JSON.stringify({ email, password }) });
 };
 
 export const deleteAdminMessage = (messageId: string): Promise<{ success: boolean }> =>

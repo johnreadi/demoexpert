@@ -77,40 +77,8 @@ export default function AuctionsPage(): React.ReactNode {
                 const data = await api.getAuctions();
                 console.log("Auctions data received:", data);
                 
-                // If we have no auctions, use mock data for testing
-                let processedData = data;
-                if (!data || data.length === 0) {
-                    console.log("Using mock data for testing");
-                    processedData = [
-                        {
-                            id: 'mock-1',
-                            vehicle: {
-                                name: 'Peugeot 208 GT Line',
-                                brand: 'Peugeot',
-                                model: '208',
-                                year: 2019,
-                                mileage: 55000,
-                                description: 'Superbe Peugeot 208 GT Line...',
-                                images: ['https://picsum.photos/seed/auc1-1/800/600']
-                            },
-                            startingPrice: 8000,
-                            currentBid: 8300,
-                            bidCount: 6,
-                            bids: [
-                                {
-                                    userId: 'user-1',
-                                    bidderName: 'Marie Curie',
-                                    amount: 8300,
-                                    timestamp: new Date(Date.now() - 3600000 * 1)
-                                }
-                            ],
-                            endDate: new Date(Date.now() + 1000 * 60 * 60 * 49)
-                        }
-                    ];
-                }
-                
                 // Ensure dates are Date objects for proper comparison
-                processedData = processedData.map(auction => {
+                const processedData = (data || []).map(auction => {
                     const raw = auction.endDate;
                     let endDate: any = raw;
                     if (typeof raw === 'string') {
@@ -125,34 +93,7 @@ export default function AuctionsPage(): React.ReactNode {
                 setAllAuctions(processedData);
             } catch (error) {
                 console.error("Failed to fetch auctions", error);
-                // Use mock data as fallback
-                const mockData = [
-                    {
-                        id: 'mock-1',
-                        vehicle: {
-                            name: 'Peugeot 208 GT Line',
-                            brand: 'Peugeot',
-                            model: '208',
-                            year: 2019,
-                            mileage: 55000,
-                            description: 'Superbe Peugeot 208 GT Line...',
-                            images: ['https://picsum.photos/seed/auc1-1/800/600']
-                        },
-                        startingPrice: 8000,
-                        currentBid: 8300,
-                        bidCount: 6,
-                        bids: [
-                            {
-                                userId: 'user-1',
-                                bidderName: 'Marie Curie',
-                                amount: 8300,
-                                timestamp: new Date(Date.now() - 3600000 * 1)
-                            }
-                        ],
-                        endDate: new Date(Date.now() + 1000 * 60 * 60 * 49)
-                    }
-                ];
-                setAllAuctions(mockData);
+                setAllAuctions([]);
             } finally {
                 console.log("Finished fetching auctions");
                 setIsLoading(false);

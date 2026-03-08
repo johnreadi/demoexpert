@@ -868,8 +868,7 @@ app.get('/api/auctions', async (_req, res) => {
     res.json(transformed);
   } catch (error) {
     console.error("Failed to list auctions:", error);
-    // Return mock data as fallback
-    res.json([]);
+    res.status(500).json({ error: 'failed_to_list_auctions' });
   }
 });
 
@@ -906,32 +905,7 @@ app.get('/api/auctions/:id', async (req, res) => {
     res.json(transformed);
   } catch (error) {
     console.error("Failed to get auction:", error);
-    // Return mock data as fallback
-    const mockAuction = {
-      id: req.params.id,
-      vehicle: { 
-        name: 'Peugeot 208 GT Line', 
-        brand: 'Peugeot', 
-        model: '208', 
-        year: 2019, 
-        mileage: 55000, 
-        description: 'Superbe Peugeot 208 GT Line...', 
-        images: ['https://picsum.photos/seed/auc1-1/800/600'] 
-      }, 
-      startingPrice: 8000, 
-      currentBid: 8300, 
-      bidCount: 6, 
-      bids: [ 
-        { 
-          userId: 'mock-user-1', 
-          bidderName: 'Marie Curie', 
-          amount: 8300, 
-          timestamp: new Date(Date.now() - 3600000 * 1) 
-        } 
-      ], 
-      endDate: new Date(Date.now() + 1000 * 60 * 60 * 49) 
-    };
-    res.json(mockAuction);
+    res.status(500).json({ error: 'failed_to_get_auction' });
   }
 });
 
