@@ -82,11 +82,12 @@ async function main() {
 
   // 2. Create Users
   console.log('👥 Creating users...');
-  const adminPassword = await bcrypt.hash('password123', 10);
+  const adminRawPassword = process.env.DEFAULT_ADMIN_PASSWORD || 'password123';
+  const adminPassword = await bcrypt.hash(adminRawPassword, 10);
   
   const admin = await prisma.user.upsert({
     where: { email: 'admin@demoexpert.fr' },
-    update: {},
+    update: { password: adminPassword },
     create: {
       name: 'Admin Expert',
       email: 'admin@demoexpert.fr',
@@ -108,7 +109,7 @@ async function main() {
     }
   });
 
-  console.log('✅ Users created: admin@demoexpert.fr, staff@demoexpert.fr (password: password123)');
+  console.log(`✅ Users created: admin@demoexpert.fr, staff@demoexpert.fr (password: ${adminRawPassword})`);
 
   // 3. Create Products
   console.log('🔧 Creating products...');

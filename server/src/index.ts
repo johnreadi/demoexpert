@@ -576,8 +576,9 @@ app.post('/api/auth/login', async (req, res) => {
     const safeUser: UserSession = { id: user.id, name: user.name, email: user.email, role: user.role as any, status: user.status as any };
     (req.session as any).user = safeUser;
     return res.json(safeUser);
-  } catch {
-    return res.status(500).json({ error: 'login_failed' });
+  } catch (err: any) {
+    console.error('[login] Error:', err?.message || err);
+    return res.status(500).json({ error: 'login_failed', detail: err?.message });
   }
 });
 
@@ -598,8 +599,9 @@ app.post('/auth/login', async (req, res) => {
     const safeUser: UserSession = { id: user.id, name: user.name, email: user.email, role: user.role as any, status: user.status as any };
     (req.session as any).user = safeUser;
     return res.json(safeUser);
-  } catch {
-    return res.status(500).json({ error: 'login_failed' });
+  } catch (err: any) {
+    console.error('[login] Error:', err?.message || err);
+    return res.status(500).json({ error: 'login_failed', detail: err?.message });
   }
 });
 

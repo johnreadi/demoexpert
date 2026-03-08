@@ -22,6 +22,7 @@ services:
       DEFAULT_ADMIN_EMAIL: ${DEFAULT_ADMIN_EMAIL:-admin@demoexpert.fr}
       DEFAULT_ADMIN_PASSWORD: ${DEFAULT_ADMIN_PASSWORD:-demo76000}
       STRICT_DB: "false"
+      SEED_DB: "true"
     networks:
       - dokploy-overlay
       # Removing dokploy-network to force single-interface communication via overlay
