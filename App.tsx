@@ -30,12 +30,6 @@ import TiresPage from './pages/TiresPage';
 import AccountPage from './pages/AccountPage';
 import FAQPage from './pages/FAQPage';
 
-import TestMinimalApiImport from './TestMinimalApiImport';
-import TestApiFunctions from './TestApiFunctions';
-import TestApiImportComponent from './test-api-import';
-import TestApiOnly from './TestApiOnly';
-import TestSpecificApiImport from './TestSpecificApiImport';
-
 // Simple error fallback component
 const ErrorFallback: React.FC = () => (
   <div className="min-h-screen flex items-center justify-center bg-gray-100">
@@ -56,19 +50,20 @@ const ErrorFallback: React.FC = () => (
 
 // Wrapper component with error handling
 class ErrorBoundary extends React.Component<{ children: ReactNode }, { hasError: boolean }> {
-  constructor(props: any) {
+  constructor(props: { children: ReactNode }) {
     super(props);
-    this.state = { hasError: false };
+    (this as any).state = { hasError: false };
   }
-  static getDerivedStateFromError(error: Error) {
-    console.error('ErrorBoundary', error);
+  static getDerivedStateFromError(_error: Error) {
     return { hasError: true };
   }
   componentDidCatch(error: Error, info: React.ErrorInfo) {
     console.error('ErrorBoundary', error, info);
   }
   render(): React.ReactNode {
-    return this.state.hasError ? <ErrorFallback /> : this.props.children;
+    const s = (this as any).state as { hasError: boolean };
+    const p = (this as any).props as { children: ReactNode };
+    return s.hasError ? <ErrorFallback /> : p.children;
   }
 }
 
@@ -118,12 +113,6 @@ function App() {
               <Header />
               <main className="flex-grow">
                 <Routes>
-                  {/* Test routes for debugging */}
-                  <Route path="/test-api" element={<TestMinimalApiImport />} />
-                  <Route path="/test-api-functions" element={<TestApiFunctions />} />
-                  <Route path="/test-api-import" element={<TestApiImportComponent />} />
-                  <Route path="/test-api-only" element={<TestApiOnly />} />
-                  <Route path="/test-specific-api-import" element={<TestSpecificApiImport />} />
                   <Route path="/" element={<HomePage />} />
                   <Route path="/pieces" element={<PartsCatalogPage />} />
                   <Route path="/pieces/:id" element={<ProductDetailPage />} />
