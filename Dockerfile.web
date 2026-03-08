@@ -12,21 +12,23 @@ RUN npm install --no-fund --no-audit
 COPY . .
 
 # 4. Variables d'environnement pour le build
-ARG VITE_API_BASE_URL=/api
+ARG VITE_API_BASE_URL=https://api.demoexpert.fr/api
 ARG VITE_APP_BASE_URL=https://app.demoexpert.fr
+ARG VITE_USE_LOCAL_API=false
 ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
 ENV VITE_APP_BASE_URL=$VITE_APP_BASE_URL
+ENV VITE_USE_LOCAL_API=$VITE_USE_LOCAL_API
 
 # 5. Builder l'application
 RUN npm run build
 
-# 6. Post-build: injection simple du timestamp
-RUN echo "🔧 Post-build processing..." && \
-    TIMESTAMP=$(date +%s) && \
-    # Créer un fichier simple de version
+# 6. Vérifier que le build a réussi
+RUN test -f dist/index.html || (echo "BUILD FAILED: dist/index.html not found" && exit 1)
+
+# 7. Post-build
+RUN TIMESTAMP=$(date +%s) && \
     echo "$TIMESTAMP" > dist/build.timestamp && \
-    echo "healthy" > dist/health.txt && \
-    echo "✅ Build completed at: $TIMESTAMP"
+    echo "healthy" > dist/health.txt
 
 # ================= ÉTAPE NGINX =================
 FROM nginx:1.27-alpine
