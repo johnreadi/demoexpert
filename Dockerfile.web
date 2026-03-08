@@ -17,13 +17,10 @@ ARG VITE_APP_BASE_URL=https://app.demoexpert.fr
 ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
 ENV VITE_APP_BASE_URL=$VITE_APP_BASE_URL
 
-# 5. Supprimer les fichiers de configuration Tailwind si problématiques
-RUN rm -f postcss.config.js tailwind.config.js 2>/dev/null || true
-
-# 6. Builder l'application
+# 5. Builder l'application
 RUN npm run build
 
-# 7. Post-build: injection simple du timestamp
+# 6. Post-build: injection simple du timestamp
 RUN echo "🔧 Post-build processing..." && \
     TIMESTAMP=$(date +%s) && \
     # Créer un fichier simple de version
