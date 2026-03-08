@@ -585,7 +585,8 @@ app.post('/api/auth/login', async (req, res) => {
     return res.json(safeUser);
   } catch (err: any) {
     console.error('[login] Error:', err?.message || err);
-    return res.status(500).json({ error: 'login_failed', detail: err?.message });
+    console.error('[login] Stack:', err?.stack);
+    return res.status(500).json({ error: 'login_failed', detail: err?.message, code: err?.code });
   }
 });
 
