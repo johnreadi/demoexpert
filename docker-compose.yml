@@ -37,6 +37,14 @@ services:
       - "traefik.http.routers.backend.entrypoints=websecure"
       - "traefik.http.routers.backend.tls.certresolver=letsencrypt"
       - "traefik.http.routers.backend.service=backend"
+      - "traefik.http.routers.backend.middlewares=backend-cors"
+      # Middleware CORS (pour les requêtes preflight OPTIONS)
+      - "traefik.http.middlewares.backend-cors.headers.accesscontrolalloworiginlist=https://app.demoexpert.fr,https://demoexpert.fr"
+      - "traefik.http.middlewares.backend-cors.headers.accesscontrolallowmethods=GET,POST,PUT,DELETE,OPTIONS,PATCH"
+      - "traefik.http.middlewares.backend-cors.headers.accesscontrolallowheaders=Content-Type,Authorization,X-Requested-With,Cookie"
+      - "traefik.http.middlewares.backend-cors.headers.accesscontrolallowcredentials=true"
+      - "traefik.http.middlewares.backend-cors.headers.accesscontrolmaxage=86400"
+      - "traefik.http.middlewares.backend-cors.headers.addvaryheader=true"
       # Service
       - "traefik.http.services.backend.loadbalancer.server.port=3000"
       - "traefik.http.services.backend.loadbalancer.healthcheck.path=/healthz"
