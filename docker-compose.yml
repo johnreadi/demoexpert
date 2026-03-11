@@ -45,6 +45,23 @@ services:
       - "traefik.http.middlewares.demoexpert-backend-cors.headers.addvaryheader=true"
       # Service — PAS de healthcheck Traefik (Docker healthcheck suffit)
       - "traefik.http.services.demoexpert-backend.loadbalancer.server.port=3000"
+
+    deploy:
+      labels:
+        - "traefik.enable=true"
+        - "traefik.docker.network=${TRAEFIK_DOCKER_NETWORK:-dokploy-network}"
+        - "traefik.http.routers.demoexpert-backend.rule=Host(`api.demoexpert.fr`)"
+        - "traefik.http.routers.demoexpert-backend.entrypoints=websecure"
+        - "traefik.http.routers.demoexpert-backend.tls.certresolver=letsencrypt"
+        - "traefik.http.routers.demoexpert-backend.service=demoexpert-backend"
+        - "traefik.http.routers.demoexpert-backend.middlewares=demoexpert-backend-cors"
+        - "traefik.http.middlewares.demoexpert-backend-cors.headers.accesscontrolalloworiginlist=https://app.demoexpert.fr,https://demoexpert.fr"
+        - "traefik.http.middlewares.demoexpert-backend-cors.headers.accesscontrolallowmethods=GET,POST,PUT,DELETE,OPTIONS,PATCH"
+        - "traefik.http.middlewares.demoexpert-backend-cors.headers.accesscontrolallowheaders=Content-Type,Authorization,X-Requested-With,Cookie"
+        - "traefik.http.middlewares.demoexpert-backend-cors.headers.accesscontrolallowcredentials=true"
+        - "traefik.http.middlewares.demoexpert-backend-cors.headers.accesscontrolmaxage=86400"
+        - "traefik.http.middlewares.demoexpert-backend-cors.headers.addvaryheader=true"
+        - "traefik.http.services.demoexpert-backend.loadbalancer.server.port=3000"
     
     healthcheck:
       test: ["CMD-SHELL", "node -e \"require('http').get('http://127.0.0.1:3000/healthz', (r) => process.exit(r.statusCode === 200 ? 0 : 1))\" || exit 1"]
@@ -75,6 +92,16 @@ services:
       - "traefik.http.routers.demoexpert-app.service=demoexpert-app"
       # Service
       - "traefik.http.services.demoexpert-app.loadbalancer.server.port=80"
+
+    deploy:
+      labels:
+        - "traefik.enable=true"
+        - "traefik.docker.network=${TRAEFIK_DOCKER_NETWORK:-dokploy-network}"
+        - "traefik.http.routers.demoexpert-app.rule=Host(`app.demoexpert.fr`)"
+        - "traefik.http.routers.demoexpert-app.entrypoints=websecure"
+        - "traefik.http.routers.demoexpert-app.tls.certresolver=letsencrypt"
+        - "traefik.http.routers.demoexpert-app.service=demoexpert-app"
+        - "traefik.http.services.demoexpert-app.loadbalancer.server.port=80"
 
 networks:
   dokploy-overlay:
