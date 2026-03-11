@@ -20,24 +20,18 @@ fi
 
 echo "DATABASE_URL is set (masked): $(echo $DATABASE_URL | sed 's/:[^:@]*@/:****@/')"
 
-# 1. Run Migrations - use --skip-generate to avoid issues, fallback to db push
+# 1. Run Migrations (required)
 echo "Running Prisma migrations..."
 if command -v prisma >/dev/null 2>&1; then
-  prisma migrate deploy || {
-    echo "⚠️ migrate deploy failed, trying db push..."
-    prisma db push --accept-data-loss || echo "⚠️ db push also failed, continuing..."
-  }
+  prisma migrate deploy
 else
-  npx --yes prisma migrate deploy || {
-    echo "⚠️ migrate deploy failed, trying db push..."
-    npx --yes prisma db push --accept-data-loss || echo "⚠️ db push also failed, continuing..."
-  }
+  npx --yes prisma migrate deploy
 fi
 
 # 2. Seed Database
 if [ "$SEED_DB" = "true" ]; then
   echo "🌱 Seeding database..."
-  npm run seed || echo "⚠️ Seeding failed (non-critical)"
+  npm run seed
 fi
 
 # 3. Start Application

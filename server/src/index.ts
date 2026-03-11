@@ -577,16 +577,28 @@ app.post('/api/auth/login', async (req, res) => {
   try {
     const user = await prisma.user.findUnique({ where: { email: String(email).toLowerCase() } });
     if (!user) return res.status(401).json({ error: 'invalid_credentials' });
-    const ok = await bcrypt.compare(String(password), user.password);
+    if (!user.password || typeof user.password !== 'string') return res.status(401).json({ error: 'invalid_credentials' });
+    let ok = false;
+    try {
+      ok = await bcrypt.compare(String(password), user.password);
+    } catch {
+      ok = false;
+    }
     if (!ok) return res.status(401).json({ error: 'invalid_credentials' });
     if (user.status === 'pending') return res.status(403).json({ error: 'account_pending' });
     const safeUser: UserSession = { id: user.id, name: user.name, email: user.email, role: user.role as any, status: user.status as any };
     (req.session as any).user = safeUser;
     return res.json(safeUser);
   } catch (err: any) {
+    const code = String(err?.code || '');
     console.error('[login] Error:', err?.message || err);
-    console.error('[login] Stack:', err?.stack);
-    return res.status(500).json({ error: 'login_failed', detail: err?.message, code: err?.code });
+    if (code === 'P2021' || code === 'P2022') {
+      return res.status(503).json({ error: 'database_schema_missing', code });
+    }
+    if (code === 'P1000' || code === 'P1001' || code === 'P1002' || code === 'P1003' || code === 'P1017') {
+      return res.status(503).json({ error: 'database_unavailable', code });
+    }
+    return res.status(500).json({ error: 'login_failed', code });
   }
 });
 
@@ -601,15 +613,28 @@ app.post('/auth/login', async (req, res) => {
   try {
     const user = await prisma.user.findUnique({ where: { email: String(email).toLowerCase() } });
     if (!user) return res.status(401).json({ error: 'invalid_credentials' });
-    const ok = await bcrypt.compare(String(password), user.password);
+    if (!user.password || typeof user.password !== 'string') return res.status(401).json({ error: 'invalid_credentials' });
+    let ok = false;
+    try {
+      ok = await bcrypt.compare(String(password), user.password);
+    } catch {
+      ok = false;
+    }
     if (!ok) return res.status(401).json({ error: 'invalid_credentials' });
     if (user.status === 'pending') return res.status(403).json({ error: 'account_pending' });
     const safeUser: UserSession = { id: user.id, name: user.name, email: user.email, role: user.role as any, status: user.status as any };
     (req.session as any).user = safeUser;
     return res.json(safeUser);
   } catch (err: any) {
+    const code = String(err?.code || '');
     console.error('[login] Error:', err?.message || err);
-    return res.status(500).json({ error: 'login_failed', detail: err?.message });
+    if (code === 'P2021' || code === 'P2022') {
+      return res.status(503).json({ error: 'database_schema_missing', code });
+    }
+    if (code === 'P1000' || code === 'P1001' || code === 'P1002' || code === 'P1003' || code === 'P1017') {
+      return res.status(503).json({ error: 'database_unavailable', code });
+    }
+    return res.status(500).json({ error: 'login_failed', code });
   }
 });
 
