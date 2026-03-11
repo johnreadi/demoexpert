@@ -13,7 +13,7 @@ services:
       NODE_ENV: production
       PORT: 3000
       # Ensure connection to the correct Dokploy database via internal network
-      DATABASE_URL: ${DATABASE_URL:-postgresql://dokploy:dokploy@${DB_HOST:-demoexpert-expertdb-djopvt}:5432/${DB_NAME:-demoexpert-expertdb-djopvt}}
+      DATABASE_URL: ${DATABASE_URL:-postgresql://dokploy:dokploy@${DB_HOST:-demoexpert-expertdb-djopvt-kgplzz}:5432/${DB_NAME:-demoexpert-expertdb-djopvt}}
       SESSION_SECRET: ${SESSION_SECRET}
       CORS_ORIGIN: ${CORS_ORIGIN:-https://app.demoexpert.fr}
       TRUST_PROXY: "1"
