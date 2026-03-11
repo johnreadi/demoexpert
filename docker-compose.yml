@@ -13,7 +13,7 @@ services:
       NODE_ENV: production
       PORT: 3000
       # Ensure connection to the correct Dokploy database via internal network
-      DATABASE_URL: ${DATABASE_URL:-postgresql://dokploy:dokploy@demoexpert-expertdb-djopvt:5432/demoexpert-expertdb-djopvt}
+      DATABASE_URL: ${DATABASE_URL:-postgresql://dokploy:dokploy@${DB_HOST:-demoexpert-expertdb-djopvt}:5432/${DB_NAME:-demoexpert-expertdb-djopvt}}
       SESSION_SECRET: ${SESSION_SECRET}
       CORS_ORIGIN: ${CORS_ORIGIN:-https://app.demoexpert.fr}
       TRUST_PROXY: "1"
@@ -24,12 +24,12 @@ services:
       STRICT_DB: "false"
       SEED_DB: "true"
     networks:
-      - dokploy-overlay
       - dokploy-network
+      - dokploy-overlay
     
     labels:
       - "traefik.enable=true"
-      - "traefik.docker.network=dokploy-network"
+      - "traefik.docker.network=${TRAEFIK_DOCKER_NETWORK:-dokploy-network}"
       # Router pour api.demoexpert.fr
       - "traefik.http.routers.backend.rule=Host(`api.demoexpert.fr`)"
       - "traefik.http.routers.backend.entrypoints=websecure"
@@ -62,12 +62,12 @@ services:
         VITE_USE_LOCAL_API: "false"
     restart: unless-stopped
     networks:
-      - dokploy-overlay
       - dokploy-network
+      - dokploy-overlay
     
     labels:
       - "traefik.enable=true"
-      - "traefik.docker.network=dokploy-network"
+      - "traefik.docker.network=${TRAEFIK_DOCKER_NETWORK:-dokploy-network}"
       # Router pour app.demoexpert.fr
       - "traefik.http.routers.app.rule=Host(`app.demoexpert.fr`)"
       - "traefik.http.routers.app.entrypoints=websecure"
