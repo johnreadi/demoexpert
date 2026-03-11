@@ -24,11 +24,11 @@ services:
       STRICT_DB: "false"
       SEED_DB: "true"
     networks:
-      - dokploy-network
+      - dokploy-overlay
     
     labels:
       - "traefik.enable=true"
-      - "traefik.docker.network=dokploy-network"
+      - "traefik.docker.network=dokploy-overlay"
       # Router pour api.demoexpert.fr
       - "traefik.http.routers.backend.rule=Host(`api.demoexpert.fr`)"
       - "traefik.http.routers.backend.entrypoints=websecure"
@@ -61,11 +61,11 @@ services:
         VITE_USE_LOCAL_API: "false"
     restart: unless-stopped
     networks:
-      - dokploy-network
+      - dokploy-overlay
     
     labels:
       - "traefik.enable=true"
-      - "traefik.docker.network=dokploy-network"
+      - "traefik.docker.network=dokploy-overlay"
       # Router pour app.demoexpert.fr
       - "traefik.http.routers.app.rule=Host(`app.demoexpert.fr`)"
       - "traefik.http.routers.app.entrypoints=websecure"
