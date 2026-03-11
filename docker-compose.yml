@@ -25,10 +25,11 @@ services:
       SEED_DB: "true"
     networks:
       - dokploy-overlay
+      - dokploy-network
     
     labels:
       - "traefik.enable=true"
-      - "traefik.docker.network=dokploy-overlay"
+      - "traefik.docker.network=dokploy-network"
       # Router pour api.demoexpert.fr
       - "traefik.http.routers.backend.rule=Host(`api.demoexpert.fr`)"
       - "traefik.http.routers.backend.entrypoints=websecure"
@@ -62,10 +63,11 @@ services:
     restart: unless-stopped
     networks:
       - dokploy-overlay
+      - dokploy-network
     
     labels:
       - "traefik.enable=true"
-      - "traefik.docker.network=dokploy-overlay"
+      - "traefik.docker.network=dokploy-network"
       # Router pour app.demoexpert.fr
       - "traefik.http.routers.app.rule=Host(`app.demoexpert.fr`)"
       - "traefik.http.routers.app.entrypoints=websecure"
