@@ -27,6 +27,7 @@ services:
       SEED_DB: "true"
     networks:
       - traefik-network
+      - dokploy-overlay
     
     labels:
       - "traefik.enable=true"
@@ -106,6 +107,8 @@ services:
 
 networks:
   traefik-network:
+    external: true
+  dokploy-overlay:
     external: true
 
 volumes:
