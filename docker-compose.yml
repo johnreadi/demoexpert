@@ -27,11 +27,10 @@ services:
       SEED_DB: "true"
     networks:
       - dokploy-network
-      - dokploy-overlay
     
     labels:
       - "traefik.enable=true"
-      - "traefik.docker.network=${TRAEFIK_DOCKER_NETWORK:-dokploy-network}"
+      - "traefik.docker.network=dokploy-network"
       # Router pour api.demoexpert.fr
       - "traefik.http.routers.demoexpert-api.rule=Host(`api.demoexpert.fr`)"
       - "traefik.http.routers.demoexpert-api.entrypoints=websecure"
@@ -85,11 +84,10 @@ services:
       - CHOWN
     networks:
       - dokploy-network
-      - dokploy-overlay
     
     labels:
       - "traefik.enable=true"
-      - "traefik.docker.network=${TRAEFIK_DOCKER_NETWORK:-dokploy-network}"
+      - "traefik.docker.network=dokploy-network"
       # Router pour app.demoexpert.fr
       - "traefik.http.routers.demoexpert-app.rule=Host(`app.demoexpert.fr`)"
       - "traefik.http.routers.demoexpert-app.entrypoints=websecure"
