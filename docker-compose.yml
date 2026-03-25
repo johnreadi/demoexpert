@@ -9,6 +9,7 @@ services:
       context: ./server
       dockerfile: Dockerfile
     restart: unless-stopped
+    container_name: demoexpert-backend-new
     environment:
       NODE_ENV: production
       PORT: 3000
