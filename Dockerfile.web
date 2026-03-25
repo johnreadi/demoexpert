@@ -7,7 +7,9 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 
 # 2. Installer TOUTES les dépendances (y compris dev pour le build)
-RUN npm install --no-fund --no-audit
+# Utiliser --mount=type=cache pour éviter de re-télécharger à chaque build
+RUN --mount=type=cache,target=/root/.npm \
+    npm ci --no-fund --no-audit --prefer-offline
 
 # 3. Copier le code source
 COPY . .
