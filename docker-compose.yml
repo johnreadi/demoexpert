@@ -4,12 +4,11 @@ services:
   # ❌ Removed temporary DB service. 
   # We will use the existing managed DB service (demoexpert-expertdb-djopvt) which is running Postgres 18.
 
-  backend:
+  api:
     build:
       context: ./server
       dockerfile: Dockerfile
     restart: unless-stopped
-    container_name: demoexpert-backend-new
     environment:
       NODE_ENV: production
       PORT: 3000
@@ -32,22 +31,22 @@ services:
       - "traefik.enable=true"
       - "traefik.docker.network=${TRAEFIK_DOCKER_NETWORK:-dokploy-network}"
       # Router pour api.demoexpert.fr
-      - "traefik.http.routers.demoexpert-backend.rule=Host(`api.demoexpert.fr`)"
-      - "traefik.http.routers.demoexpert-backend.entrypoints=websecure"
-      - "traefik.http.routers.demoexpert-backend.tls.certresolver=letsencrypt"
-      - "traefik.http.routers.demoexpert-backend.service=demoexpert-backend"
+      - "traefik.http.routers.demoexpert-api.rule=Host(`api.demoexpert.fr`)"
+      - "traefik.http.routers.demoexpert-api.entrypoints=websecure"
+      - "traefik.http.routers.demoexpert-api.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.demoexpert-api.service=demoexpert-api"
       # Service — PAS de healthcheck Traefik (Docker healthcheck suffit)
-      - "traefik.http.services.demoexpert-backend.loadbalancer.server.port=3000"
+      - "traefik.http.services.demoexpert-api.loadbalancer.server.port=3000"
 
     deploy:
       labels:
         - "traefik.enable=true"
         - "traefik.docker.network=${TRAEFIK_DOCKER_NETWORK:-dokploy-network}"
-        - "traefik.http.routers.demoexpert-backend.rule=Host(`api.demoexpert.fr`)"
-        - "traefik.http.routers.demoexpert-backend.entrypoints=websecure"
-        - "traefik.http.routers.demoexpert-backend.tls.certresolver=letsencrypt"
-        - "traefik.http.routers.demoexpert-backend.service=demoexpert-backend"
-        - "traefik.http.services.demoexpert-backend.loadbalancer.server.port=3000"
+        - "traefik.http.routers.demoexpert-api.rule=Host(`api.demoexpert.fr`)"
+        - "traefik.http.routers.demoexpert-api.entrypoints=websecure"
+        - "traefik.http.routers.demoexpert-api.tls.certresolver=letsencrypt"
+        - "traefik.http.routers.demoexpert-api.service=demoexpert-api"
+        - "traefik.http.services.demoexpert-api.loadbalancer.server.port=3000"
     
     healthcheck:
       test: ["CMD-SHELL", "node -e \"require('http').get('http://127.0.0.1:3000/healthz', (r) => process.exit(r.statusCode === 200 ? 0 : 1))\" || exit 1"]
