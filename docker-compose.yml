@@ -37,6 +37,14 @@ services:
       - "traefik.http.routers.demoexpert-api.service=demoexpert-api"
       # Service — PAS de healthcheck Traefik (Docker healthcheck suffit)
       - "traefik.http.services.demoexpert-api.loadbalancer.server.port=3000"
+      # Security headers
+      - "traefik.http.middlewares.demoexpert-api-security.headers.customFrameOptionsValue=SAMEORIGIN"
+      - "traefik.http.middlewares.demoexpert-api-security.headers.contentTypeNosniff=true"
+      - "traefik.http.middlewares.demoexpert-api-security.headers.referrerPolicy=strict-origin-when-cross-origin"
+      - "traefik.http.middlewares.demoexpert-api-security.headers.stsSeconds=31536000"
+      - "traefik.http.middlewares.demoexpert-api-security.headers.stsIncludeSubdomains=true"
+      - "traefik.http.middlewares.demoexpert-api-security.headers.stsPreload=true"
+      - "traefik.http.routers.demoexpert-api.middlewares=demoexpert-api-security"
 
     deploy:
       labels:
@@ -47,6 +55,17 @@ services:
         - "traefik.http.routers.demoexpert-api.tls.certresolver=letsencrypt"
         - "traefik.http.routers.demoexpert-api.service=demoexpert-api"
         - "traefik.http.services.demoexpert-api.loadbalancer.server.port=3000"
+    
+    # Security: Limit container capabilities
+    read_only: true
+    tmpfs:
+      - /tmp:noexec,nosuid,size=100m
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_BIND_SERVICE
     
     healthcheck:
       test: ["CMD-SHELL", "node -e \"require('http').get('http://127.0.0.1:3000/healthz', (r) => process.exit(r.statusCode === 200 ? 0 : 1))\" || exit 1"]
@@ -63,6 +82,20 @@ services:
         VITE_API_BASE_URL: https://api.demoexpert.fr/api
         VITE_USE_LOCAL_API: "false"
     restart: unless-stopped
+    # Security: Limit container capabilities
+    read_only: true
+    tmpfs:
+      - /tmp:noexec,nosuid,size=50m
+      - /var/cache/nginx:noexec,nosuid,size=10m
+      - /var/run:noexec,nosuid,size=10m
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_BIND_SERVICE
+      - SETGID
+      - SETUID
     networks:
       - dokploy-network
       - dokploy-overlay
@@ -77,6 +110,14 @@ services:
       - "traefik.http.routers.demoexpert-app.service=demoexpert-app"
       # Service
       - "traefik.http.services.demoexpert-app.loadbalancer.server.port=80"
+      # Security headers
+      - "traefik.http.middlewares.demoexpert-app-security.headers.customFrameOptionsValue=SAMEORIGIN"
+      - "traefik.http.middlewares.demoexpert-app-security.headers.contentTypeNosniff=true"
+      - "traefik.http.middlewares.demoexpert-app-security.headers.referrerPolicy=strict-origin-when-cross-origin"
+      - "traefik.http.middlewares.demoexpert-app-security.headers.stsSeconds=31536000"
+      - "traefik.http.middlewares.demoexpert-app-security.headers.stsIncludeSubdomains=true"
+      - "traefik.http.middlewares.demoexpert-app-security.headers.stsPreload=true"
+      - "traefik.http.routers.demoexpert-app.middlewares=demoexpert-app-security"
 
     deploy:
       labels:
