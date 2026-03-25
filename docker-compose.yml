@@ -26,11 +26,11 @@ services:
       STRICT_DB: "false"
       SEED_DB: "true"
     networks:
-      - dokploy-network
+      - dokploy-overlay
     
     labels:
       - "traefik.enable=true"
-      - "traefik.docker.network=dokploy-network"
+      - "traefik.docker.network=dokploy-overlay"
       # Router pour api.demoexpert.fr
       - "traefik.http.routers.demoexpert-api.rule=Host(`api.demoexpert.fr`)"
       - "traefik.http.routers.demoexpert-api.entrypoints=websecure"
@@ -83,11 +83,11 @@ services:
       - SETUID
       - CHOWN
     networks:
-      - dokploy-network
+      - dokploy-overlay
     
     labels:
       - "traefik.enable=true"
-      - "traefik.docker.network=dokploy-network"
+      - "traefik.docker.network=dokploy-overlay"
       # Router pour app.demoexpert.fr
       - "traefik.http.routers.demoexpert-app.rule=Host(`app.demoexpert.fr`)"
       - "traefik.http.routers.demoexpert-app.entrypoints=websecure"
@@ -106,8 +106,6 @@ services:
 
 networks:
   dokploy-overlay:
-    external: true
-  dokploy-network:
     external: true
 
 volumes:
