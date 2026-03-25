@@ -49,9 +49,6 @@ services:
       - "traefik.http.routers.demoexpert-api.middlewares=demoexpert-api-security"
     
     # Security: Limit container capabilities
-    read_only: true
-    tmpfs:
-      - /tmp:noexec,nosuid,size=100m
     security_opt:
       - no-new-privileges:true
     cap_drop:
@@ -76,12 +73,7 @@ services:
     image: demoexpert-app:latest
     container_name: demoexpert-app
     restart: unless-stopped
-    # Security: Limit container capabilities
-    read_only: true
-    tmpfs:
-      - /tmp:noexec,nosuid,size=50m
-      - /var/cache/nginx:noexec,nosuid,size=10m
-      - /var/run:noexec,nosuid,size=10m
+    # Security: Limit container capabilities (nginx needs write access)
     security_opt:
       - no-new-privileges:true
     cap_drop:
@@ -90,6 +82,7 @@ services:
       - NET_BIND_SERVICE
       - SETGID
       - SETUID
+      - CHOWN
     networks:
       - dokploy-network
       - dokploy-overlay
