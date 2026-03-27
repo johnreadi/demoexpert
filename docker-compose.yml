@@ -9,7 +9,7 @@ services:
       context: ./server
       dockerfile: Dockerfile
     image: demoexpert-api:latest
-    container_name: demoexpert-api
+    container_name: demoexpert-api-v2
     restart: unless-stopped
     environment:
       NODE_ENV: production
