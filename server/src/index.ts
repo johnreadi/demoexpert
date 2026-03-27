@@ -821,7 +821,7 @@ app.post('/products', async (req, res) => {
       model: data.model,
       year: Number(data.year),
       category: String(data.category),
-      price: String(data.price),
+      price: Number(data.price),
       condition: data.condition,
       warranty: data.warranty,
       compatibility: data.compatibility ?? null,
@@ -830,6 +830,7 @@ app.post('/products', async (req, res) => {
     }});
     res.status(201).json(created);
   } catch (e) {
+    console.error('Product creation error:', e);
     res.status(400).json({ error: 'failed_to_create_product' });
   }
 });
@@ -844,7 +845,7 @@ app.put('/products/:id', async (req, res) => {
       ...(data.model !== undefined ? { model: data.model } : {}),
       ...(data.year !== undefined ? { year: Number(data.year) } : {}),
       ...(data.category !== undefined ? { category: String(data.category) } : {}),
-      ...(data.price !== undefined ? { price: String(data.price) } : {}),
+      ...(data.price !== undefined ? { price: Number(data.price) } : {}),
       ...(data.condition !== undefined ? { condition: data.condition } : {}),
       ...(data.warranty !== undefined ? { warranty: data.warranty } : {}),
       ...(data.compatibility !== undefined ? { compatibility: data.compatibility } : {}),
@@ -1072,12 +1073,9 @@ app.post('/api/contact', async (req, res) => {
     
     // Check if we have a database connection
     if (!process.env.DATABASE_URL) {
-      if (process.env.STRICT_DB === 'true') {
-        return res.status(503).json({ error: 'database_unavailable' });
-      }
-      return res.status(201).json({ success: true, id: `mock-contact-${Date.now()}` });
+      return res.status(503).json({ error: 'database_unavailable' });
     }
-    
+
     // Store in database
     const contact = await prisma.contact.create({
       data: {
@@ -1302,21 +1300,9 @@ app.get('/api/contact', async (_req, res) => {
   try {
     // Check if we have a database connection
     if (!process.env.DATABASE_URL) {
-      if (process.env.STRICT_DB === 'true') {
-        return res.status(503).json({ error: 'database_unavailable' });
-      }
-      return res.json([
-        { 
-          id: 'mock-contact-1', 
-          name: 'John Doe', 
-          email: 'john@example.com', 
-          subject: 'Question sur un produit', 
-          message: 'Bonjour, j\'aimerais savoir si vous avez en stock le produit REF123456 ?', 
-          createdAt: new Date(Date.now() - 86400000) 
-        }
-      ]);
+      return res.status(503).json({ error: 'database_unavailable' });
     }
-    
+
     const contacts = await prisma.contact.findMany({
       orderBy: { createdAt: 'desc' }
     });
@@ -1331,10 +1317,7 @@ app.get('/api/contact', async (_req, res) => {
 app.delete('/api/contact/:id', async (req, res) => {
   try {
     if (!process.env.DATABASE_URL) {
-      if (process.env.STRICT_DB === 'true') {
-        return res.status(503).json({ error: 'database_unavailable' });
-      }
-      return res.json({ success: true });
+      return res.status(503).json({ error: 'database_unavailable' });
     }
     await prisma.contact.delete({ where: { id: req.params.id } });
     res.json({ success: true });
@@ -1352,10 +1335,7 @@ app.post('/api/contacts/delete', async (req, res) => {
       return res.status(400).json({ error: 'no_ids_or_emails' });
     }
     if (!process.env.DATABASE_URL) {
-      if (process.env.STRICT_DB === 'true') {
-        return res.status(503).json({ error: 'database_unavailable' });
-      }
-      return res.json({ deleted: ids.length || emails.length });
+      return res.status(503).json({ error: 'database_unavailable' });
     }
     let resultCount = 0;
     if (ids.length > 0) {
@@ -1619,25 +1599,9 @@ app.get('/api/admin/messages', async (req, res) => {
   try {
     // Check if we have a database connection
     if (!process.env.DATABASE_URL) {
-      if (process.env.STRICT_DB === 'true') {
-        return res.status(503).json({ error: 'database_unavailable' });
-      }
-      return res.json([
-        { 
-          id: 'mock-msg-1', 
-          from: 'Formulaire de Contact', 
-          senderName: 'John Doe', 
-          senderEmail: 'john@example.com', 
-          subject: 'Question sur un produit', 
-          content: 'Bonjour, j\'aimerais savoir si vous avez en stock le produit REF123456 ?', 
-          receivedAt: new Date(Date.now() - 86400000), 
-          isRead: false, 
-          isArchived: false, 
-          status: 'pending' 
-        }
-      ]);
+      return res.status(503).json({ error: 'database_unavailable' });
     }
-    
+
     const messages = await prisma.adminMessage.findMany({
       orderBy: { receivedAt: 'desc' }
     });
@@ -1729,17 +1693,7 @@ app.post('/api/admin/messages', async (req, res) => {
     }
 
     if (!process.env.DATABASE_URL) {
-      if (process.env.STRICT_DB === 'true') {
-        return res.status(503).json({ error: 'database_unavailable' });
-      }
-      return res.status(201).json({
-        id: `mock-msg-${Date.now()}`,
-        ...inbound,
-        receivedAt: new Date(),
-        isRead: false,
-        isArchived: false,
-        status: 'pending'
-      });
+      return res.status(503).json({ error: 'database_unavailable' });
     }
 
     const message = await prisma.adminMessage.create({
@@ -1759,20 +1713,12 @@ app.post('/api/admin/messages', async (req, res) => {
 app.put('/api/admin/messages/:id', async (req, res) => {
   try {
     const { isRead, isArchived, status } = req.body || {};
-    
+
     // Check if we have a database connection
     if (!process.env.DATABASE_URL) {
-      if (process.env.STRICT_DB === 'true') {
-        return res.status(503).json({ error: 'database_unavailable' });
-      }
-      return res.json({ 
-        id: req.params.id,
-        isRead: isRead !== undefined ? isRead : false,
-        isArchived: isArchived !== undefined ? isArchived : false,
-        status: status || 'pending'
-      });
+      return res.status(503).json({ error: 'database_unavailable' });
     }
-    
+
     // Update in database
     const message = await prisma.adminMessage.update({
       where: { id: req.params.id },
@@ -1794,17 +1740,14 @@ app.delete('/api/admin/messages/:id', async (req, res) => {
   try {
     // Check if we have a database connection
     if (!process.env.DATABASE_URL) {
-      if (process.env.STRICT_DB === 'true') {
-        return res.status(503).json({ error: 'database_unavailable' });
-      }
-      return res.json({ success: true });
+      return res.status(503).json({ error: 'database_unavailable' });
     }
-    
+
     // Delete from database
     await prisma.adminMessage.delete({
       where: { id: req.params.id }
     });
-    
+
     res.json({ success: true });
   } catch (error) {
     console.error('Failed to delete admin message:', error);
@@ -1817,10 +1760,7 @@ app.delete('/api/admin/messages/:id', async (req, res) => {
 app.get('/api/admin/users', requireAdmin, async (_req, res) => {
   try {
     if (!process.env.DATABASE_URL) {
-      if (process.env.STRICT_DB === 'true') {
-        return res.status(503).json({ error: 'database_unavailable' });
-      }
-      return res.json([]);
+      return res.status(503).json({ error: 'database_unavailable' });
     }
 
     const users = await prisma.user.findMany({
@@ -1922,10 +1862,7 @@ app.delete('/api/admin/users/:id', requireAdmin, async (req, res) => {
 app.get('/api/lift-bookings', requireAdmin, async (_req, res) => {
   try {
     if (!process.env.DATABASE_URL) {
-      if (process.env.STRICT_DB === 'true') {
-        return res.status(503).json({ error: 'database_unavailable' });
-      }
-      return res.json([]);
+      return res.status(503).json({ error: 'database_unavailable' });
     }
 
     const bookings = await prisma.liftRentalBooking.findMany({
@@ -1965,10 +1902,7 @@ app.put('/api/lift-bookings/:id/status', requireAdmin, async (req, res) => {
 app.get('/api/audit-logs', requireAdmin, async (_req, res) => {
   try {
     if (!process.env.DATABASE_URL) {
-      if (process.env.STRICT_DB === 'true') {
-        return res.status(503).json({ error: 'database_unavailable' });
-      }
-      return res.json([]);
+      return res.status(503).json({ error: 'database_unavailable' });
     }
 
     const logs = await prisma.auditLogEntry.findMany({

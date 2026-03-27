@@ -23,7 +23,7 @@ services:
       COOKIE_SAME_SITE: "none"
       DEFAULT_ADMIN_EMAIL: ${DEFAULT_ADMIN_EMAIL:-admin@demoexpert.fr}
       DEFAULT_ADMIN_PASSWORD: ${DEFAULT_ADMIN_PASSWORD:-demo76000}
-      STRICT_DB: "false"
+      STRICT_DB: "true"
       SEED_DB: "true"
     networks:
       - traefik-network
