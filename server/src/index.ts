@@ -750,6 +750,30 @@ app.get('/api/products/:id', async (req, res) => {
   }
 });
 
+app.post('/api/products', async (req, res) => {
+  try {
+    const data = req.body || {};
+    const created = await prisma.product.create({ data: {
+      name: data.name,
+      oemRef: data.oemRef,
+      brand: data.brand,
+      model: data.model,
+      year: Number(data.year),
+      category: String(data.category),
+      price: Number(data.price),
+      condition: data.condition,
+      warranty: data.warranty,
+      compatibility: data.compatibility ?? null,
+      images: Array.isArray(data.images) ? data.images : [],
+      description: data.description,
+    }});
+    res.status(201).json(created);
+  } catch (e) {
+    console.error('Product creation error:', e);
+    res.status(400).json({ error: 'failed_to_create_product' });
+  }
+});
+
 app.put('/api/products/:id', async (req, res) => {
   try {
     const data = req.body || {};
