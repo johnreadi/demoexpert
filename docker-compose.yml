@@ -27,6 +27,20 @@ services:
       SEED_DB: "true"
     networks:
       - dokploy-overlay
+      - dokploy-network
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=dokploy-network
+      - traefik.http.routers.demoexpert-api-web.rule=Host(`api.demoexpert.fr`)
+      - traefik.http.routers.demoexpert-api-web.entrypoints=web
+      - traefik.http.routers.demoexpert-api-web.middlewares=redirect-to-https@file
+      - traefik.http.routers.demoexpert-api-web.service=demoexpert-api-web
+      - traefik.http.routers.demoexpert-api-websecure.rule=Host(`api.demoexpert.fr`)
+      - traefik.http.routers.demoexpert-api-websecure.entrypoints=websecure
+      - traefik.http.routers.demoexpert-api-websecure.tls.certresolver=letsencrypt
+      - traefik.http.routers.demoexpert-api-websecure.service=demoexpert-api-websecure
+      - traefik.http.services.demoexpert-api-web.loadbalancer.server.port=3000
+      - traefik.http.services.demoexpert-api-websecure.loadbalancer.server.port=3000
     
     # Security: Limit container capabilities
     security_opt:
@@ -65,9 +79,12 @@ services:
       - CHOWN
     networks:
       - dokploy-overlay
+      - dokploy-network
 
 networks:
   dokploy-overlay:
+    external: true
+  dokploy-network:
     external: true
 
 volumes:
