@@ -26,7 +26,6 @@ services:
       STRICT_DB: "true"
       SEED_DB: "true"
     networks:
-      - dokploy-overlay
       - dokploy-network
     labels:
       - traefik.enable=true
@@ -78,12 +77,9 @@ services:
       - SETUID
       - CHOWN
     networks:
-      - dokploy-overlay
       - dokploy-network
 
 networks:
-  dokploy-overlay:
-    external: true
   dokploy-network:
     external: true
 
