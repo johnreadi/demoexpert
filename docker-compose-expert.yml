@@ -6,7 +6,7 @@ services:
     container_name: expert_app
     restart: unless-stopped
     networks:
-      - dokploy-network
+      - dokploy-overlay
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.expert.rule=Host(`app.demoexpert.fr`)"
@@ -14,7 +14,7 @@ services:
       - "traefik.http.routers.expert.tls=true"
       - "traefik.http.routers.expert.tls.certresolver=letsencrypt"
       - "traefik.http.services.expert.loadbalancer.server.port=3000"
-      - "traefik.docker.network=dokploy-network"
+      - "traefik.docker.network=dokploy-overlay"
     environment:
       - NODE_ENV=production
     healthcheck:
@@ -24,5 +24,5 @@ services:
       retries: 3
 
 networks:
-  dokploy-network:
+  dokploy-overlay:
     external: true
