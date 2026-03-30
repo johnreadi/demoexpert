@@ -201,7 +201,11 @@ app.get('/api/admin/users', requireAdmin, async (_req, res) => {
       select: { id: true, name: true, email: true, role: true, status: true, createdAt: true, updatedAt: true }
     });
     return res.json(users);
-  } catch {
+  } catch (e: any) {
+    const code = String(e?.code || '');
+    if (code === 'P2021' || code === 'P2022') {
+      return res.json([]);
+    }
     return res.status(500).json({ error: 'failed_to_list_users' });
   }
 });
@@ -272,7 +276,11 @@ app.get('/api/admin/messages', requireAdmin, async (_req, res) => {
   try {
     const msgs = await prisma.adminMessage.findMany({ orderBy: { receivedAt: 'desc' } });
     return res.json(msgs);
-  } catch {
+  } catch (e: any) {
+    const code = String(e?.code || '');
+    if (code === 'P2021' || code === 'P2022') {
+      return res.json([]);
+    }
     return res.status(500).json({ error: 'failed_to_list_messages' });
   }
 });
@@ -894,7 +902,7 @@ app.delete('/products/:id', async (req, res) => {
 app.get('/api/auctions', async (_req, res) => {
   try {
     if (!process.env.DATABASE_URL) {
-      return res.status(503).json({ error: 'database_not_configured' });
+      return res.json([]);
     }
     
     const auctions = await prisma.auction.findMany({ orderBy: { createdAt: 'desc' } });
@@ -916,9 +924,13 @@ app.get('/api/auctions', async (_req, res) => {
       endDate: a.endDate
     }));
     res.json(transformed);
-  } catch (error) {
-    console.error("Failed to list auctions:", error);
-    res.status(500).json({ error: 'failed_to_list_auctions' });
+  } catch (e: any) {
+    const code = String(e?.code || '');
+    console.error("Failed to list auctions:", { code, message: e?.message });
+    if (code === 'P2021' || code === 'P2022') {
+      return res.json([]);
+    }
+    return res.status(500).json({ error: 'failed_to_list_auctions' });
   }
 });
 
@@ -1324,7 +1336,7 @@ app.get('/api/contact', async (_req, res) => {
   try {
     // Check if we have a database connection
     if (!process.env.DATABASE_URL) {
-      return res.status(503).json({ error: 'database_unavailable' });
+      return res.json([]);
     }
 
     const contacts = await prisma.contact.findMany({
@@ -1332,9 +1344,13 @@ app.get('/api/contact', async (_req, res) => {
     });
     const mapped = contacts.map((c: any) => ({ id: c.id, name: c.name, email: c.email, source: 'Message entrant' }));
     res.json(mapped);
-  } catch (error) {
-    console.error('Failed to fetch contacts:', error);
-    res.status(500).json({ error: 'failed_to_fetch_contacts' });
+  } catch (e: any) {
+    const code = String(e?.code || '');
+    console.error('Failed to fetch contacts:', { code, message: e?.message });
+    if (code === 'P2021' || code === 'P2022') {
+      return res.json([]);
+    }
+    return res.status(500).json({ error: 'failed_to_fetch_contacts' });
   }
 });
 

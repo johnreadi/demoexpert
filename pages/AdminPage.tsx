@@ -194,7 +194,7 @@ export default function AdminPage(): React.ReactNode {
       setIsLoadingData(true);
       setError(null);
       try {
-        const [productsData, auctionsData, usersData, messagesData, bookingsData, logsData, contactsData] = await Promise.all([
+        const results = await Promise.allSettled([
           api.getProducts({}),
           api.getAuctions(),
           api.getAdminUsers(),
@@ -203,6 +203,23 @@ export default function AdminPage(): React.ReactNode {
           api.getAuditLogs(),
           api.getContacts()
         ]);
+
+        const unwrap = <T,>(r: PromiseSettledResult<T>, fallback: T): T => r.status === 'fulfilled' ? r.value : fallback;
+
+        const productsData = unwrap(results[0], [] as Product[]);
+        const auctionsData = unwrap(results[1], [] as Auction[]);
+        const usersData = unwrap(results[2], [] as User[]);
+        const messagesData = unwrap(results[3], [] as AdminMessage[]);
+        const bookingsData = unwrap(results[4], [] as LiftRentalBooking[]);
+        const logsData = unwrap(results[5], [] as AuditLogEntry[]);
+        const contactsData = unwrap(results[6], [] as Contact[]);
+
+        const hadError = results.some(r => r.status === 'rejected');
+        if (hadError) {
+          console.error("Failed to load some admin data", results.filter(r => r.status === 'rejected'));
+          setError("Certaines données n'ont pas pu être chargées.");
+        }
+
         setProducts(productsData);
         setAuctions(auctionsData);
         setUsers(usersData);
