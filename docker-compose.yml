@@ -77,6 +77,19 @@ services:
       - CHOWN
     networks:
       - dokploy-network
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=dokploy-network
+      - traefik.http.routers.demoexpert-app-web.rule=Host(`app.demoexpert.fr`)
+      - traefik.http.routers.demoexpert-app-web.entrypoints=web
+      - traefik.http.routers.demoexpert-app-web.middlewares=redirect-to-https@file
+      - traefik.http.routers.demoexpert-app-web.service=demoexpert-app-web
+      - traefik.http.routers.demoexpert-app-websecure.rule=Host(`app.demoexpert.fr`)
+      - traefik.http.routers.demoexpert-app-websecure.entrypoints=websecure
+      - traefik.http.routers.demoexpert-app-websecure.tls.certresolver=letsencrypt
+      - traefik.http.routers.demoexpert-app-websecure.service=demoexpert-app-websecure
+      - traefik.http.services.demoexpert-app-web.loadbalancer.server.port=80
+      - traefik.http.services.demoexpert-app-websecure.loadbalancer.server.port=80
 
 networks:
   dokploy-network:
