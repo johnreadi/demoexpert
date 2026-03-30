@@ -204,6 +204,19 @@ export default function AdminPage(): React.ReactNode {
           api.getContacts()
         ]);
 
+        const authFailed = results.some(r =>
+          r.status === 'rejected' && (
+            r.reason?.status === 401 ||
+            r.reason?.status === 403 ||
+            r.reason?.body?.error === 'unauthorized'
+          )
+        );
+        if (authFailed) {
+          logout();
+          navigate('/connexion');
+          return;
+        }
+
         const unwrap = <T,>(r: PromiseSettledResult<T>, fallback: T): T => r.status === 'fulfilled' ? r.value : fallback;
 
         const productsData = unwrap(results[0], [] as Product[]);
