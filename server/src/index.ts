@@ -6,6 +6,7 @@ import morgan from 'morgan';
 import cookieParser from 'cookie-parser';
 import bcrypt from 'bcryptjs';
 import nodemailer from 'nodemailer';
+import { Pool } from 'pg';
 
 // 🔧 FIX ENABLED: We suspect the data is in 'demoexpert-expertdb-djopvt' but URL might be 'postgres'.
 if (process.env.DATABASE_URL) {
@@ -146,11 +147,35 @@ app.use(cors({
 // Handle preflight explicitly for all routes
 app.options('*', cors());
 
+const SESSION_TTL_SECONDS = Number(process.env.SESSION_TTL_SECONDS || 60 * 60 * 24 * 7);
+const SESSION_STORE = String(process.env.SESSION_STORE || '').toLowerCase();
+let sessionStore: any = undefined;
+
+if (SESSION_STORE !== 'memory' && process.env.DATABASE_URL) {
+  try {
+    const PgSessionStore = require('connect-pg-simple')(session);
+    const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+    sessionStore = new PgSessionStore({
+      pool,
+      tableName: process.env.SESSION_TABLE || 'session',
+      createTableIfMissing: true,
+      ttl: SESSION_TTL_SECONDS,
+    });
+
+    const closePool = () => pool.end().catch(() => {});
+    process.on('SIGTERM', closePool);
+    process.on('SIGINT', closePool);
+  } catch (e: any) {
+    console.error('Failed to initialize Postgres session store:', e?.message || e);
+  }
+}
+
 app.use(session({
   secret: SESSION_SECRET,
   resave: false,
   saveUninitialized: false,
   proxy: true,
+  ...(sessionStore ? { store: sessionStore } : {}),
   cookie: {
     httpOnly: true,
     secure: COOKIE_SECURE,
