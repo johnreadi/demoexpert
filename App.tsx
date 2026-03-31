@@ -1,4 +1,4 @@
-import React, { ReactNode, useEffect } from 'react';
+import React, { ReactNode, useEffect, useMemo, useState } from 'react';
 import { HashRouter as Router, Routes, Route } from 'react-router-dom';
 import Header from './components/Header';
 import Footer from './components/Footer';
@@ -98,6 +98,106 @@ const SeoManager: React.FC = () => {
   return null;
 };
 
+const InstallPrompt: React.FC = () => {
+  const [dismissed, setDismissed] = useState(false);
+  const [showHelp, setShowHelp] = useState(false);
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+
+  const isMobile = useMemo(() => {
+    if (typeof window === 'undefined') return false;
+    const coarse = window.matchMedia?.('(pointer: coarse)')?.matches;
+    const ua = String(navigator.userAgent || '');
+    const mobileUa = /Android|iPhone|iPad|iPod/i.test(ua);
+    return Boolean(coarse || mobileUa);
+  }, []);
+
+  const isInstalled = useMemo(() => {
+    if (typeof window === 'undefined') return false;
+    const standalone = window.matchMedia?.('(display-mode: standalone)')?.matches;
+    const iosStandalone = Boolean((navigator as any).standalone);
+    return Boolean(standalone || iosStandalone);
+  }, []);
+
+  const isIos = useMemo(() => {
+    const ua = String(navigator.userAgent || '');
+    return /iPhone|iPad|iPod/i.test(ua);
+  }, []);
+
+  useEffect(() => {
+    const handler = (e: any) => {
+      try { e.preventDefault?.(); } catch {}
+      setDeferredPrompt(e);
+    };
+    window.addEventListener('beforeinstallprompt', handler as any);
+    return () => window.removeEventListener('beforeinstallprompt', handler as any);
+  }, []);
+
+  if (!isMobile || isInstalled || dismissed) return null;
+
+  const onInstall = async () => {
+    if (deferredPrompt?.prompt) {
+      try {
+        await deferredPrompt.prompt();
+        try { await deferredPrompt.userChoice; } catch {}
+      } finally {
+        setDeferredPrompt(null);
+        setDismissed(true);
+      }
+      return;
+    }
+    setShowHelp(true);
+  };
+
+  return (
+    <>
+      <div className="fixed bottom-0 left-0 right-0 z-50 bg-expert-blue text-white px-4 py-3 shadow-lg">
+        <div className="max-w-5xl mx-auto flex items-center justify-between gap-3">
+          <div className="text-sm">
+            Ajoutez l’application sur votre écran d’accueil pour un accès rapide.
+          </div>
+          <div className="flex items-center gap-2">
+            <button onClick={onInstall} className="bg-white text-expert-blue font-semibold px-3 py-1.5 rounded">
+              Installer
+            </button>
+            <button onClick={() => setDismissed(true)} className="text-white/90 underline text-sm">
+              Plus tard
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {showHelp && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-end justify-center">
+          <div className="bg-white w-full max-w-lg rounded-t-xl p-5">
+            <div className="flex items-center justify-between mb-3">
+              <div className="font-bold text-lg">Installer l’application</div>
+              <button onClick={() => setShowHelp(false)} className="text-gray-600">✕</button>
+            </div>
+            <div className="text-sm text-gray-700 space-y-2">
+              {isIos ? (
+                <>
+                  <div>1) Appuyez sur le bouton Partager (⤴︎) dans Safari.</div>
+                  <div>2) Choisissez “Sur l’écran d’accueil”.</div>
+                </>
+              ) : (
+                <>
+                  <div>1) Ouvrez le menu du navigateur (⋮).</div>
+                  <div>2) Choisissez “Installer l’application” ou “Ajouter à l’écran d’accueil”.</div>
+                </>
+              )}
+            </div>
+            <div className="mt-4 flex justify-end">
+              <button onClick={() => setShowHelp(false)} className="bg-expert-blue text-white px-4 py-2 rounded">
+                OK
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+};
+
 function App() {
   return (
     <ErrorBoundary>
@@ -106,6 +206,7 @@ function App() {
           <ToastProvider>
             <Router>
             <SeoManager />
+            <InstallPrompt />
             <div
               className="flex flex-col min-h-screen"
               onContextMenu={(e) => e.preventDefault()}

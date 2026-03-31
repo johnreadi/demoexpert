@@ -40,6 +40,17 @@ const DISALLOW_DB_HOSTS = String(process.env.DISALLOW_DB_HOSTS || 'dokploy-db')
   .map(s => s.trim())
   .filter(Boolean);
 
+const sseClients = new Set<any>();
+function sseSend(res: any, event: string, data: any) {
+  try {
+    res.write(`event: ${event}\n`);
+    res.write(`data: ${JSON.stringify(data ?? {})}\n\n`);
+  } catch {}
+}
+function sseBroadcast(event: string, data: any) {
+  for (const res of sseClients) sseSend(res, event, data);
+}
+
 function maskDbUrl(dbUrl: string) {
   return String(dbUrl || '').replace(/:([^:@]+)@/, ':****@');
 }
@@ -253,6 +264,23 @@ app.get('/api/db/health', async (_req, res) => {
   } catch (e) {
     res.status(503).json({ ok: false, error: 'db_unreachable' });
   }
+});
+
+app.get('/api/events', (req, res) => {
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache, no-transform');
+  res.setHeader('Connection', 'keep-alive');
+  try { res.flushHeaders?.(); } catch {}
+
+  sseClients.add(res);
+  sseSend(res, 'hello', { ok: true, ts: Date.now() });
+
+  const intervalId = setInterval(() => sseSend(res, 'ping', { ts: Date.now() }), 25000);
+
+  req.on('close', () => {
+    clearInterval(intervalId);
+    sseClients.delete(res);
+  });
 });
 
 app.get('/api/admin/users', requireAdmin, async (_req, res) => {
@@ -1349,22 +1377,12 @@ app.post('/api/quote', async (req, res) => {
 
 // --- Admin messaging ---
 
-app.get('/api/admin/messages', async (_req, res) => {
-  try {
-    const messages = await prisma.adminMessage.findMany({ orderBy: { receivedAt: 'desc' } });
-    return res.json(messages);
-  } catch (error) {
-    console.error('Failed to fetch admin messages:', error);
-    return res.status(500).json({ error: 'failed_to_fetch_admin_messages' });
-  }
-});
-
 // --- Site settings ---
 
 app.get('/api/settings', async (_req, res) => {
   try {
     if (!process.env.DATABASE_URL) {
-      return res.json({ key: 'site_settings', value: DEFAULT_SETTINGS });
+      return res.json(DEFAULT_SETTINGS);
     }
     let s = await prisma.settings.findUnique({ where: { key: 'site_settings' } });
     if (!s) {
@@ -1389,6 +1407,7 @@ app.put('/api/settings', requireAdmin, async (req, res) => {
       update: { value },
       create: { key: 'site_settings', value },
     });
+    sseBroadcast('settings_updated', { key: 'site_settings', ts: Date.now() });
     return res.json(s.value);
   } catch (e: any) {
     console.error('[PUT /api/settings] error:', e?.message);
@@ -1523,37 +1542,6 @@ app.post('/api/auctions/import', requireAdmin, async (req, res) => {
   }
 });
 
-app.get('/api/settings', async (_req, res) => {
-  try {
-    res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0');
-    res.set('Pragma', 'no-cache');
-    res.set('Vary', 'Origin');
-    try { res.set('X-Instance', process.env.HOSTNAME || require('os').hostname()); } catch {}
-    const settings = await prisma.settings.findUnique({ where: { key: 'site_settings' } });
-    if (!settings) {
-      return res.status(503).json({ error: 'settings_missing' });
-    }
-    return res.json(normalizeSettings(settings.value));
-  } catch (error) {
-    console.error("Failed to fetch settings from database:", error);
-    return res.status(503).json({ error: 'database_unavailable' });
-  }
-});
-
-app.put('/api/settings', async (req, res) => {
-  try {
-    const settingsData = req.body;
-    const settings = await prisma.settings.upsert({
-      where: { key: 'site_settings' },
-      update: { value: settingsData },
-      create: { key: 'site_settings', value: settingsData }
-    });
-    res.json(settings.value);
-  } catch {
-    res.status(500).json({ error: 'failed_to_update_settings' });
-  }
-});
-
 app.post('/api/settings/import', requireAdmin, async (req, res) => {
   try {
     const value = req.body?.settings ?? req.body;
@@ -1562,6 +1550,7 @@ app.post('/api/settings/import', requireAdmin, async (req, res) => {
       update: { value },
       create: { key: 'site_settings', value }
     });
+    sseBroadcast('settings_updated', { key: 'site_settings', ts: Date.now() });
     res.json({ imported: 1 });
   } catch {
     res.status(500).json({ error: 'failed_to_import_settings' });

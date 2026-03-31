@@ -1,6 +1,7 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import * as api from '../api';
 import type { SiteSettings } from '../types';
+import { API_BASE_URL } from '../services/http';
 
 interface SettingsContextType {
   settings: SiteSettings | null;
@@ -168,6 +169,7 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   useEffect(() => {
     let isMounted = true;
     let timeoutId: NodeJS.Timeout;
+    let es: EventSource | null = null;
 
     const fetchSettings = async () => {
       try {
@@ -197,10 +199,23 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }, 9000); // proche du timeout HTTP (10s)
     
     fetchSettings();
+
+    const base = String(API_BASE_URL || '/api').replace(/\/+$/, '').replace(/(\/api)+$/, '/api');
+    try {
+      es = new EventSource(`${base}/events`, { withCredentials: true } as any);
+      const onUpdate = async () => {
+        try {
+          const siteSettings = await api.getSiteSettings();
+          if (isMounted) setSettings(normalizeSettings(siteSettings));
+        } catch {}
+      };
+      es.addEventListener('settings_updated', onUpdate as any);
+    } catch {}
     
     return () => {
       isMounted = false;
       clearTimeout(timeoutId);
+      try { es?.close(); } catch {}
     };
   }, []);
 
