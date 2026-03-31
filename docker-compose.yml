@@ -1,3 +1,4 @@
+name: demoexpert-casseauto-bckdiq
 version: '3.8'
 
 # Configuration pour éviter les conflits d'endpoint Docker Swarm
@@ -25,7 +26,7 @@ services:
       STRICT_DB: "true"
       SEED_DB: "true"
     networks:
-      - dokploy-network
+      - default
       - dokploy-overlay
     labels:
       - traefik.enable=true
@@ -75,8 +76,6 @@ services:
       - SETGID
       - SETUID
       - CHOWN
-    networks:
-      - dokploy-network
     labels:
       - traefik.enable=true
       - traefik.docker.network=dokploy-network
@@ -92,8 +91,9 @@ services:
       - traefik.http.services.demoexpert-app-websecure.loadbalancer.server.port=80
 
 networks:
-  dokploy-network:
+  default:
     external: true
+    name: dokploy-network
   dokploy-overlay:
     external: true
 
