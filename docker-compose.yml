@@ -96,6 +96,7 @@ networks:
     name: dokploy-network
   dokploy-overlay:
     external: true
+    name: demoexpert-overlay
 
 volumes:
   db_data:
