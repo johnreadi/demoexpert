@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import type { ChatMessage } from '../types';
 import { useSettings } from '../context/SettingsContext';
+import { getAiChatResponse } from '../services/geminiService';
 
 export default function ChatWidget(): React.ReactNode {
   const [isOpen, setIsOpen] = useState(false);
@@ -31,8 +32,6 @@ export default function ChatWidget(): React.ReactNode {
     setIsLoading(true);
 
     try {
-      // Dynamically import the AI service to avoid loading it on page start
-      const { getAiChatResponse } = await import('../services/geminiService');
       const history = currentMessages.slice(0, -1);
       const botResponseText = await getAiChatResponse(userInput, history, settings);
       const botMessage: ChatMessage = { sender: 'bot', text: botResponseText };

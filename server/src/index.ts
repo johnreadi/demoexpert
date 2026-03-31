@@ -8,67 +8,7 @@ import bcrypt from 'bcryptjs';
 import nodemailer from 'nodemailer';
 import { Pool } from 'pg';
 
-// 🔧 FIX ENABLED: We suspect the data is in 'demoexpert-expertdb-djopvt' but URL might be 'postgres'.
-if (process.env.DATABASE_URL) {
-  try {
-    const url = new URL(process.env.DATABASE_URL);
-    if (url.pathname === '/postgres') {
-       console.log('⚠️ Fixing DATABASE_URL: Changing target DB from "postgres" to "demoexpert-expertdb-djopvt"');
-       url.pathname = '/demoexpert-expertdb-djopvt';
-       process.env.DATABASE_URL = url.toString();
-    }
-  } catch (e) {
-    console.error('Failed to parse/fix DATABASE_URL:', e);
-  }
-}
-
 const { prisma } = require('./prisma.js');
-
-// --- DIAGNOSTIC START ---
-(async () => {
-  console.log('--- STARTUP DIAGNOSTICS ---');
-  console.log('NODE_ENV:', process.env.NODE_ENV);
-  console.log('Hostname:', process.env.HOSTNAME);
-  
-  const dbUrl = process.env.DATABASE_URL || '';
-  if (dbUrl) {
-    const masked = dbUrl.replace(/:([^:@]+)@/, ':****@');
-    console.log('DATABASE_URL (masked):', masked);
-    
-    // Parse URL to debug parts
-     try {
-       const url = new URL(dbUrl);
-       console.log('DB Host:', url.hostname);
-       console.log('DB Port:', url.port);
-       console.log('DB Name:', url.pathname);
-       
-       // DNS Lookup
-       try {
-         const dns = require('dns').promises;
-         const lookup = await dns.lookup(url.hostname);
-         console.log(`DNS Lookup for ${url.hostname}:`, lookup);
-       } catch (dnsErr: any) {
-         console.error(`DNS Lookup FAILED for ${url.hostname}:`, dnsErr.message);
-       }
-     } catch (e) {
-       console.log('Invalid DATABASE_URL format');
-     }
-
-    // Attempt direct connection
-    try {
-      console.log('Testing DB connection...');
-      await prisma.$connect();
-      console.log('✅ DB Connection SUCCESS');
-      await prisma.$disconnect();
-    } catch (e: any) {
-      console.error('❌ DB Connection FAILED:', e.message);
-    }
-  } else {
-    console.error('❌ DATABASE_URL is NOT set');
-  }
-  console.log('--- END DIAGNOSTICS ---');
-})();
-// --- DIAGNOSTIC END ---
 
 const app = express();
 
@@ -92,6 +32,101 @@ const COOKIE_SAME_SITE: 'lax' | 'strict' | 'none' =
   COOKIE_SAME_SITE_RAW === 'lax' || COOKIE_SAME_SITE_RAW === 'strict' || COOKIE_SAME_SITE_RAW === 'none'
     ? (COOKIE_SAME_SITE_RAW as any)
     : (IS_PROD ? 'lax' : 'none');
+
+const STRICT_DB = String(process.env.STRICT_DB || '').toLowerCase() === 'true';
+const STARTUP_DIAGNOSTICS = String(process.env.STARTUP_DIAGNOSTICS || '').toLowerCase() === 'true';
+const DISALLOW_DB_HOSTS = String(process.env.DISALLOW_DB_HOSTS || 'dokploy-db')
+  .split(',')
+  .map(s => s.trim())
+  .filter(Boolean);
+
+function maskDbUrl(dbUrl: string) {
+  return String(dbUrl || '').replace(/:([^:@]+)@/, ':****@');
+}
+
+function validateDatabaseUrlOrExit() {
+  const raw = String(process.env.DATABASE_URL || '');
+  if (!raw) {
+    if (IS_PROD && STRICT_DB) {
+      console.error('DATABASE_URL is missing (STRICT_DB=true).');
+      process.exit(1);
+    }
+    return;
+  }
+
+  let url: URL | null = null;
+  try {
+    url = new URL(raw);
+  } catch {
+    if (IS_PROD && STRICT_DB) {
+      console.error('DATABASE_URL is invalid (STRICT_DB=true):', maskDbUrl(raw));
+      process.exit(1);
+    }
+    return;
+  }
+
+  const dbName = String(url.pathname || '').replace(/^\//, '');
+  const host = String(url.hostname || '');
+
+  if (dbName === 'postgres') {
+    const msg = `DATABASE_URL points to database "postgres" (disallowed): ${maskDbUrl(raw)}`;
+    if (IS_PROD && STRICT_DB) {
+      console.error(msg);
+      process.exit(1);
+    } else {
+      console.warn(msg);
+    }
+  }
+
+  if (IS_PROD && STRICT_DB && DISALLOW_DB_HOSTS.includes(host)) {
+    console.error(`DATABASE_URL host is disallowed (${host}) (STRICT_DB=true):`, maskDbUrl(raw));
+    process.exit(1);
+  }
+}
+
+validateDatabaseUrlOrExit();
+
+if (STARTUP_DIAGNOSTICS) {
+  (async () => {
+    console.log('--- STARTUP DIAGNOSTICS ---');
+    console.log('NODE_ENV:', process.env.NODE_ENV);
+    console.log('Hostname:', process.env.HOSTNAME);
+
+    const dbUrl = process.env.DATABASE_URL || '';
+    if (dbUrl) {
+      console.log('DATABASE_URL (masked):', maskDbUrl(dbUrl));
+
+      try {
+        const url = new URL(dbUrl);
+        console.log('DB Host:', url.hostname);
+        console.log('DB Port:', url.port);
+        console.log('DB Name:', url.pathname);
+
+        try {
+          const dns = require('dns').promises;
+          const lookup = await dns.lookup(url.hostname);
+          console.log(`DNS Lookup for ${url.hostname}:`, lookup);
+        } catch (dnsErr: any) {
+          console.error(`DNS Lookup FAILED for ${url.hostname}:`, dnsErr.message);
+        }
+      } catch {
+        console.log('Invalid DATABASE_URL format');
+      }
+
+      try {
+        console.log('Testing DB connection...');
+        await prisma.$connect();
+        console.log('✅ DB Connection SUCCESS');
+        await prisma.$disconnect();
+      } catch (e: any) {
+        console.error('❌ DB Connection FAILED:', e.message);
+      }
+    } else {
+      console.error('❌ DATABASE_URL is NOT set');
+    }
+    console.log('--- END DIAGNOSTICS ---');
+  })();
+}
 
 app.set('trust proxy', TRUST_PROXY);
 
@@ -174,6 +209,7 @@ app.use(session({
   secret: SESSION_SECRET,
   resave: false,
   saveUninitialized: false,
+  rolling: true,
   proxy: true,
   ...(sessionStore ? { store: sessionStore } : {}),
   cookie: {
@@ -726,11 +762,14 @@ ${historyText}
 
 Dernière question utilisateur: ${String(message ?? '').trim()}`;
 
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 12000);
     const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ contents: [{ role: 'user', parts: [{ text: prompt }] }] })
-    });
+      body: JSON.stringify({ contents: [{ role: 'user', parts: [{ text: prompt }] }] }),
+      signal: controller.signal,
+    }).finally(() => clearTimeout(timeoutId));
 
     if (!r.ok) {
       const details = await r.text().catch(() => '');

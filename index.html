@@ -140,7 +140,8 @@
         
         // 1. VÉRIFICATION DE VERSION
         const DEPLOY_TIMESTAMP = '<!-- DEPLOY_TIMESTAMP -->';
-        const STORED_TIMESTAMP = localStorage.getItem('deploy_timestamp');
+        let STORED_TIMESTAMP = null;
+        try { STORED_TIMESTAMP = localStorage.getItem('deploy_timestamp'); } catch {}
         const IS_PLACEHOLDER = DEPLOY_TIMESTAMP === '<!-- DEPLOY_TIMESTAMP -->';
     
         // Désinscription SW + purge caches (sans reload forcé)
@@ -162,11 +163,13 @@
     
         // Nettoyage uniquement si vraie nouvelle version (sans reload automatique)
         if (!IS_PLACEHOLDER && STORED_TIMESTAMP && STORED_TIMESTAMP !== DEPLOY_TIMESTAMP) {
-          const preserveKeys = ['user_token', 'user_preferences', 'language'];
-          Object.keys(localStorage).forEach(function(key) {
-            if (!preserveKeys.includes(key)) localStorage.removeItem(key);
-          });
-          sessionStorage.clear();
+          try {
+            const preserveKeys = ['user_token', 'user_preferences', 'language'];
+            Object.keys(localStorage).forEach(function(key) {
+              if (!preserveKeys.includes(key)) localStorage.removeItem(key);
+            });
+            sessionStorage.clear();
+          } catch {}
           if (window.indexedDB && window.indexedDB.databases) {
             window.indexedDB.databases().then(function(databases) {
               databases.forEach(function(db) { indexedDB.deleteDatabase(db.name); });
@@ -175,8 +178,8 @@
           console.log('✅ Cache nettoyé (sans rechargement forcé)');
         }
     
-        localStorage.setItem('deploy_timestamp', DEPLOY_TIMESTAMP);
-        localStorage.setItem('last_visit', new Date().toISOString());
+        try { localStorage.setItem('deploy_timestamp', DEPLOY_TIMESTAMP); } catch {}
+        try { localStorage.setItem('last_visit', new Date().toISOString()); } catch {}
     
         // Surveille les changements de route (aucun reload)
         let lastUrl = location.href;

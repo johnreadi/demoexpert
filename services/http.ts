@@ -1,28 +1,5 @@
 export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
-const USE_LOCAL_API = import.meta.env.MODE === 'development' && import.meta.env.VITE_USE_LOCAL_API === 'true';
-const USE_LOCAL_STORAGE = import.meta.env.MODE === 'development' && import.meta.env.VITE_USE_LOCAL_STORAGE === 'true';
-
-// Local storage mock for API calls
-const localStorageMock: Record<string, any> = {
-  // Default data
-  '/api/products': [],
-  '/api/auctions': [],
-  '/api/settings': {
-    businessInfo: {
-      name: 'Démolition Expert',
-      logoUrl: '',
-      address: '450 Route de Gournay, 76160 Saint-Jacques-sur-Darnétal, France',
-      phone: '02 35 08 18 55',
-      email: 'contact@casseautopro.fr',
-      openingHours: 'Lun-Ven: 8h00 - 18h00, Sam: 9h00 - 12h00'
-    },
-    hero: {
-      title: "Pièces d'occasion de qualité",
-      subtitle: "Économisez jusqu'à 80% et recyclez !",
-      background: { type: 'image', value: 'https://picsum.photos/seed/hero/1920/1080' }
-    }
-  }
-};
+const HTTP_TIMEOUT_MS = Number(import.meta.env.VITE_HTTP_TIMEOUT_MS || 30000);
 
 function sanitizeApi(data: any, path: string): any {
   const san = (node: any): any => {
@@ -71,85 +48,72 @@ function resolveUrl(path: string): string {
   return `${base}/${normalized}`;
 }
 
+function shouldRetry(status: number | undefined) {
+  return status === 502 || status === 503 || status === 504;
+}
+
+function isIdempotent(method: string) {
+  const m = String(method || 'GET').toUpperCase();
+  return m === 'GET' || m === 'HEAD' || m === 'OPTIONS';
+}
+
+async function sleep(ms: number) {
+  return new Promise<void>(resolve => setTimeout(resolve, ms));
+}
+
 export async function http<T = any>(path: string, options: RequestInit = {}): Promise<T> {
-  // Handle localStorage mock for development
-  if (USE_LOCAL_STORAGE) {
-    // Handle localStorage mock
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        // For GET requests, return stored data
-        if (!options.method || options.method === 'GET') {
-          // Priorité aux données réellement sauvegardées
-          const storedStr = localStorage.getItem(`api_mock_${path}`);
-          let raw: any = null;
-          try {
-            raw = storedStr ? JSON.parse(storedStr) : null;
-          } catch {
-            raw = null;
-          }
-          if (raw === null || raw === undefined) {
-            raw = localStorageMock[path];
-          }
-          const data = raw ?? [];
-          resolve(sanitizeApi(data, path) as any);
-        } 
-        // For POST/PUT requests, store the data
-        else if (options.method === 'POST' || options.method === 'PUT') {
-          try {
-            const body = JSON.parse(options.body as string);
-            localStorage.setItem(`api_mock_${path}`, JSON.stringify(body));
-            resolve(body as any);
-          } catch {
-            resolve({} as any);
-          }
-        }
-        // For DELETE requests, remove the data
-        else if (options.method === 'DELETE') {
-          localStorage.removeItem(`api_mock_${path}`);
-          resolve({ success: true } as any);
-        }
-      }, 100); // Simulate network delay
-    });
-  }
-  
-  // Handle local API mode for development
-  if (USE_LOCAL_API) throw new Error('local_api_mode');
-  
   // Production mode - make actual API calls with timeout and error handling
-  return new Promise(async (resolve, reject) => {
-    // Add timeout for API calls
-    const timeoutId = setTimeout(() => {
-      reject(new Error(`Request timeout for ${path}`));
-    }, 60000); // 60 second timeout
-    
+  const method = String(options.method || 'GET').toUpperCase();
+  const maxAttempts = isIdempotent(method) ? 3 : 1;
+  const url = resolveUrl(path);
+
+  let lastErr: any = undefined;
+
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), HTTP_TIMEOUT_MS);
     try {
-      const res = await fetch(resolveUrl(path), {
+      const res = await fetch(url, {
         credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
           ...(options.headers || {}),
         },
         ...options,
+        signal: controller.signal,
       });
-      
+
       clearTimeout(timeoutId);
-      
+
       if (!res.ok) {
         let err: any = { status: res.status };
         try { err.body = await res.json(); } catch {}
+        if (attempt < maxAttempts && shouldRetry(res.status)) {
+          lastErr = err;
+          await sleep(250 * attempt * attempt);
+          continue;
+        }
         throw err;
       }
-      
+
       try {
         const data = await res.json();
-        const sanitized = sanitizeApi(data, path);
-        resolve(sanitized);
+        return sanitizeApi(data, path);
       } catch {
-        resolve(undefined as any);
+        return undefined as any;
       }
-    } catch (error) {
+    } catch (error: any) {
       clearTimeout(timeoutId);
-      reject(error);
+      const aborted = error?.name === 'AbortError';
+      const canRetry = attempt < maxAttempts && (aborted || shouldRetry(error?.status));
+      if (canRetry) {
+        lastErr = error;
+        await sleep(250 * attempt * attempt);
+        continue;
+      }
+      throw error;
     }
-  });
+  }
+
+  throw lastErr;
 }

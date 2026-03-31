@@ -1,23 +1,5 @@
 import type { Product, Auction, PartCategory, User, AdminMessage, SiteSettings, LiftRentalBooking, AuditLogEntry, BlogPost, Contact } from '../types';
-import * as db from './db';
 import { http } from '../services/http';
-
-// Helper to simulate network delay and return a promise
-const simulateApiCall = <T>(data: T, delay = 200): Promise<T> => {
-    return new Promise(resolve => {
-        // Deep copy to prevent direct state mutation from components
-        const dataCopy = JSON.parse(JSON.stringify(data));
-        setTimeout(() => resolve(dataCopy), delay);
-    });
-};
-
-const simulateApiError = (message: string, delay = 200): Promise<any> => {
-    return new Promise((_, reject) => {
-        setTimeout(() => reject(new Error(message)), delay);
-    });
-};
-
-const USE_LOCAL_API = import.meta.env.VITE_USE_LOCAL_API === 'true';
 const normalizeAuction = (a: any): Auction => {
   // Handle case where auction data comes directly from database (flat structure)
   const rawVehicle = a?.vehicle ?? {
@@ -69,23 +51,15 @@ const normalizeAuction = (a: any): Auction => {
 
 // --- Site Settings API (real backend - no localStorage) ---
 export const getSiteSettings = async (): Promise<SiteSettings> => {
-  return USE_LOCAL_API ? simulateApiCall(db.getSiteSettings()) : http<SiteSettings>(`/api/settings`);
+  return http<SiteSettings>(`/api/settings`);
 };
 export const updateSiteSettings = async (newSettings: SiteSettings): Promise<SiteSettings> => {
-  return USE_LOCAL_API ? simulateApiCall(db.updateSiteSettings(newSettings)) : http<SiteSettings>(`/api/settings`, { method: 'PUT', body: JSON.stringify(newSettings) });
+  return http<SiteSettings>(`/api/settings`, { method: 'PUT', body: JSON.stringify(newSettings) });
 };
 
 
 // --- Products API (real backend) ---
 export const getProducts = async (filters: { category?: string | PartCategory; brand?: string; model?: string, limit?: number }): Promise<Product[]> => {
-  if (USE_LOCAL_API) {
-    return simulateApiCall(db.getProducts({
-      category: filters?.category ? String(filters.category) : undefined,
-      brand: filters?.brand,
-      model: filters?.model,
-      limit: filters?.limit,
-    }));
-  }
   const params = new URLSearchParams();
   if (filters?.category) params.set('category', String(filters.category));
   if (filters?.brand) params.set('brand', String(filters.brand));
@@ -94,160 +68,132 @@ export const getProducts = async (filters: { category?: string | PartCategory; b
   return http<Product[]>(`products${params.toString() ? `?${params.toString()}` : ''}`);
 };
 export const getProductById = async (id: string): Promise<Product | undefined> =>
-  USE_LOCAL_API ? simulateApiCall(db.getProductById(id)) : http<Product>(`products/${id}`);
+  http<Product>(`products/${id}`);
 export const addProduct = async (productData: Omit<Product, 'id'>): Promise<Product> =>
-  USE_LOCAL_API ? simulateApiCall(db.addProduct(productData)) : http<Product>(`products`, { method: 'POST', body: JSON.stringify(productData) });
+  http<Product>(`products`, { method: 'POST', body: JSON.stringify(productData) });
 export const updateProduct = async (productId: string, productData: Partial<Omit<Product, 'id'>>): Promise<Product> =>
-  USE_LOCAL_API ? simulateApiCall(db.updateProduct(productId, productData)) : http<Product>(`products/${productId}`, { method: 'PUT', body: JSON.stringify(productData) });
+  http<Product>(`products/${productId}`, { method: 'PUT', body: JSON.stringify(productData) });
 export const deleteProduct = async (productId: string): Promise<{ success: boolean }> =>
-  USE_LOCAL_API ? simulateApiCall(db.deleteProduct(productId)) : http<{ success: boolean }>(`products/${productId}`, { method: 'DELETE' });
+  http<{ success: boolean }>(`products/${productId}`, { method: 'DELETE' });
 
 
 // --- Auctions API (real backend) ---
 export const getAuctions = async (): Promise<Auction[]> => {
-  if (USE_LOCAL_API) return simulateApiCall(db.getAuctions());
   const data = await http<any[]>(`auctions`);
   return Array.isArray(data) ? data.map(normalizeAuction) : [];
 };
 export const getAuctionById = async (id: string): Promise<Auction | undefined> => {
-  if (USE_LOCAL_API) return simulateApiCall(db.getAuctionById(id));
   const a = await http<any>(`auctions/${id}`);
   return a ? normalizeAuction(a) : undefined;
 };
 export const addBid = async (auctionId: string, bidAmount: number, userId: string, bidderName: string): Promise<Auction> => {
-  if (USE_LOCAL_API) return simulateApiCall(db.addBid(auctionId, bidAmount, userId, bidderName));
   const a = await http<any>(`auctions/${auctionId}/bids`, { method: 'POST', body: JSON.stringify({ amount: bidAmount }) });
   return normalizeAuction(a);
 };
 export const addAuction = async (auctionData: Omit<Auction, 'id' | 'currentBid' | 'bidCount' | 'bids'>): Promise<Auction> => {
-  if (USE_LOCAL_API) return simulateApiCall(db.addAuction(auctionData));
   const a = await http<any>(`auctions`, { method: 'POST', body: JSON.stringify(auctionData) });
   return normalizeAuction(a);
 };
 export const updateAuction = async (auctionId: string, auctionData: Partial<Omit<Auction, 'id'>>): Promise<Auction> => {
-  if (USE_LOCAL_API) return simulateApiCall(db.updateAuction(auctionId, auctionData));
   const a = await http<any>(`auctions/${auctionId}`, { method: 'PUT', body: JSON.stringify(auctionData) });
   return normalizeAuction(a);
 };
 export const deleteAuction = async (auctionId: string): Promise<{ success: boolean }> =>
-  USE_LOCAL_API ? simulateApiCall(db.deleteAuction(auctionId)) : http<{ success: boolean }>(`auctions/${auctionId}`, { method: 'DELETE' });
+  http<{ success: boolean }>(`auctions/${auctionId}`, { method: 'DELETE' });
 
 // --- Blog API ---
 export const getBlogPosts = (): Promise<BlogPost[]> => 
-  USE_LOCAL_API ? simulateApiCall(db.getBlogPosts()) : http<BlogPost[]>(`/api/blog`);
+  http<BlogPost[]>(`/api/blog`);
 
 
 // --- Forms API ---
 export const submitContactForm = (data: any): Promise<{ success: boolean }> => 
-  USE_LOCAL_API ? simulateApiCall(db.submitContactForm(data)) : http<{ success: boolean }>(`/api/contact`, { method: 'POST', body: JSON.stringify(data) });
+  http<{ success: boolean }>(`/api/contact`, { method: 'POST', body: JSON.stringify(data) });
 
 export const submitScrapRemovalRequest = (data: any): Promise<{ success: boolean }> => 
-  USE_LOCAL_API ? simulateApiCall(db.submitScrapRemovalRequest(data)) : http<{ success: boolean }>(`/api/scrap-removal`, { method: 'POST', body: JSON.stringify(data) });
+  http<{ success: boolean }>(`/api/scrap-removal`, { method: 'POST', body: JSON.stringify(data) });
 
 export const submitWindshieldRequest = (data: any): Promise<{ success: boolean }> => 
-  USE_LOCAL_API ? simulateApiCall(db.submitWindshieldRequest(data)) : http<{ success: boolean }>(`/api/windshield`, { method: 'POST', body: JSON.stringify(data) });
+  http<{ success: boolean }>(`/api/windshield`, { method: 'POST', body: JSON.stringify(data) });
 
 export const submitLiftRentalRequest = (data: any): Promise<{ success: boolean }> => 
-  USE_LOCAL_API ? simulateApiCall(db.submitLiftRentalRequest(data)) : http<{ success: boolean }>(`/api/lift-rental`, { method: 'POST', body: JSON.stringify(data) });
+  http<{ success: boolean }>(`/api/lift-rental`, { method: 'POST', body: JSON.stringify(data) });
 
 export const submitBuybackRequest = (data: any): Promise<{ success: true, estimation: string }> => 
-  USE_LOCAL_API ? simulateApiCall(db.submitBuybackRequest(data)) : http<{ success: true, estimation: string }>(`/api/buyback`, { method: 'POST', body: JSON.stringify(data) });
+  http<{ success: true, estimation: string }>(`/api/buyback`, { method: 'POST', body: JSON.stringify(data) });
 
 export const submitQuoteRequest = (product: Product, quoteData: any): Promise<{ success: boolean }> => 
-  USE_LOCAL_API ? simulateApiCall(db.submitQuoteRequest(product, quoteData)) : http<{ success: boolean }>(`/api/quote`, { method: 'POST', body: JSON.stringify({ product, ...quoteData }) });
+  http<{ success: boolean }>(`/api/quote`, { method: 'POST', body: JSON.stringify({ product, ...quoteData }) });
 
 // --- Admin Messaging API ---
 export const getAdminMessages = (): Promise<AdminMessage[]> => 
-  USE_LOCAL_API ? simulateApiCall(db.getAdminMessages()) : http<AdminMessage[]>(`/api/admin/messages`);
+  http<AdminMessage[]>(`/api/admin/messages`);
 
 export const sendAdminReply = (data: any): Promise<{ success: boolean }> => 
-  USE_LOCAL_API ? simulateApiCall(db.sendAdminReply(data)) : http<{ success: boolean }>(`/api/admin/messages`, { method: 'POST', body: JSON.stringify(data) });
+  http<{ success: boolean }>(`/api/admin/messages`, { method: 'POST', body: JSON.stringify(data) });
 
 export const sendNewMessage = (data: any): Promise<{ success: boolean }> => 
-  USE_LOCAL_API ? simulateApiCall(db.sendNewMessage(data)) : http<{ success: boolean }>(`/api/admin/messages`, { method: 'POST', body: JSON.stringify(data) });
+  http<{ success: boolean }>(`/api/admin/messages`, { method: 'POST', body: JSON.stringify(data) });
 
 export const archiveMessage = (messageId: string, isArchived: boolean): Promise<AdminMessage> => 
-  USE_LOCAL_API ? simulateApiCall(db.archiveMessage(messageId, isArchived)) : http<AdminMessage>(`/api/admin/messages/${messageId}`, { method: 'PUT', body: JSON.stringify({ isArchived }) });
+  http<AdminMessage>(`/api/admin/messages/${messageId}`, { method: 'PUT', body: JSON.stringify({ isArchived }) });
 
 // --- Admin-specific API ---
 export const getAdminUsers = (): Promise<User[]> => 
-  USE_LOCAL_API ? simulateApiCall(db.getAdminUsers()) : http<User[]>(`/api/admin/users`);
+  http<User[]>(`/api/admin/users`);
 
 export const getContacts = (): Promise<Contact[]> => 
-  USE_LOCAL_API ? simulateApiCall(db.getContacts()) : http<Contact[]>(`/api/contact`);
+  http<Contact[]>(`/api/contact`);
 
 export const addContact = (contactData: Omit<Contact, 'id'>): Promise<Contact> => 
-  USE_LOCAL_API ? simulateApiCall(db.addContact(contactData)) : http<Contact>(`/api/contact`, { method: 'POST', body: JSON.stringify(contactData) });
+  http<Contact>(`/api/contact`, { method: 'POST', body: JSON.stringify(contactData) });
 
 export const getLiftRentalBookings = (): Promise<LiftRentalBooking[]> => 
-  USE_LOCAL_API ? simulateApiCall(db.getLiftRentalBookings()) : http<LiftRentalBooking[]>(`/api/lift-bookings`);
+  http<LiftRentalBooking[]>(`/api/lift-bookings`);
 
 export const getAuditLogs = (): Promise<AuditLogEntry[]> => 
-  USE_LOCAL_API ? simulateApiCall(db.getAuditLogs()) : http<AuditLogEntry[]>(`/api/audit-logs`);
+  http<AuditLogEntry[]>(`/api/audit-logs`);
 
 export const updateLiftRentalBookingStatus = (bookingId: string, status: LiftRentalBooking['status']): Promise<LiftRentalBooking> => 
-  USE_LOCAL_API 
-    ? simulateApiCall(db.updateLiftRentalBookingStatus(bookingId, status)) 
-    : http<LiftRentalBooking>(`/api/lift-bookings/${bookingId}/status`, { method: 'PUT', body: JSON.stringify({ status }) });
+  http<LiftRentalBooking>(`/api/lift-bookings/${bookingId}/status`, { method: 'PUT', body: JSON.stringify({ status }) });
 
 export const addUser = (userData: any): Promise<User> => 
-  USE_LOCAL_API ? simulateApiCall(db.addUser(userData)) : http<User>(`/api/admin/users`, { method: 'POST', body: JSON.stringify(userData) });
+  http<User>(`/api/admin/users`, { method: 'POST', body: JSON.stringify(userData) });
 
 export const updateUser = (userId: string, userData: Partial<Omit<User, 'id'>>): Promise<User> => 
-  USE_LOCAL_API ? simulateApiCall(db.updateUser(userId, userData)) : http<User>(`/api/admin/users/${userId}`, { method: 'PUT', body: JSON.stringify(userData) });
+  http<User>(`/api/admin/users/${userId}`, { method: 'PUT', body: JSON.stringify(userData) });
 
 export const approveUser = (userId: string): Promise<User> => 
-  USE_LOCAL_API ? simulateApiCall(db.approveUser(userId)) : http<User>(`/api/admin/users/${userId}/approve`, { method: 'POST', body: JSON.stringify({}) });
+  http<User>(`/api/admin/users/${userId}/approve`, { method: 'POST', body: JSON.stringify({}) });
 
 export const deleteUser = (userId: string): Promise<{ success: boolean }> => 
-  USE_LOCAL_API ? simulateApiCall(db.deleteUser(userId)) : http<{ success: boolean }>(`/api/admin/users/${userId}`, { method: 'DELETE' });
+  http<{ success: boolean }>(`/api/admin/users/${userId}`, { method: 'DELETE' });
 
 
 // --- User Account API ---
 export const getBidsForUser = (userId: string): Promise<any[]> => 
-  USE_LOCAL_API ? simulateApiCall(db.getBidsForUser(userId)) : http<any[]>(`/api/users/${userId}/bids`);
+  http<any[]>(`/api/users/${userId}/bids`);
 export const getMessagesForUser = (userEmail: string): Promise<AdminMessage[]> => 
-  USE_LOCAL_API ? simulateApiCall(db.getMessagesForUser(userEmail)) : http<AdminMessage[]>(`/api/users/me/messages`);
+  http<AdminMessage[]>(`/api/users/me/messages`);
 export const updateUserProfile = (userId: string, data: { name: string, email: string }): Promise<User> => 
-  USE_LOCAL_API ? simulateApiCall(db.updateUserProfile(userId, data)) : http<User>(`/api/users/${userId}`, { method: 'PUT', body: JSON.stringify(data) });
+  http<User>(`/api/users/${userId}`, { method: 'PUT', body: JSON.stringify(data) });
 export const updateUserPassword = (userId: string, data: { current: string, new: string }): Promise<{ success: boolean }> => {
-    if (USE_LOCAL_API) {
-        try {
-            return simulateApiCall(db.updateUserPassword(userId, data));
-        } catch(e: any) {
-            return simulateApiError(e.message);
-        }
-    }
     return http<{ success: boolean }>(`/api/users/${userId}/password`, { method: 'PUT', body: JSON.stringify(data) });
 };
 
 // --- Auth API ---
 export const registerUser = (data: any): Promise<{ success: true }> => {
-    if (USE_LOCAL_API) {
-        try {
-            return simulateApiCall(db.registerUser(data));
-        } catch (e: any) {
-            return simulateApiError(e.message);
-        }
-    }
     return http<{ success: true }>(`/auth/register`, { method: 'POST', body: JSON.stringify(data) });
 };
 export const loginUser = (email: string, password: string): Promise<User> => {
-    if (USE_LOCAL_API) {
-        try {
-            return simulateApiCall(db.loginUser(email, password));
-        } catch (e: any) {
-            return simulateApiError(e.message);
-        }
-    }
     return http<User>(`/auth/login`, { method: 'POST', body: JSON.stringify({ email, password }) });
 };
 
 export const deleteAdminMessage = (messageId: string): Promise<{ success: boolean }> =>
-  USE_LOCAL_API ? simulateApiCall({ success: true }) : http<{ success: boolean }>(`/api/admin/messages/${messageId}`, { method: 'DELETE' });
+  http<{ success: boolean }>(`/api/admin/messages/${messageId}`, { method: 'DELETE' });
 
 export const deleteContactsBulk = (ids: string[] = [], emails: string[] = []): Promise<{ deleted: number }> =>
-  USE_LOCAL_API ? simulateApiCall({ deleted: ids.length || emails.length }) : http<{ deleted: number }>(`/api/contacts/delete`, { method: 'POST', body: JSON.stringify({ ids, emails }) });
+  http<{ deleted: number }>(`/api/contacts/delete`, { method: 'POST', body: JSON.stringify({ ids, emails }) });
 
 // Test SMTP configuration
 export const testSmtpConfig = (testEmail: string): Promise<{ success: boolean; message?: string }> =>

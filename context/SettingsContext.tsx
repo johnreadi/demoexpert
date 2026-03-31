@@ -169,22 +169,6 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     let isMounted = true;
     let timeoutId: NodeJS.Timeout;
 
-    const seedFromLocal = () => {
-      // Skip localStorage in production - always use real API
-      if (process.env.NODE_ENV === 'production') return;
-      try {
-        const stored = localStorage.getItem('api_mock_/api/settings');
-        if (stored && isMounted) {
-          const parsed = JSON.parse(stored);
-          setSettings(normalizeSettings(parsed));
-          setIsLoading(false);
-        }
-      } catch {}
-    };
-
-    // Seed rapide pour éviter le flicker en dev (uniquement en dev)
-    seedFromLocal();
-
     const fetchSettings = async () => {
       try {
         const siteSettings = await api.getSiteSettings();
