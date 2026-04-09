@@ -88,6 +88,8 @@ services:
       - traefik.http.routers.demoexpert-app-websecure.service=demoexpert-app-websecure
       - traefik.http.services.demoexpert-app-web.loadbalancer.server.port=80
       - traefik.http.services.demoexpert-app-websecure.loadbalancer.server.port=80
+    networks:
+      - dokploy-overlay
 
 networks:
   dokploy-overlay:
