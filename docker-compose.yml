@@ -26,7 +26,6 @@ services:
       STRICT_DB: "true"
       SEED_DB: "true"
     networks:
-      - default
       - dokploy-overlay
     labels:
       - traefik.enable=true
@@ -91,12 +90,9 @@ services:
       - traefik.http.services.demoexpert-app-websecure.loadbalancer.server.port=80
 
 networks:
-  default:
-    external: true
-    name: dokploy-network
   dokploy-overlay:
     external: true
-    name: demoexpert-overlay
+    name: dokploy-overlay
 
 volumes:
   db_data:
