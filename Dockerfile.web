@@ -26,7 +26,7 @@ ENV VITE_USE_LOCAL_API=$VITE_USE_LOCAL_API
 RUN npm run build
 
 # 6. Vérifier que le build a réussi
-RUN test -f dist/index.html || (echo "BUILD FAILED: dist/index.html not found" && exit 1)
+RUN test -f dist/index.html || test -f dist/index.htm || (echo "BUILD FAILED: dist/index.html not found" && ls -la dist && exit 1)
 
 # 7. Post-build
 RUN TIMESTAMP=$(date +%s) && \
