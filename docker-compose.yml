@@ -42,6 +42,17 @@ services:
       - traefik.http.routers.demoexpert-api-websecure.service=demoexpert-api-websecure
       - traefik.http.services.demoexpert-api-web.loadbalancer.server.port=3000
       - traefik.http.services.demoexpert-api-websecure.loadbalancer.server.port=3000
+
+      - traefik.http.routers.demoexpert-api-app-web.rule=Host(`app.demoexpert.fr`) && PathPrefix(`/api`)
+      - traefik.http.routers.demoexpert-api-app-web.entrypoints=web
+      - traefik.http.routers.demoexpert-api-app-web.priority=200
+      - traefik.http.routers.demoexpert-api-app-web.middlewares=redirect-to-https@file
+      - traefik.http.routers.demoexpert-api-app-web.service=demoexpert-api-web
+      - traefik.http.routers.demoexpert-api-app-websecure.rule=Host(`app.demoexpert.fr`) && PathPrefix(`/api`)
+      - traefik.http.routers.demoexpert-api-app-websecure.entrypoints=websecure
+      - traefik.http.routers.demoexpert-api-app-websecure.priority=200
+      - traefik.http.routers.demoexpert-api-app-websecure.tls.certresolver=letsencrypt
+      - traefik.http.routers.demoexpert-api-app-websecure.service=demoexpert-api-websecure
     
     # Security: Limit container capabilities
     security_opt:
