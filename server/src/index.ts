@@ -7,6 +7,7 @@ import cookieParser from 'cookie-parser';
 import bcrypt from 'bcryptjs';
 import nodemailer from 'nodemailer';
 import { Pool } from 'pg';
+import crypto from 'crypto';
 
 const { prisma } = require('./prisma.js');
 
@@ -638,6 +639,25 @@ async function ensureDefaultSettings() {
   }
 }
 
+async function ensureDefaultAdminUser() {
+  if (!process.env.DATABASE_URL) return;
+  const email = String(process.env.DEFAULT_ADMIN_EMAIL || '').trim().toLowerCase();
+  const password = String(process.env.DEFAULT_ADMIN_PASSWORD || '').trim();
+  if (!email || !password) return;
+
+  try {
+    const passwordHash = await bcrypt.hash(password, 10);
+    await prisma.user.upsert({
+      where: { email },
+      update: { password: passwordHash, role: 'Admin', status: 'approved' },
+      create: { name: 'Admin', email, password: passwordHash, role: 'Admin', status: 'approved' },
+    });
+  } catch (e: any) {
+    const code = String(e?.code || '');
+    console.error('Failed to ensure default admin user on startup:', e?.message || e, code ? { code } : '');
+  }
+}
+
 async function getSmtpTransport() {
   try {
     const s = await prisma.settings.findUnique({ where: { key: 'site_settings' } });
@@ -663,7 +683,42 @@ app.get('/api/auth/me', (req, res) => {
   return res.json(user);
 });
 
-app.post('/api/auth/login', async (req, res) => {
+function isBcryptHash(value: string) {
+  return /^\$2[aby]\$/.test(value);
+}
+
+function timingSafeEquals(a: string, b: string) {
+  const aHash = crypto.createHash('sha256').update(String(a)).digest();
+  const bHash = crypto.createHash('sha256').update(String(b)).digest();
+  return crypto.timingSafeEqual(aHash, bHash);
+}
+
+async function verifyUserPasswordAndUpgrade(user: any, rawPassword: string) {
+  const stored = String(user?.password || '');
+  if (!stored) return { ok: false, upgraded: false };
+
+  if (isBcryptHash(stored)) {
+    try {
+      const ok = await bcrypt.compare(String(rawPassword), stored);
+      return { ok, upgraded: false };
+    } catch {
+      return { ok: false, upgraded: false };
+    }
+  }
+
+  const ok = timingSafeEquals(String(rawPassword), stored);
+  if (!ok) return { ok: false, upgraded: false };
+
+  try {
+    const hash = await bcrypt.hash(String(rawPassword), 10);
+    await prisma.user.update({ where: { id: user.id }, data: { password: hash } });
+    return { ok: true, upgraded: true };
+  } catch {
+    return { ok: true, upgraded: false };
+  }
+}
+
+async function handleLogin(req: any, res: any) {
   const { email, password } = req.body || {};
   if (!email || !password) return res.status(400).json({ error: 'missing_credentials' });
 
@@ -674,15 +729,11 @@ app.post('/api/auth/login', async (req, res) => {
   try {
     const user = await prisma.user.findUnique({ where: { email: String(email).toLowerCase() } });
     if (!user) return res.status(401).json({ error: 'invalid_credentials' });
-    if (!user.password || typeof user.password !== 'string') return res.status(401).json({ error: 'invalid_credentials' });
-    let ok = false;
-    try {
-      ok = await bcrypt.compare(String(password), user.password);
-    } catch {
-      ok = false;
-    }
+
+    const { ok } = await verifyUserPasswordAndUpgrade(user, String(password));
     if (!ok) return res.status(401).json({ error: 'invalid_credentials' });
     if (user.status === 'pending') return res.status(403).json({ error: 'account_pending' });
+
     const safeUser: UserSession = { id: user.id, name: user.name, email: user.email, role: user.role as any, status: user.status as any };
     (req.session as any).user = safeUser;
     return res.json(safeUser);
@@ -697,43 +748,10 @@ app.post('/api/auth/login', async (req, res) => {
     }
     return res.status(500).json({ error: 'login_failed', code });
   }
-});
+}
 
-app.post('/auth/login', async (req, res) => {
-  const { email, password } = req.body || {};
-  if (!email || !password) return res.status(400).json({ error: 'missing_credentials' });
-
-  if (!process.env.DATABASE_URL) {
-    return res.status(503).json({ error: 'database_not_configured' });
-  }
-
-  try {
-    const user = await prisma.user.findUnique({ where: { email: String(email).toLowerCase() } });
-    if (!user) return res.status(401).json({ error: 'invalid_credentials' });
-    if (!user.password || typeof user.password !== 'string') return res.status(401).json({ error: 'invalid_credentials' });
-    let ok = false;
-    try {
-      ok = await bcrypt.compare(String(password), user.password);
-    } catch {
-      ok = false;
-    }
-    if (!ok) return res.status(401).json({ error: 'invalid_credentials' });
-    if (user.status === 'pending') return res.status(403).json({ error: 'account_pending' });
-    const safeUser: UserSession = { id: user.id, name: user.name, email: user.email, role: user.role as any, status: user.status as any };
-    (req.session as any).user = safeUser;
-    return res.json(safeUser);
-  } catch (err: any) {
-    const code = String(err?.code || '');
-    console.error('[login] Error:', err?.message || err);
-    if (code === 'P2021' || code === 'P2022') {
-      return res.status(503).json({ error: 'database_schema_missing', code });
-    }
-    if (code === 'P1000' || code === 'P1001' || code === 'P1002' || code === 'P1003' || code === 'P1017') {
-      return res.status(503).json({ error: 'database_unavailable', code });
-    }
-    return res.status(500).json({ error: 'login_failed', code });
-  }
-});
+app.post('/api/auth/login', handleLogin);
+app.post('/auth/login', handleLogin);
 
 app.post('/api/auth/logout', (req, res) => {
   req.session.destroy(err => {
@@ -1680,6 +1698,9 @@ app.get('/sitemap.xml', async (req, res) => {
 // This prevents 502 Bad Gateway errors if DB is slow.
 ensureDefaultSettings().catch(err => {
   console.error('Failed to ensure default settings on startup:', err);
+});
+ensureDefaultAdminUser().catch(err => {
+  console.error('Failed to ensure default admin user on startup:', err);
 });
 
 app.listen(PORT, '0.0.0.0', () => {

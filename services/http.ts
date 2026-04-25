@@ -61,6 +61,27 @@ async function sleep(ms: number) {
   return new Promise<void>(resolve => setTimeout(resolve, ms));
 }
 
+function humanizeApiError(path: string, status: number, body: any): string {
+  const code = String(body?.error || '').trim();
+  if (code) {
+    if (code === 'missing_credentials' || code === 'missing_fields') return 'Email et mot de passe requis.';
+    if (code === 'invalid_credentials') return 'Email ou mot de passe incorrect.';
+    if (code === 'account_pending') return 'Compte en attente de validation.';
+    if (code === 'unauthorized') return 'Vous devez vous reconnecter.';
+    if (code === 'database_not_configured' || code === 'database_unavailable' || code === 'database_schema_missing') {
+      return 'Base de données indisponible.';
+    }
+    if (code === 'login_failed') return 'La connexion a échoué.';
+    return code;
+  }
+  if (status === 401) return 'Vous devez vous reconnecter.';
+  if (status === 403) return 'Accès refusé.';
+  if (status === 404) return 'Ressource introuvable.';
+  if (status >= 500) return 'Erreur serveur.';
+  const p = String(path || '');
+  return p ? `Erreur API (${p})` : 'Erreur API';
+}
+
 export async function http<T = any>(path: string, options: RequestInit = {}): Promise<T> {
   // Production mode - make actual API calls with timeout and error handling
   const method = String(options.method || 'GET').toUpperCase();
@@ -86,14 +107,15 @@ export async function http<T = any>(path: string, options: RequestInit = {}): Pr
       clearTimeout(timeoutId);
 
       if (!res.ok) {
-        let err: any = { status: res.status };
-        try { err.body = await res.json(); } catch {}
+        const errBody = await res.json().catch(() => undefined);
+        const message = humanizeApiError(path, res.status, errBody);
+        const e: any = Object.assign(new Error(message), { status: res.status, body: errBody });
         if (attempt < maxAttempts && shouldRetry(res.status)) {
-          lastErr = err;
+          lastErr = e;
           await sleep(250 * attempt * attempt);
           continue;
         }
-        throw err;
+        throw e;
       }
 
       try {
