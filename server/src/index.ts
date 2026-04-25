@@ -15,6 +15,7 @@ const app = express();
 
 const PORT = Number(process.env.PORT || 8080);
 const NODE_ENV = process.env.NODE_ENV || 'development';
+const BUILD_MARKER = 'auth-bootstrap-4';
 const SESSION_SECRET = process.env.SESSION_SECRET || 'dev_session_secret_change_me';
 const CORS_ORIGIN = process.env.CORS_ORIGIN || 'http://localhost:3000';
 const TRUST_PROXY = process.env.TRUST_PROXY ? Number(process.env.TRUST_PROXY) : 0;
@@ -248,11 +249,11 @@ function requireAdmin(req: any, res: any, next: any) {
 }
 
 app.get('/healthz', (_req, res) => {
-  res.status(200).json({ status: 'ok', env: NODE_ENV });
+  res.status(200).json({ status: 'ok', env: NODE_ENV, build: BUILD_MARKER });
 });
 
 app.get('/api/healthz', (_req, res) => {
-  res.status(200).json({ status: 'ok', env: NODE_ENV });
+  res.status(200).json({ status: 'ok', env: NODE_ENV, build: BUILD_MARKER });
 });
 
 app.get('/api/db/health', async (_req, res) => {
@@ -770,6 +771,36 @@ async function handleLogin(req: any, res: any) {
 
 app.post('/api/auth/login', handleLogin);
 app.post('/auth/login', handleLogin);
+
+app.post('/api/auth/bootstrap-reset', async (req, res) => {
+  const token = String(req.get('x-admin-reset-token') || '');
+  const expected = String(process.env.ADMIN_RESET_TOKEN || '');
+  if (!expected || !token || !timingSafeEquals(token, expected)) {
+    return res.status(403).json({ error: 'forbidden' });
+  }
+
+  if (!process.env.DATABASE_URL) {
+    return res.status(503).json({ error: 'database_not_configured' });
+  }
+
+  const email = String(req.body?.email || process.env.DEFAULT_ADMIN_EMAIL || 'admin@demoexpert.fr').trim().toLowerCase();
+  const password = String(req.body?.password || process.env.DEFAULT_ADMIN_PASSWORD || 'demo76000').trim();
+  if (!email || !password) return res.status(400).json({ error: 'missing_fields' });
+
+  try {
+    const passwordHash = await bcrypt.hash(password, 10);
+    await prisma.user.upsert({
+      where: { email },
+      update: { name: 'Admin', password: passwordHash, role: 'Admin', status: 'approved' },
+      create: { name: 'Admin', email, password: passwordHash, role: 'Admin', status: 'approved' },
+    });
+    return res.json({ success: true });
+  } catch (e: any) {
+    const code = String(e?.code || '');
+    console.error('bootstrap-reset failed:', e?.message || e, code ? { code } : '');
+    return res.status(500).json({ error: 'reset_failed', code });
+  }
+});
 
 app.post('/api/auth/logout', (req, res) => {
   req.session.destroy(err => {
