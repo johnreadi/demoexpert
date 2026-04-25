@@ -641,17 +641,15 @@ async function ensureDefaultSettings() {
 
 async function ensureDefaultAdminUser() {
   if (!process.env.DATABASE_URL) return;
-  const email = String(process.env.DEFAULT_ADMIN_EMAIL || '').trim().toLowerCase();
-  const password = String(process.env.DEFAULT_ADMIN_PASSWORD || '').trim();
+  const email = String(process.env.DEFAULT_ADMIN_EMAIL || 'admin@demoexpert.fr').trim().toLowerCase();
+  const password = String(process.env.DEFAULT_ADMIN_PASSWORD || 'demo76000').trim();
   if (!email || !password) return;
 
   try {
+    const existing = await prisma.user.findUnique({ where: { email } });
+    if (existing) return;
     const passwordHash = await bcrypt.hash(password, 10);
-    await prisma.user.upsert({
-      where: { email },
-      update: { password: passwordHash, role: 'Admin', status: 'approved' },
-      create: { name: 'Admin', email, password: passwordHash, role: 'Admin', status: 'approved' },
-    });
+    await prisma.user.create({ data: { name: 'Admin', email, password: passwordHash, role: 'Admin', status: 'approved' } });
   } catch (e: any) {
     const code = String(e?.code || '');
     console.error('Failed to ensure default admin user on startup:', e?.message || e, code ? { code } : '');
