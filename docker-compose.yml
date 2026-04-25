@@ -13,7 +13,7 @@ services:
     restart: unless-stopped
     environment:
       NODE_ENV: production
-      PORT: 3000
+      PORT: 8080
       # Ensure connection to the correct Dokploy database via internal network
       DATABASE_URL: postgresql://dokploy:dokploy@demoexpert-expertdb-djopvt-kgplzz:5432/demoexpert-expertdb-djopvt
       SESSION_SECRET: ${SESSION_SECRET}
@@ -40,8 +40,8 @@ services:
       - traefik.http.routers.demoexpert-api-websecure.priority=100
       - traefik.http.routers.demoexpert-api-websecure.tls.certresolver=letsencrypt
       - traefik.http.routers.demoexpert-api-websecure.service=demoexpert-api-websecure
-      - traefik.http.services.demoexpert-api-web.loadbalancer.server.port=3000
-      - traefik.http.services.demoexpert-api-websecure.loadbalancer.server.port=3000
+      - traefik.http.services.demoexpert-api-web.loadbalancer.server.port=8080
+      - traefik.http.services.demoexpert-api-websecure.loadbalancer.server.port=8080
 
       - traefik.http.routers.demoexpert-api-app-web.rule=Host(`app.demoexpert.fr`) && PathPrefix(`/api`)
       - traefik.http.routers.demoexpert-api-app-web.entrypoints=web
@@ -63,7 +63,7 @@ services:
       - NET_BIND_SERVICE
     
     healthcheck:
-      test: ["CMD-SHELL", "node -e \"require('http').get('http://127.0.0.1:3000/healthz', (r) => process.exit(r.statusCode === 200 ? 0 : 1))\" || exit 1"]
+      test: ["CMD-SHELL", "node -e \"require('http').get('http://127.0.0.1:8080/healthz', (r) => process.exit(r.statusCode === 200 ? 0 : 1))\" || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 5
