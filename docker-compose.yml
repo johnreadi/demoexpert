@@ -29,7 +29,7 @@ services:
       - dokploy-overlay
     labels:
       - traefik.enable=true
-      - traefik.docker.network=2-dokploy-overlay
+      - traefik.docker.network=dokploy-overlay
       - traefik.http.routers.demoexpert-api-web.rule=Host(`api.demoexpert.fr`)
       - traefik.http.routers.demoexpert-api-web.entrypoints=web
       - traefik.http.routers.demoexpert-api-web.priority=100
@@ -90,7 +90,7 @@ services:
       - CHOWN
     labels:
       - traefik.enable=true
-      - traefik.docker.network=2-dokploy-overlay
+      - traefik.docker.network=dokploy-overlay
       - traefik.http.routers.demoexpert-app-web.rule=Host(`app.demoexpert.fr`)
       - traefik.http.routers.demoexpert-app-web.entrypoints=web
       - traefik.http.routers.demoexpert-app-web.priority=100
@@ -109,4 +109,4 @@ services:
 networks:
   dokploy-overlay:
     external: true
-    name: 2-dokploy-overlay
+    name: dokploy-overlay
