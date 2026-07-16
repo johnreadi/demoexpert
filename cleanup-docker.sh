@@ -35,6 +35,11 @@ docker service rm demoexpert-casseauto-bckdiq_backend 2>/dev/null || true
 docker service rm demoexpert-casseauto-bckdiq_api 2>/dev/null || true
 docker service rm demoexpert_app 2>/dev/null || true
 docker service rm demoexpert_api 2>/dev/null || true
+# Supprimer tout service orphelin lié à demoexpert ou expert-frontend
+for svc in $(docker service ls --format '{{.Name}}' | grep -E '^demoexpert|^expert-frontend' || true); do
+  echo -e "${YELLOW}   Suppression du service orphelin : $svc${NC}"
+  docker service rm "$svc" 2>/dev/null || true
+done
 
 # 4. Nettoyer les réseaux - méthode agressive
 echo -e "${YELLOW}4. Nettoyage des réseaux (méthode agressive)...${NC}"

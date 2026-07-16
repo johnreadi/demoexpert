@@ -118,6 +118,37 @@ docker exec -it demoexpert-casseauto-bckdiq-backend-1 sh
 docker stats
 ```
 
+### 🟣 Erreur : "404 page not found" avec `/index.tsx` en 404
+
+**Cause** : Un service Swarm orphelin (`expert-frontend-*`) intercepte le trafic de `app.demoexpert.fr` alors que l'application réelle est déployée via Docker Compose.
+
+**Diagnostic** :
+```bash
+# Vérifier les services Swarm orphelins
+docker service ls | grep -E 'demoexpert|expert-frontend'
+
+# Vérifier quel conteneur est le vrai frontend
+docker ps | grep demoexpert
+
+# Vérifier le contenu servi
+docker exec CONTENEUR_APP sh -c "cat /usr/share/nginx/html/index.html | grep -o 'src=\"[^\"]*\"' | head"
+```
+
+**Solution** :
+```bash
+# Supprimer le service orphelin
+docker service rm expert-frontend-nbcwwx
+
+# Vérifier que https://app.demoexpert.fr/ répond 200
+curl -I https://app.demoexpert.fr/
+```
+
+**Prévention** : exécutez `verify-deployment.sh` après chaque déploiement :
+```bash
+chmod +x verify-deployment.sh
+./verify-deployment.sh
+```
+
 ## Contact et Support
 
 Si les problèmes persistent :
