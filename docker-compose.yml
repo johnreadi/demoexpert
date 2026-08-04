@@ -14,8 +14,8 @@ services:
     environment:
       NODE_ENV: production
       PORT: 8080
-      # Ensure connection to the correct Dokploy database via internal network
-      DATABASE_URL: postgresql://dokploy:dokploy@demoexpert-expertdb-djopvt-kgplzz:5432/demoexpert-expertdb-djopvt
+      # Database is now managed inside this docker-compose stack
+      DATABASE_URL: postgresql://dokploy:dokploy@db:5432/demoexpert-expertdb-djopvt
       SESSION_SECRET: ${SESSION_SECRET}
       CORS_ORIGIN: ${CORS_ORIGIN:-https://app.demoexpert.fr}
       TRUST_PROXY: "1"
@@ -24,7 +24,10 @@ services:
       DEFAULT_ADMIN_EMAIL: ${DEFAULT_ADMIN_EMAIL:-admin@demoexpert.fr}
       DEFAULT_ADMIN_PASSWORD: ${DEFAULT_ADMIN_PASSWORD:-demo76000}
       STRICT_DB: "true"
-      SEED_DB: "true"
+      SEED_DB: "false"
+    depends_on:
+      db:
+        condition: service_healthy
     networks:
       - dokploy-overlay
     labels:
@@ -106,7 +109,29 @@ services:
     networks:
       - dokploy-overlay
 
+  db:
+    image: postgres:18
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: dokploy
+      POSTGRES_PASSWORD: dokploy
+      POSTGRES_DB: demoexpert-expertdb-djopvt
+      PGDATA: /var/lib/postgresql/data
+    volumes:
+      - demoexpert-expertdb-data:/var/lib/postgresql
+    networks:
+      - dokploy-overlay
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dokploy -d demoexpert-expertdb-djopvt"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 60s
+
 networks:
   dokploy-overlay:
     external: true
     name: dokploy-overlay
+
+volumes:
+  demoexpert-expertdb-data:
