@@ -14,7 +14,7 @@ services:
       NODE_ENV: production
       PORT: 8080
       # Database is now managed inside this docker-compose stack
-      DATABASE_URL: postgresql://dokploy:dokploy@db:5432/demoexpert-expertdb-djopvt
+      DATABASE_URL: postgresql://dokploy:dokploy@demoexpert-db:5432/demoexpert-expertdb-djopvt
       SESSION_SECRET: ${SESSION_SECRET:-d3m0xp3rt-5ess10n-5ecr3t-2026-Kp9Qm2Xv}
       CORS_ORIGIN: ${CORS_ORIGIN:-https://app.demoexpert.fr}
       TRUST_PROXY: "1"
@@ -119,7 +119,9 @@ services:
     volumes:
       - demoexpert-expertdb-data:/var/lib/postgresql
     networks:
-      - dokploy-overlay
+      dokploy-overlay:
+        aliases:
+          - demoexpert-db
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U dokploy -d demoexpert-expertdb-djopvt"]
       interval: 10s
