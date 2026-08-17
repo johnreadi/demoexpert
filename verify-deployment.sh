@@ -32,8 +32,8 @@ fi
 
 # 2. Vérifier que les conteneurs Compose tournent
 echo -e "${YELLOW}2. Conteneurs Compose de l'application${NC}"
-APP_CONTAINER=$(docker ps --format '{{.Names}}' | grep -E '^demoexpert-casseauto.*-app-1$' || true)
-API_CONTAINER=$(docker ps --format '{{.Names}}' | grep -E '^demoexpert-casseauto.*-api-1$' || true)
+APP_CONTAINER=$(docker ps --format '{{.Names}}' | grep -E '^(demoexpert|expert)-casseauto.*-app-1$' || true)
+API_CONTAINER=$(docker ps --format '{{.Names}}' | grep -E '^(demoexpert|expert)-casseauto.*-api-1$' || true)
 if [ -n "$APP_CONTAINER" ] && [ -n "$API_CONTAINER" ]; then
   echo -e "${GREEN}   ✅ App : $APP_CONTAINER${NC}"
   echo -e "${GREEN}   ✅ API : $API_CONTAINER${NC}"
@@ -76,6 +76,19 @@ else
 fi
 
 echo ""
+# 5. Vérifier que Traefik est sur le réseau dokploy-overlay
+if [ -n "$APP_CONTAINER" ]; then
+  echo -e "${YELLOW}5. Réseau Traefik${NC}"
+  TRAEFIK_IN_NETWORK=$(docker network inspect dokploy-overlay --format='{{json .Containers}}' | grep -c 'dokploy-traefik' || true)
+  if [ "$TRAEFIK_IN_NETWORK" -gt 0 ]; then
+    echo -e "${GREEN}   ✅ Traefik est connecté à dokploy-overlay${NC}"
+  else
+    echo -e "${RED}   ❌ Traefik n'est pas connecté à dokploy-overlay${NC}"
+    echo -e "${YELLOW}      → Exécutez : docker network connect dokploy-overlay dokploy-traefik && docker restart dokploy-traefik${NC}"
+    ERRORS=$((ERRORS + 1))
+  fi
+fi
+
 if [ "$ERRORS" -eq 0 ]; then
   echo -e "${GREEN}✅ Toutes les vérifications sont passées${NC}"
   exit 0

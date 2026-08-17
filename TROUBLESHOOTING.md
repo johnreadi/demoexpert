@@ -143,8 +143,33 @@ docker service rm expert-frontend-nbcwwx
 curl -I https://app.demoexpert.fr/
 ```
 
+### 🟣 Erreur : "504 Gateway Timeout" après mise à jour de Dokploy
+
+**Cause** : Après une mise à jour de Dokploy, le réseau `dokploy-overlay` peut être recréé. Si Traefik n'est pas reconnecté à ce réseau, il ne peut pas joindre les conteneurs de l'application.
+
+**Diagnostic** :
+```bash
+# Vérifier que Traefik est sur le réseau dokploy-overlay
+docker network inspect dokploy-overlay --format='{{json .Containers}}' | grep dokploy-traefik
+
+# Vérifier les réponses HTTP
+curl -I https://app.demoexpert.fr/
+curl -I https://api.demoexpert.fr/api/healthz
+```
+
+**Solution** :
+```bash
+# Connecter Traefik au réseau et redémarrer
+docker network connect dokploy-overlay dokploy-traefik
+docker restart dokploy-traefik
+
+# Vérifier après 30 secondes
+curl -I https://app.demoexpert.fr/
+```
+
 **Prévention** : exécutez `verify-deployment.sh` après chaque déploiement :
 ```bash
+curl -o verify-deployment.sh https://raw.githubusercontent.com/johnreadi/demoexpert/Main/verify-deployment.sh
 chmod +x verify-deployment.sh
 ./verify-deployment.sh
 ```
