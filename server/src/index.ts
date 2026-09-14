@@ -920,24 +920,46 @@ app.get('/api/products/:id', async (req, res) => {
 app.post('/api/products', async (req, res) => {
   try {
     const data = req.body || {};
+    const required = ['name', 'brand', 'model', 'category', 'condition', 'warranty', 'description'];
+    const missing = required.filter(k => !data[k] || String(data[k]).trim() === '');
+    if (missing.length) {
+      return res.status(400).json({ error: `missing_fields: ${missing.join(', ')}` });
+    }
+    const yearNum = Number(data.year);
+    if (!Number.isFinite(yearNum) || yearNum < 1900 || yearNum > 2100) {
+      return res.status(400).json({ error: 'invalid_year' });
+    }
+    const priceNum = Number(data.price);
+    if (!Number.isFinite(priceNum) || priceNum < 0) {
+      return res.status(400).json({ error: 'invalid_price' });
+    }
+    let oemRef = data.oemRef ? String(data.oemRef).trim() : '';
+    if (!oemRef) {
+      oemRef = `AUTO-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+    }
     const created = await prisma.product.create({ data: {
-      name: data.name,
-      oemRef: data.oemRef,
-      brand: data.brand,
-      model: data.model,
-      year: Number(data.year),
+      name: String(data.name).trim(),
+      oemRef,
+      brand: String(data.brand).trim(),
+      model: String(data.model).trim(),
+      year: yearNum,
       category: String(data.category),
-      price: Number(data.price),
-      condition: data.condition,
-      warranty: data.warranty,
-      compatibility: data.compatibility ?? null,
-      images: Array.isArray(data.images) ? data.images : [],
-      description: data.description,
+      price: priceNum,
+      condition: String(data.condition),
+      warranty: String(data.warranty).trim(),
+      compatibility: data.compatibility ? String(data.compatibility).trim() : null,
+      images: Array.isArray(data.images) ? data.images.filter((x: any) => typeof x === 'string') : [],
+      description: String(data.description).trim(),
     }});
     res.status(201).json(created);
-  } catch (e) {
+  } catch (e: any) {
     console.error('Product creation error:', e);
-    res.status(400).json({ error: 'failed_to_create_product' });
+    const code = String(e?.code || '').toLowerCase();
+    if (code === 'p2002') {
+      return res.status(400).json({ error: 'oemref_already_exists' });
+    }
+    const msg = e?.message ? String(e.message) : 'failed_to_create_product';
+    res.status(400).json({ error: msg });
   }
 });
 

@@ -2049,22 +2049,22 @@ export default function AdminPage(): React.ReactNode {
              <form onSubmit={handleProductSubmit} className="space-y-4">
                 <input name="name" placeholder="Nom de la pièce" value={productFormData.name} onChange={handleProductFormChange} className="w-full p-2 border rounded" required/>
                 <div className="grid grid-cols-2 gap-4">
-                    <input name="brand" placeholder="Marque" value={productFormData.brand} onChange={handleProductFormChange} className="p-2 border rounded"/>
-                    <input name="model" placeholder="Modèle" value={productFormData.model} onChange={handleProductFormChange} className="p-2 border rounded"/>
-                    <input name="year" type="number" placeholder="Année" value={productFormData.year} onChange={handleProductFormChange} className="p-2 border rounded"/>
-                    <input name="price" type="number" placeholder="Prix" value={productFormData.price} onChange={handleProductFormChange} className="p-2 border rounded"/>
+                    <input name="brand" placeholder="Marque" value={productFormData.brand} onChange={handleProductFormChange} className="p-2 border rounded" required/>
+                    <input name="model" placeholder="Modèle" value={productFormData.model} onChange={handleProductFormChange} className="p-2 border rounded" required/>
+                    <input name="year" type="number" placeholder="Année" value={productFormData.year} onChange={handleProductFormChange} className="p-2 border rounded" required/>
+                    <input name="price" type="number" placeholder="Prix" value={productFormData.price} onChange={handleProductFormChange} className="p-2 border rounded" required/>
                 </div>
-                <input name="oemRef" placeholder="Référence OEM" value={productFormData.oemRef} onChange={handleProductFormChange} className="w-full p-2 border rounded"/>
-                <select name="category" value={productFormData.category} onChange={handleProductFormChange} className="w-full p-2 border rounded bg-white">
+                <input name="oemRef" placeholder="Référence OEM" value={productFormData.oemRef} onChange={handleProductFormChange} className="w-full p-2 border rounded" required/>
+                <select name="category" value={productFormData.category} onChange={handleProductFormChange} className="w-full p-2 border rounded bg-white" required>
                     {Object.values(PartCategory).map(cat => <option key={cat} value={cat}>{cat}</option>)}
                 </select>
-                <select name="condition" value={productFormData.condition} onChange={handleProductFormChange} className="w-full p-2 border rounded bg-white">
+                <select name="condition" value={productFormData.condition} onChange={handleProductFormChange} className="w-full p-2 border rounded bg-white" required>
                     <option value="Neuf">Neuf</option>
                     <option value="Bon état">Bon état</option>
                     <option value="Occasion">Occasion</option>
                 </select>
-                <input name="warranty" placeholder="Garantie" value={productFormData.warranty} onChange={handleProductFormChange} className="w-full p-2 border rounded"/>
-                <textarea name="description" placeholder="Description" value={productFormData.description} onChange={handleProductFormChange} rows={3} className="w-full p-2 border rounded"/>
+                <input name="warranty" placeholder="Garantie" value={productFormData.warranty} onChange={handleProductFormChange} className="w-full p-2 border rounded" required/>
+                <textarea name="description" placeholder="Description" value={productFormData.description} onChange={handleProductFormChange} rows={3} className="w-full p-2 border rounded" required/>
                 <textarea name="compatibility" placeholder="Compatibilité" value={productFormData.compatibility} onChange={handleProductFormChange} rows={2} className="w-full p-2 border rounded"/>
                 
                 {/* Image Management */}

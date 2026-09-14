@@ -65,6 +65,13 @@ function humanizeApiError(path: string, status: number, body: any): string {
   const code = String(body?.error || '').trim();
   if (code) {
     if (code === 'missing_credentials' || code === 'missing_fields') return 'Email et mot de passe requis.';
+    if (code.startsWith('missing_fields:')) {
+      const fields = code.replace('missing_fields:', '').split(',').map(s => s.trim()).filter(Boolean).join(', ');
+      return `Champs requis manquants : ${fields}.`;
+    }
+    if (code === 'invalid_year') return 'L\'année doit être comprise entre 1900 et 2100.';
+    if (code === 'invalid_price') return 'Le prix doit être un nombre positif.';
+    if (code === 'oemref_already_exists') return 'Cette référence OEM existe déjà.';
     if (code === 'invalid_credentials') return 'Email ou mot de passe incorrect.';
     if (code === 'account_pending') return 'Compte en attente de validation.';
     if (code === 'unauthorized') return 'Vous devez vous reconnecter.';
