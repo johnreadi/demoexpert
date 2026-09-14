@@ -325,13 +325,14 @@ app.post('/api/admin/users', requireAdmin, async (req, res) => {
 
 app.put('/api/admin/users/:id', requireAdmin, async (req, res) => {
   try {
-    const { name, email, role } = req.body || {};
+    const { name, email, role, status } = req.body || {};
     const updated = await prisma.user.update({
       where: { id: req.params.id },
       data: {
         ...(name !== undefined ? { name: String(name) } : {}),
         ...(email !== undefined ? { email: String(email).toLowerCase() } : {}),
         ...(role !== undefined ? { role: role === 'Admin' ? 'Admin' : 'Staff' } : {}),
+        ...(status !== undefined && (status === 'approved' || status === 'pending') ? { status } : {}),
       },
       select: { id: true, name: true, email: true, role: true, status: true, createdAt: true, updatedAt: true }
     });
@@ -365,7 +366,7 @@ app.delete('/api/admin/users/:id', requireAdmin, async (req, res) => {
 
 app.get('/api/audit-logs', requireAdmin, async (_req, res) => {
   try {
-    const logs = await prisma.auditLogEntry.findMany({ orderBy: { createdAt: 'desc' } });
+    const logs = await prisma.auditLogEntry.findMany({ orderBy: { createdAt: 'desc' }, take: 500 });
     return res.json(logs);
   } catch (e: any) {
     const code = String(e?.code || '');
@@ -394,7 +395,10 @@ app.get('/api/lift-bookings', requireAdmin, async (_req, res) => {
 app.put('/api/lift-bookings/:id/status', requireAdmin, async (req, res) => {
   try {
     const { status } = req.body || {};
-    const updated = await prisma.liftRentalBooking.update({ where: { id: req.params.id }, data: { status: String(status || 'pending') } });
+    if (!status || !['pending', 'confirmed', 'cancelled'].includes(status)) {
+      return res.status(400).json({ error: 'invalid_status' });
+    }
+    const updated = await prisma.liftRentalBooking.update({ where: { id: req.params.id }, data: { status: String(status) } });
     return res.json(updated);
   } catch {
     return res.status(404).json({ error: 'not_found' });
@@ -1498,32 +1502,6 @@ app.delete('/api/contact/:id', async (req, res) => {
   }
 });
 
-app.post('/api/contacts/delete', async (req, res) => {
-  try {
-    const ids: string[] = Array.isArray(req.body?.ids) ? req.body.ids : [];
-    const emails: string[] = Array.isArray(req.body?.emails) ? req.body.emails : [];
-    if (!ids.length && !emails.length) {
-      return res.status(400).json({ error: 'no_ids_or_emails' });
-    }
-    if (!process.env.DATABASE_URL) {
-      return res.status(503).json({ error: 'database_unavailable' });
-    }
-    let resultCount = 0;
-    if (ids.length > 0) {
-      const result = await prisma.contact.deleteMany({ where: { id: { in: ids } } });
-      resultCount += result.count;
-    }
-    if (emails.length > 0) {
-      const result = await prisma.contact.deleteMany({ where: { email: { in: emails } } });
-      resultCount += result.count;
-    }
-    res.json({ deleted: resultCount });
-  } catch (error) {
-    console.error('Failed to bulk delete contacts:', error);
-    res.status(500).json({ error: 'failed_to_bulk_delete_contacts' });
-  }
-});
-
 app.post('/api/auctions/:id/bids', async (req, res) => {
   try {
     const user = (req.session as any)?.user;
@@ -1900,167 +1878,6 @@ app.delete('/api/admin/messages/:id', requireAdmin, async (req, res) => {
   } catch (error) {
     console.error('Failed to delete admin message:', error);
     res.status(500).json({ error: 'failed_to_delete_admin_message' });
-  }
-});
-
-// --- Admin Users API ---
-
-app.get('/api/admin/users', requireAdmin, async (_req, res) => {
-  try {
-    if (!process.env.DATABASE_URL) {
-      return res.status(503).json({ error: 'database_unavailable' });
-    }
-
-    const users = await prisma.user.findMany({
-      orderBy: { createdAt: 'desc' }
-    });
-    res.json(users);
-  } catch (error) {
-    console.error('Failed to list admin users:', error);
-    res.status(500).json({ error: 'failed_to_list_users' });
-  }
-});
-
-app.post('/api/admin/users', requireAdmin, async (req, res) => {
-  try {
-    const { name, email, password, role } = req.body || {};
-
-    if (!name || !email || !password) {
-      return res.status(400).json({ error: 'missing_required_fields' });
-    }
-
-    if (!process.env.DATABASE_URL) {
-      return res.status(503).json({ error: 'database_unavailable' });
-    }
-
-    const hashed = await bcrypt.hash(String(password), 10);
-    const user = await prisma.user.create({
-      data: {
-        name: String(name),
-        email: String(email).toLowerCase(),
-        password: hashed,
-        role: role === 'Admin' ? 'Admin' : 'Staff',
-        status: 'approved'
-      }
-    });
-    res.status(201).json(user);
-  } catch (error) {
-    console.error('Failed to create admin user:', error);
-    res.status(500).json({ error: 'failed_to_create_user' });
-  }
-});
-
-app.put('/api/admin/users/:id', requireAdmin, async (req, res) => {
-  try {
-    if (!process.env.DATABASE_URL) {
-      return res.status(503).json({ error: 'database_unavailable' });
-    }
-
-    const { name, email, role, status } = req.body || {};
-    const data: any = {};
-    if (name !== undefined) data.name = String(name);
-    if (email !== undefined) data.email = String(email).toLowerCase();
-    if (role !== undefined && (role === 'Admin' || role === 'Staff')) data.role = role;
-    if (status !== undefined && (status === 'approved' || status === 'pending')) data.status = status;
-
-    const user = await prisma.user.update({
-      where: { id: req.params.id },
-      data
-    });
-    res.json(user);
-  } catch (error) {
-    console.error('Failed to update admin user:', error);
-    res.status(500).json({ error: 'failed_to_update_user' });
-  }
-});
-
-app.post('/api/admin/users/:id/approve', requireAdmin, async (req, res) => {
-  try {
-    if (!process.env.DATABASE_URL) {
-      return res.status(503).json({ error: 'database_unavailable' });
-    }
-
-    const user = await prisma.user.update({
-      where: { id: req.params.id },
-      data: { status: 'approved' }
-    });
-    res.json(user);
-  } catch (error) {
-    console.error('Failed to approve user:', error);
-    res.status(500).json({ error: 'failed_to_approve_user' });
-  }
-});
-
-app.delete('/api/admin/users/:id', requireAdmin, async (req, res) => {
-  try {
-    if (!process.env.DATABASE_URL) {
-      return res.status(503).json({ error: 'database_unavailable' });
-    }
-
-    await prisma.user.delete({ where: { id: req.params.id } });
-    res.json({ success: true });
-  } catch (error) {
-    console.error('Failed to delete user:', error);
-    res.status(500).json({ error: 'failed_to_delete_user' });
-  }
-});
-
-// --- Lift Rental Bookings API ---
-
-app.get('/api/lift-bookings', requireAdmin, async (_req, res) => {
-  try {
-    if (!process.env.DATABASE_URL) {
-      return res.status(503).json({ error: 'database_unavailable' });
-    }
-
-    const bookings = await prisma.liftRentalBooking.findMany({
-      orderBy: { date: 'desc' }
-    });
-    res.json(bookings);
-  } catch (error) {
-    console.error('Failed to list lift bookings:', error);
-    res.status(500).json({ error: 'failed_to_list_lift_bookings' });
-  }
-});
-
-app.put('/api/lift-bookings/:id/status', requireAdmin, async (req, res) => {
-  try {
-    if (!process.env.DATABASE_URL) {
-      return res.status(503).json({ error: 'database_unavailable' });
-    }
-
-    const { status } = req.body || {};
-    if (!status || !['pending', 'confirmed', 'cancelled'].includes(status)) {
-      return res.status(400).json({ error: 'invalid_status' });
-    }
-
-    const booking = await prisma.liftRentalBooking.update({
-      where: { id: req.params.id },
-      data: { status }
-    });
-    res.json(booking);
-  } catch (error) {
-    console.error('Failed to update lift booking status:', error);
-    res.status(500).json({ error: 'failed_to_update_lift_booking' });
-  }
-});
-
-// --- Audit Logs API ---
-
-app.get('/api/audit-logs', requireAdmin, async (_req, res) => {
-  try {
-    if (!process.env.DATABASE_URL) {
-      return res.status(503).json({ error: 'database_unavailable' });
-    }
-
-    const logs = await prisma.auditLogEntry.findMany({
-      orderBy: { createdAt: 'desc' },
-      take: 500
-    });
-    res.json(logs);
-  } catch (error) {
-    console.error('Failed to list audit logs:', error);
-    res.status(500).json({ error: 'failed_to_list_audit_logs' });
   }
 });
 
