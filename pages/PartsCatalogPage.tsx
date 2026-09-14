@@ -16,6 +16,7 @@ const ProductCard: React.FC<{ product: Product }> = ({ product }) => (
             <h3 className="text-lg font-bold text-expert-blue group-hover:text-expert-green transition-colors">{product.name}</h3>
             <p className="text-sm text-gray-500 mb-2">{product.brand} {product.model} ({product.year})</p>
             <p className="text-sm">Réf: {product.oemRef}</p>
+            <p className="mt-2 text-xl font-bold text-expert-green">{Number(product.price).toLocaleString('fr-FR')} €</p>
             <div className="mt-auto pt-4">
                  <Link to={`/pieces/${product.id}`} className="w-full text-center bg-expert-green hover:bg-green-600 text-white font-bold py-2 px-4 rounded transition duration-300">
                     Détails & Devis

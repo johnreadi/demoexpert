@@ -128,6 +128,7 @@ export default function ProductDetailPage(): React.ReactNode {
                     <div>
                         <h1 className="text-3xl md:text-4xl font-bold font-heading text-expert-blue mb-2">{product.name}</h1>
                         <p className="text-lg text-gray-500 mb-4">{product.brand} {product.model} ({product.year})</p>
+                        <p className="text-3xl font-bold font-heading text-expert-green mb-4">{Number(product.price).toLocaleString('fr-FR')} €</p>
                         
                         <div className="space-y-4 text-lg">
                             <p><span className="font-semibold">Référence OEM:</span> {product.oemRef}</p>
@@ -161,6 +162,7 @@ export default function ProductDetailPage(): React.ReactNode {
                                 <div className="p-4">
                                     <h4 className="font-bold text-lg text-expert-blue truncate">{p.name}</h4>
                                     <p className="text-sm text-gray-500">{p.brand} {p.model}</p>
+                                    <p className="mt-2 text-xl font-bold text-expert-green">{Number(p.price).toLocaleString('fr-FR')} €</p>
                                     <Link to={`/pieces/${p.id}`} className="mt-4 inline-block bg-expert-blue text-white py-2 px-4 rounded hover:bg-expert-blue/80 transition-colors w-full text-center">
                                         Voir détails
                                     </Link>

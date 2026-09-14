@@ -73,6 +73,7 @@ const FeaturedProductCard: React.FC<{ product: Product }> = ({ product }) => (
         <div className="p-4">
             <h4 className="font-bold text-lg text-expert-blue truncate">{product.name}</h4>
             <p className="text-sm text-gray-500">{product.brand} {product.model}</p>
+            <p className="mt-2 text-xl font-bold text-expert-green">{Number(product.price).toLocaleString('fr-FR')} €</p>
             <Link to={`/pieces/${product.id}`} className="mt-4 inline-block bg-expert-blue text-white py-2 px-4 rounded hover:bg-expert-blue/80 transition-colors w-full text-center">
                 Voir détails
             </Link>
