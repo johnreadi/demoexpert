@@ -625,7 +625,10 @@ async function getSmtpTransport() {
       host: smtp.host,
       port: smtp.port || 587,
       secure: smtp.port === 465,
-      auth: smtp.user ? { user: smtp.user, pass: smtp.pass || '' } : undefined
+      auth: smtp.user ? { user: smtp.user, pass: smtp.pass || '' } : undefined,
+      tls: {
+        rejectUnauthorized: false
+      }
     });
     return transporter;
   } catch (e) {
@@ -1771,9 +1774,13 @@ app.post('/api/admin/messages', requireAdmin, async (req, res) => {
         } catch {}
         const normalized = normalizeSettings(settingsValue);
         const businessEmail = normalized?.businessInfo?.email || 'no-reply@casseautopro.fr';
+        const smtp = normalized?.advancedSettings?.smtp ?? {};
+        const fromName = smtp.fromName || 'Démolition Expert';
+        const fromEmail = smtp.fromEmail || smtp.user || businessEmail;
 
         const mailOptions: any = {
-          from: businessEmail,
+          from: `"${fromName}" <${fromEmail}>`,
+          replyTo: businessEmail,
           to,
           subject,
           text: content,
