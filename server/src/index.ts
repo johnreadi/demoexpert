@@ -363,50 +363,6 @@ app.delete('/api/admin/users/:id', requireAdmin, async (req, res) => {
   }
 });
 
-app.get('/api/admin/messages', requireAdmin, async (_req, res) => {
-  try {
-    const msgs = await prisma.adminMessage.findMany({ orderBy: { receivedAt: 'desc' } });
-    return res.json(msgs);
-  } catch (e: any) {
-    const code = String(e?.code || '');
-    if (code === 'P2021' || code === 'P2022') {
-      return res.json([]);
-    }
-    return res.status(500).json({ error: 'failed_to_list_messages' });
-  }
-});
-
-app.post('/api/admin/messages', requireAdmin, async (req, res) => {
-  try {
-    const { to, subject, content } = req.body || {};
-    if (!to || !subject || !content) return res.status(400).json({ error: 'missing_fields' });
-    await getSmtpTransport();
-    return res.json({ success: true });
-  } catch (e: any) {
-    if (e?.message === 'smtp_not_configured') return res.status(400).json({ error: 'smtp_not_configured' });
-    return res.status(500).json({ error: 'smtp_send_failed' });
-  }
-});
-
-app.put('/api/admin/messages/:id', requireAdmin, async (req, res) => {
-  try {
-    const { isArchived } = req.body || {};
-    const updated = await prisma.adminMessage.update({ where: { id: req.params.id }, data: { isArchived: Boolean(isArchived) } });
-    return res.json(updated);
-  } catch {
-    return res.status(404).json({ error: 'not_found' });
-  }
-});
-
-app.delete('/api/admin/messages/:id', requireAdmin, async (req, res) => {
-  try {
-    await prisma.adminMessage.delete({ where: { id: req.params.id } });
-    return res.json({ success: true });
-  } catch {
-    return res.status(404).json({ error: 'not_found' });
-  }
-});
-
 app.get('/api/audit-logs', requireAdmin, async (_req, res) => {
   try {
     const logs = await prisma.auditLogEntry.findMany({ orderBy: { createdAt: 'desc' } });
@@ -1780,7 +1736,7 @@ app.listen(PORT, '0.0.0.0', () => {
 });
 
 // --- Admin Messages API ---
-app.get('/api/admin/messages', async (req, res) => {
+app.get('/api/admin/messages', requireAdmin, async (req, res) => {
   try {
     // Check if we have a database connection
     if (!process.env.DATABASE_URL) {
@@ -1797,7 +1753,7 @@ app.get('/api/admin/messages', async (req, res) => {
   }
 });
 
-app.post('/api/admin/messages', async (req, res) => {
+app.post('/api/admin/messages', requireAdmin, async (req, res) => {
   try {
     const { to, subject, content, attachment, messageId, from, senderName, senderEmail, userId } = req.body || {};
 
@@ -1895,7 +1851,7 @@ app.post('/api/admin/messages', async (req, res) => {
   }
 });
 
-app.put('/api/admin/messages/:id', async (req, res) => {
+app.put('/api/admin/messages/:id', requireAdmin, async (req, res) => {
   try {
     const { isRead, isArchived, status } = req.body || {};
 
@@ -1921,7 +1877,7 @@ app.put('/api/admin/messages/:id', async (req, res) => {
   }
 });
 
-app.delete('/api/admin/messages/:id', async (req, res) => {
+app.delete('/api/admin/messages/:id', requireAdmin, async (req, res) => {
   try {
     // Check if we have a database connection
     if (!process.env.DATABASE_URL) {
