@@ -921,8 +921,7 @@ app.post('/api/products', async (req, res) => {
     if (code === 'p2002') {
       return res.status(400).json({ error: 'oemref_already_exists' });
     }
-    const msg = e?.message ? String(e.message) : 'failed_to_create_product';
-    res.status(400).json({ error: msg });
+    res.status(500).json({ error: 'failed_to_create_product' });
   }
 });
 
@@ -944,8 +943,16 @@ app.put('/api/products/:id', async (req, res) => {
       ...(data.description !== undefined ? { description: data.description } : {}),
     }});
     res.json(updated);
-  } catch (e) {
-    res.status(400).json({ error: 'failed_to_update_product' });
+  } catch (e: any) {
+    console.error('Product update error:', e);
+    const code = String(e?.code || '').toLowerCase();
+    if (code === 'p2002') {
+      return res.status(400).json({ error: 'oemref_already_exists' });
+    }
+    if (code === 'p2025') {
+      return res.status(404).json({ error: 'not_found' });
+    }
+    res.status(500).json({ error: 'failed_to_update_product' });
   }
 });
 

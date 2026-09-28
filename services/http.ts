@@ -72,6 +72,8 @@ function humanizeApiError(path: string, status: number, body: any): string {
     if (code === 'invalid_year') return 'L\'année doit être comprise entre 1900 et 2100.';
     if (code === 'invalid_price') return 'Le prix doit être un nombre positif.';
     if (code === 'oemref_already_exists') return 'Cette référence OEM existe déjà.';
+    if (code === 'failed_to_create_product') return 'La pièce n’a pas pu être ajoutée. Vérifiez les informations saisies.';
+    if (code === 'failed_to_update_product') return 'La pièce n’a pas pu être mise à jour. Vérifiez les informations saisies.';
     if (code === 'invalid_credentials') return 'Email ou mot de passe incorrect.';
     if (code === 'account_pending') return 'Compte en attente de validation.';
     if (code === 'unauthorized') return 'Vous devez vous reconnecter.';
@@ -84,6 +86,7 @@ function humanizeApiError(path: string, status: number, body: any): string {
   if (status === 401) return 'Vous devez vous reconnecter.';
   if (status === 403) return 'Accès refusé.';
   if (status === 404) return 'Ressource introuvable.';
+  if (status === 413) return 'Les fichiers envoyés sont trop volumineux.';
   if (status >= 500) return 'Erreur serveur.';
   const p = String(path || '');
   return p ? `Erreur API (${p})` : 'Erreur API';

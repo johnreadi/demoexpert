@@ -44,6 +44,8 @@ const initialNewUserState: Omit<User, 'id' | 'status'> & { password?: string } =
 const initialComposeState = { to: '', subject: '', content: '' };
 const initialNewContactState = { name: '', email: '', source: 'Manuel' };
 
+const apiErrorMessage = (error: unknown, fallback: string) =>
+  error instanceof Error && error.message ? error.message : fallback;
 
 export default function AdminPage(): React.ReactNode {
   const { user, logout } = useAuth();
@@ -321,7 +323,7 @@ export default function AdminPage(): React.ReactNode {
           }
           handleCloseProductModal();
       } catch (err) {
-          showToast('Erreur lors de la sauvegarde de la pièce.', 'error');
+          showToast(apiErrorMessage(err, 'Erreur lors de la sauvegarde de la pièce.'), 'error');
       }
   };
   const handleDeleteProduct = async (id: string) => {
@@ -413,7 +415,7 @@ export default function AdminPage(): React.ReactNode {
       }
       handleCloseAuctionModal();
     } catch (err) {
-        showToast("Erreur lors de l'enregistrement de l'offre.", 'error');
+        showToast(apiErrorMessage(err, "Erreur lors de l'enregistrement de l'offre."), 'error');
     }
   };
 
