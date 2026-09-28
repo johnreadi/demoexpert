@@ -659,7 +659,7 @@ export default function AdminPage(): React.ReactNode {
       if (deletedCount === ids.length) {
           showToast(`${deletedCount} message(s) supprimé(s).`, 'success');
       } else if (deletedCount > 0) {
-          showToast(`${deletedCount} message(s) supprimé(s). ${ids.length - deletedCount} erreur(s).`, 'warning');
+          showToast(`${deletedCount} message(s) supprimé(s). ${ids.length - deletedCount} erreur(s).`, 'info');
       } else {
           showToast("Erreur lors de la suppression des messages.", 'error');
       }
