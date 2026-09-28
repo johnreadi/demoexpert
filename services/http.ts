@@ -71,6 +71,9 @@ function humanizeApiError(path: string, status: number, body: any): string {
     }
     if (code === 'invalid_year') return 'L\'année doit être comprise entre 1900 et 2100.';
     if (code === 'invalid_price') return 'Le prix doit être un nombre positif.';
+    if (code === 'invalid_category') return 'La catégorie sélectionnée est invalide.';
+    if (code === 'invalid_condition') return 'L’état sélectionné est invalide.';
+    if (code === 'invalid_images') return 'La liste des images est invalide.';
     if (code === 'oemref_already_exists') return 'Cette référence OEM existe déjà.';
     if (code === 'failed_to_create_product') return 'La pièce n’a pas pu être ajoutée. Vérifiez les informations saisies.';
     if (code === 'failed_to_update_product') return 'La pièce n’a pas pu être mise à jour. Vérifiez les informations saisies.';

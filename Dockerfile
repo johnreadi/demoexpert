@@ -10,7 +10,7 @@ ENV VITE_APP_BASE_URL=$VITE_APP_BASE_URL
 COPY package.json package-lock.json* yarn.lock* pnpm-lock.yaml* ./
 RUN npm install --no-fund --no-audit
 COPY . .
-RUN npm run build
+RUN npx tsc --noEmit && npm run build
 
 # Serve stage
 FROM nginx:1.27-alpine

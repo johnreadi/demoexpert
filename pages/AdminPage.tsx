@@ -2056,7 +2056,7 @@ export default function AdminPage(): React.ReactNode {
                     <input name="year" type="number" placeholder="Année" value={productFormData.year} onChange={handleProductFormChange} className="p-2 border rounded" required/>
                     <input name="price" type="number" placeholder="Prix" value={productFormData.price} onChange={handleProductFormChange} className="p-2 border rounded" required/>
                 </div>
-                <input name="oemRef" placeholder="Référence OEM" value={productFormData.oemRef} onChange={handleProductFormChange} className="w-full p-2 border rounded" required/>
+                <input name="oemRef" placeholder="Référence OEM (générée automatiquement si vide)" value={productFormData.oemRef} onChange={handleProductFormChange} className="w-full p-2 border rounded"/>
                 <select name="category" value={productFormData.category} onChange={handleProductFormChange} className="w-full p-2 border rounded bg-white" required>
                     {Object.values(PartCategory).map(cat => <option key={cat} value={cat}>{cat}</option>)}
                 </select>

@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "check": "tsc --noEmit && vite build && npm --prefix server test",
     "preview": "vite preview",
     "git:add": "git add -A",
     "git:commit": "git commit -m \"auto: push\"",

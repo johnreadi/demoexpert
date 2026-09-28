@@ -8,6 +8,7 @@ import bcrypt from 'bcryptjs';
 import nodemailer from 'nodemailer';
 import { Pool } from 'pg';
 import crypto from 'crypto';
+import { validateProductInput } from './productValidation';
 
 const { prisma } = require('./prisma.js');
 
@@ -880,39 +881,15 @@ app.get('/api/products/:id', async (req, res) => {
   }
 });
 
-app.post('/api/products', async (req, res) => {
+app.post('/api/products', requireAdmin, async (req, res) => {
   try {
-    const data = req.body || {};
-    const required = ['name', 'brand', 'model', 'category', 'condition', 'warranty', 'description'];
-    const missing = required.filter(k => !data[k] || String(data[k]).trim() === '');
-    if (missing.length) {
-      return res.status(400).json({ error: `missing_fields: ${missing.join(', ')}` });
-    }
-    const yearNum = Number(data.year);
-    if (!Number.isFinite(yearNum) || yearNum < 1900 || yearNum > 2100) {
-      return res.status(400).json({ error: 'invalid_year' });
-    }
-    const priceNum = Number(data.price);
-    if (!Number.isFinite(priceNum) || priceNum < 0) {
-      return res.status(400).json({ error: 'invalid_price' });
-    }
-    let oemRef = data.oemRef ? String(data.oemRef).trim() : '';
-    if (!oemRef) {
-      oemRef = `AUTO-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
-    }
+    const validation = validateProductInput(req.body);
+    if (validation.ok === false) return res.status(400).json({ error: validation.error });
+    const data = validation.data;
     const created = await prisma.product.create({ data: {
-      name: String(data.name).trim(),
-      oemRef,
-      brand: String(data.brand).trim(),
-      model: String(data.model).trim(),
-      year: yearNum,
-      category: String(data.category),
-      price: priceNum,
-      condition: String(data.condition),
-      warranty: String(data.warranty).trim(),
-      compatibility: data.compatibility ? String(data.compatibility).trim() : null,
-      images: Array.isArray(data.images) ? data.images.filter((x: any) => typeof x === 'string') : [],
-      description: String(data.description).trim(),
+      ...data,
+      oemRef: data.oemRef || `AUTO-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+      images: data.images || [],
     }});
     res.status(201).json(created);
   } catch (e: any) {
@@ -925,23 +902,15 @@ app.post('/api/products', async (req, res) => {
   }
 });
 
-app.put('/api/products/:id', async (req, res) => {
+app.put('/api/products/:id', requireAdmin, async (req, res) => {
   try {
-    const data = req.body || {};
-    const updated = await prisma.product.update({ where: { id: req.params.id }, data: {
-      ...(data.name !== undefined ? { name: data.name } : {}),
-      ...(data.oemRef !== undefined ? { oemRef: data.oemRef } : {}),
-      ...(data.brand !== undefined ? { brand: data.brand } : {}),
-      ...(data.model !== undefined ? { model: data.model } : {}),
-      ...(data.year !== undefined ? { year: Number(data.year) } : {}),
-      ...(data.category !== undefined ? { category: String(data.category) } : {}),
-      ...(data.price !== undefined ? { price: String(data.price) } : {}),
-      ...(data.condition !== undefined ? { condition: data.condition } : {}),
-      ...(data.warranty !== undefined ? { warranty: data.warranty } : {}),
-      ...(data.compatibility !== undefined ? { compatibility: data.compatibility } : {}),
-      ...(data.images !== undefined ? { images: Array.isArray(data.images) ? data.images : [] } : {}),
-      ...(data.description !== undefined ? { description: data.description } : {}),
-    }});
+    const validation = validateProductInput(req.body, true);
+    if (validation.ok === false) return res.status(400).json({ error: validation.error });
+    if (!Object.keys(validation.data).length) return res.status(400).json({ error: 'missing_fields' });
+    const updated = await prisma.product.update({
+      where: { id: req.params.id },
+      data: validation.data,
+    });
     res.json(updated);
   } catch (e: any) {
     console.error('Product update error:', e);
@@ -956,92 +925,7 @@ app.put('/api/products/:id', async (req, res) => {
   }
 });
 
-app.delete('/api/products/:id', async (req, res) => {
-  try {
-    await prisma.product.delete({ where: { id: req.params.id } });
-    res.json({ success: true });
-  } catch (e) {
-    res.status(404).json({ error: 'not_found' });
-  }
-});
-
-app.get('/products', async (req, res) => {
-  try {
-    const { category, brand, model, limit } = req.query as any;
-    const take = limit ? Number(limit) : undefined;
-    const products = await prisma.product.findMany({
-      where: {
-        ...(category ? { category: String(category) } : {}),
-        ...(brand ? { brand: { contains: String(brand), mode: 'insensitive' } } : {}),
-        ...(model ? { model: { contains: String(model), mode: 'insensitive' } } : {}),
-      },
-      orderBy: { createdAt: 'desc' },
-      ...(take ? { take } : {}),
-    });
-    res.json(products);
-  } catch (e) {
-    res.status(500).json({ error: 'failed_to_list_products' });
-  }
-});
-
-app.get('/products/:id', async (req, res) => {
-  try {
-    const product = await prisma.product.findUnique({ where: { id: req.params.id } });
-    if (!product) return res.status(404).json({ error: 'not_found' });
-    res.json(product);
-  } catch (e) {
-    res.status(500).json({ error: 'failed_to_get_product' });
-  }
-});
-
-app.post('/products', async (req, res) => {
-  try {
-    const data = req.body || {};
-    const created = await prisma.product.create({ data: {
-      name: data.name,
-      oemRef: data.oemRef,
-      brand: data.brand,
-      model: data.model,
-      year: Number(data.year),
-      category: String(data.category),
-      price: Number(data.price),
-      condition: data.condition,
-      warranty: data.warranty,
-      compatibility: data.compatibility ?? null,
-      images: Array.isArray(data.images) ? data.images : [],
-      description: data.description,
-    }});
-    res.status(201).json(created);
-  } catch (e) {
-    console.error('Product creation error:', e);
-    res.status(400).json({ error: 'failed_to_create_product' });
-  }
-});
-
-app.put('/products/:id', async (req, res) => {
-  try {
-    const data = req.body || {};
-    const updated = await prisma.product.update({ where: { id: req.params.id }, data: {
-      ...(data.name !== undefined ? { name: data.name } : {}),
-      ...(data.oemRef !== undefined ? { oemRef: data.oemRef } : {}),
-      ...(data.brand !== undefined ? { brand: data.brand } : {}),
-      ...(data.model !== undefined ? { model: data.model } : {}),
-      ...(data.year !== undefined ? { year: Number(data.year) } : {}),
-      ...(data.category !== undefined ? { category: String(data.category) } : {}),
-      ...(data.price !== undefined ? { price: Number(data.price) } : {}),
-      ...(data.condition !== undefined ? { condition: data.condition } : {}),
-      ...(data.warranty !== undefined ? { warranty: data.warranty } : {}),
-      ...(data.compatibility !== undefined ? { compatibility: data.compatibility } : {}),
-      ...(data.images !== undefined ? { images: Array.isArray(data.images) ? data.images : [] } : {}),
-      ...(data.description !== undefined ? { description: data.description } : {}),
-    }});
-    res.json(updated);
-  } catch (e) {
-    res.status(400).json({ error: 'failed_to_update_product' });
-  }
-});
-
-app.delete('/products/:id', async (req, res) => {
+app.delete('/api/products/:id', requireAdmin, async (req, res) => {
   try {
     await prisma.product.delete({ where: { id: req.params.id } });
     res.json({ success: true });
@@ -1594,25 +1478,20 @@ app.post('/api/products/import', requireAdmin, async (req, res) => {
   try {
     const items = Array.isArray(req.body?.products) ? req.body.products : [];
     if (!items.length) return res.json({ imported: 0 });
-    for (const p of items) {
-      await prisma.product.create({
-        data: {
-          name: p.name || '',
-          oemRef: p.oemRef || `REF${Date.now()}`,
-          brand: p.brand || '',
-          model: p.model || '',
-          year: Number(p.year || 0),
-          category: String(p.category || ''),
-          price: String(p.price || 0),
-          condition: String(p.condition || ''),
-          warranty: String(p.warranty || ''),
-          compatibility: p.compatibility || null,
-          images: Array.isArray(p.images) ? p.images : [],
-          description: p.description || ''
-        }
+    const validated = [];
+    for (let index = 0; index < items.length; index++) {
+      const validation = validateProductInput(items[index]);
+      if (validation.ok === false) {
+        return res.status(400).json({ error: validation.error, index });
+      }
+      validated.push({
+        ...validation.data,
+        oemRef: validation.data.oemRef || `AUTO-${Date.now()}-${index}`,
+        images: validation.data.images || [],
       });
     }
-    res.json({ imported: items.length });
+    await prisma.$transaction(validated.map(data => prisma.product.create({ data })));
+    res.json({ imported: validated.length });
   } catch {
     res.status(500).json({ error: 'failed_to_import_products' });
   }

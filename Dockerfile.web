@@ -23,7 +23,7 @@ ENV VITE_APP_BASE_URL=$VITE_APP_BASE_URL
 ENV VITE_USE_LOCAL_API=$VITE_USE_LOCAL_API
 
 # 5. Builder l'application
-RUN npm run build
+RUN npx tsc --noEmit && npm run build
 
 # 6. Vérifier que le build a réussi
 RUN test -f dist/index.html || test -f dist/index.htm || (echo "BUILD FAILED: dist/index.html not found" && ls -la dist && exit 1)
